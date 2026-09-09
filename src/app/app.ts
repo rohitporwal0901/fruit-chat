@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 
 @Component({
@@ -26,4 +27,13 @@ import { NavbarComponent } from './shared/navbar/navbar.component';
 })
 export class App {
   title = 'fruit-chat';
+  private router = inject(Router);
+
+  constructor() {
+    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    });
+  }
 }
