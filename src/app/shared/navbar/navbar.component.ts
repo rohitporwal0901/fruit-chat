@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../core/services/cart.service';
 
@@ -8,33 +8,35 @@ import { CartService } from '../../core/services/cart.service';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, CommonModule],
   template: `
-    <!-- MOBILE TOP HEADER -->
-    <header class="mobile-header">
-      <a routerLink="/" class="brand">
-        <div class="brand-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2C8 2 4 6 4 10c0 4 4 8 8 10 4-2 8-6 8-10 0-4-4-8-8-8z" fill="#4CAF50" opacity="0.35"/>
-            <path d="M12 4C9 4 7 7 7 10s3 7 5 8c2-1 5-5 5-8S15 4 12 4z" fill="#2E7D32"/>
-            <path d="M12 8c-1 0-2 1-2 2s1 2 2 2 2-1 2-2-1-2-2-2z" fill="#fff"/>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <span class="brand-name">FruitChat</span>
-          <span class="brand-tagline">Fresh Fruits + Healthy Sprouts</span>
-        </div>
-      </a>
-      <a routerLink="/cart" class="mobile-cart-btn">
-        <div class="mobile-cart-icon-wrap">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-          </svg>
-          @if (cartService.totalItems() > 0) {
-            <span class="mobile-cart-badge">{{ cartService.totalItems() }}</span>
-          }
-        </div>
-      </a>
-    </header>
+    <!-- MOBILE TOP HEADER — only on Home page -->
+    @if (isHomePage()) {
+      <header class="mobile-header">
+        <a routerLink="/" class="brand">
+          <div class="brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C8 2 4 6 4 10c0 4 4 8 8 10 4-2 8-6 8-10 0-4-4-8-8-8z" fill="#4CAF50" opacity="0.35"/>
+              <path d="M12 4C9 4 7 7 7 10s3 7 5 8c2-1 5-5 5-8S15 4 12 4z" fill="#2E7D32"/>
+              <path d="M12 8c-1 0-2 1-2 2s1 2 2 2 2-1 2-2-1-2-2-2z" fill="#fff"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name"><span class="gradient-text">FruitChat</span></span>
+            <span class="brand-tagline">Fresh Fruits + Healthy Sprouts</span>
+          </div>
+        </a>
+        <a routerLink="/cart" class="mobile-cart-btn">
+          <div class="mobile-cart-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            @if (cartService.totalItems() > 0) {
+              <span class="mobile-cart-badge">{{ cartService.totalItems() }}</span>
+            }
+          </div>
+        </a>
+      </header>
+    }
 
     <!-- DESKTOP TOP NAV -->
     <header class="top-nav">
@@ -48,7 +50,7 @@ import { CartService } from '../../core/services/cart.service';
             </svg>
           </div>
           <div class="brand-text">
-            <span class="brand-name">FruitChat</span>
+            <span class="brand-name"><span class="gradient-text">FruitChat</span></span>
             <span class="brand-tagline">Fresh Fruits • Healthy Sprouts</span>
           </div>
         </a>
@@ -109,6 +111,31 @@ import { CartService } from '../../core/services/cart.service';
     </nav>
   `,
   styles: [`
+    /* ===== GRADIENT SHIMMER TEXT ===== */
+    .gradient-text {
+      background: linear-gradient(
+        90deg,
+        #2E7D32 0%,
+        #4CAF50 20%,
+        #8BC34A 38%,
+        #C5E1A5 50%,
+        #8BC34A 62%,
+        #4CAF50 80%,
+        #2E7D32 100%
+      );
+      background-size: 250% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 2.2s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+
     /* ===== MOBILE TOP HEADER ===== */
     .mobile-header {
       display: flex;
@@ -119,6 +146,7 @@ import { CartService } from '../../core/services/cart.service';
       position: sticky;
       top: 0;
       z-index: 100;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
     }
 
     .brand {
@@ -147,7 +175,6 @@ import { CartService } from '../../core/services/cart.service';
     .brand-name {
       font-size: 17px;
       font-weight: 800;
-      color: #1A1A1A;
       line-height: 1.1;
     }
 
@@ -329,4 +356,9 @@ import { CartService } from '../../core/services/cart.service';
 })
 export class NavbarComponent {
   cartService = inject(CartService);
+  private router = inject(Router);
+
+  isHomePage(): boolean {
+    return this.router.url === '/' || this.router.url === '';
+  }
 }

@@ -12,10 +12,12 @@ import { CartService } from '../../core/services/cart.service';
     <div class="cart-page">
       <!-- HEADER -->
       <div class="cart-header">
-        <button class="back-btn" (click)="router.navigate(['/menu'])">← Menu</button>
+        <button class="back-btn" (click)="router.navigate(['/menu'])">&#8592;</button>
         <h2 class="cart-title">My Cart</h2>
         @if (cartService.totalItems() > 0) {
-          <button class="clear-btn" (click)="clearCart()">🗑️ Clear</button>
+          <button class="clear-btn" (click)="clearCart()">&#128465; Clear</button>
+        } @else {
+          <span class="clear-btn-placeholder"></span>
         }
       </div>
 
@@ -112,10 +114,10 @@ import { CartService } from '../../core/services/cart.service';
 
     .cart-header {
       background: #fff;
-      padding: 16px 20px;
+      padding: 14px 16px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       position: sticky;
       top: 0;
@@ -124,32 +126,42 @@ import { CartService } from '../../core/services/cart.service';
     }
 
     .back-btn {
-      background: none;
+      background: #F1F8E9;
       border: none;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 16px;
+      font-weight: 700;
       color: #2E7D32;
       cursor: pointer;
       font-family: 'Poppins', sans-serif;
-      padding: 0;
+      padding: 6px 10px;
+      border-radius: 8px;
+      min-width: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .cart-title {
       flex: 1;
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       text-align: center;
+      color: #1A1A1A;
     }
 
     .clear-btn {
       background: none;
       border: none;
-      font-size: 13px;
+      font-size: 12px;
       color: #FF6B35;
       cursor: pointer;
       font-family: 'Poppins', sans-serif;
-      font-weight: 500;
+      font-weight: 600;
+      min-width: 60px;
+      text-align: right;
     }
+
+    .clear-btn-placeholder { min-width: 60px; }
 
     /* EMPTY */
     .empty-cart {

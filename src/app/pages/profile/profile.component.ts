@@ -17,18 +17,29 @@ interface MenuItem {
   template: `
     <div class="profile-page">
       <div class="profile-header">
+        <div class="ph-bg-circle c1"></div>
+        <div class="ph-bg-circle c2"></div>
         <div class="avatar-wrap">
           <div class="avatar">RP</div>
-          <button class="edit-avatar">📷</button>
+          <button class="edit-avatar">&#128247;</button>
         </div>
         <h2 class="profile-name">Rohit Porwal</h2>
         <p class="profile-phone">+91 98765 43210</p>
         <div class="profile-stats">
-          <div class="stat"><span class="stat-val">24</span><span class="stat-label">Orders</span></div>
+          <div class="stat">
+            <span class="stat-val">24</span>
+            <span class="stat-label">Orders</span>
+          </div>
           <div class="stat-divider"></div>
-          <div class="stat"><span class="stat-val">4.9★</span><span class="stat-label">Rating</span></div>
+          <div class="stat">
+            <span class="stat-val">4.9&#9733;</span>
+            <span class="stat-label">Rating</span>
+          </div>
           <div class="stat-divider"></div>
-          <div class="stat"><span class="stat-val">₹1,840</span><span class="stat-label">Saved</span></div>
+          <div class="stat">
+            <span class="stat-val">&#8377;1,840</span>
+            <span class="stat-label">Saved</span>
+          </div>
         </div>
       </div>
 
@@ -90,17 +101,61 @@ interface MenuItem {
   `,
   styles: [`
     .profile-page { background: #F8F9FA; min-height: 100vh; padding-bottom: 100px; }
-    .profile-header { background: linear-gradient(135deg, #1B5E20, #2E7D32, #4CAF50); padding: 40px 20px 32px; text-align: center; color: #fff; @media (min-width: 768px) { padding-top: 48px; } }
-    .avatar-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 14px; }
-    .avatar { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #fff; border: 3px solid rgba(255,255,255,0.4); }
-    .edit-avatar { position: absolute; bottom: 0; right: 0; background: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-    .profile-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
-    .profile-phone { font-size: 13px; opacity: 0.8; margin-bottom: 20px; }
-    .profile-stats { display: flex; align-items: center; justify-content: center; gap: 20px; background: rgba(255,255,255,0.15); border-radius: 16px; padding: 14px 24px; }
-    .stat { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .stat-val { font-size: 18px; font-weight: 800; }
-    .stat-label { font-size: 11px; opacity: 0.8; }
-    .stat-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.3); }
+
+    .profile-header {
+      background: linear-gradient(160deg, #1B5E20 0%, #2E7D32 45%, #43A047 100%);
+      padding: 52px 24px 36px;
+      text-align: center;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ph-bg-circle {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      pointer-events: none;
+    }
+    .ph-bg-circle.c1 { width: 200px; height: 200px; top: -60px; right: -60px; }
+    .ph-bg-circle.c2 { width: 130px; height: 130px; bottom: -30px; left: -30px; }
+
+    .avatar-wrap {
+      position: relative;
+      width: 90px; height: 90px;
+      margin: 0 auto 14px;
+    }
+    .avatar {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; font-weight: 800; color: #fff;
+      border: 3px solid rgba(255,255,255,0.5);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      backdrop-filter: blur(4px);
+    }
+    .edit-avatar {
+      position: absolute; bottom: 0; right: 0;
+      background: #fff; border: none; border-radius: 50%;
+      width: 28px; height: 28px; font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .profile-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.2px; }
+    .profile-phone { font-size: 13px; opacity: 0.8; margin-bottom: 22px; }
+
+    .profile-stats {
+      display: flex; align-items: center; justify-content: center; gap: 0;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 18px; padding: 16px 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    .stat { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+    .stat-val { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .stat-label { font-size: 11px; opacity: 0.78; font-weight: 500; }
+    .stat-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.28); }
     .profile-content { padding-top: 20px; }
     .profile-section { margin-bottom: 20px; }
     .section-label { font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
