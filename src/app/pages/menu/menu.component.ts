@@ -1,7 +1,7 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ProductCardComponent } from '../../shared/product-card/product-card.component';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
@@ -206,12 +206,21 @@ import { Product } from '../../core/models/product.model';
     }
   `]
 })
-export class MenuComponent {
+export class MenuComponent implements OnInit {
   private productService = inject(ProductService);
+  private route = inject(ActivatedRoute);
   cartService = inject(CartService);
 
   activeCategory = signal<string>('all');
   searchQuery = '';
+
+  ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['category']) {
+        this.activeCategory.set(params['category']);
+      }
+    });
+  }
 
   categories = [
     { id: 'all', label: 'All', emoji: '🍽️' },

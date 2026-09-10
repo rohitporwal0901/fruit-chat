@@ -55,29 +55,38 @@ import { Product } from '../../core/models/product.model';
         </div>
       </div>
 
-      <!-- CATEGORY CHIPS -->
+      <!-- CATEGORY CHIPS (Full-width 4-column layout like Swiggy) -->
       <section class="container categories-section">
-        <div class="categories-scroll">
-          <div class="category-item" routerLink="/menu">
-            <div class="cat-img-wrap"><img src="assets/images/mix-fruit-chaat.jpg" alt="Fruit Chaat"></div>
+        <div class="categories-grid">
+          <a class="category-item" [routerLink]="['/menu']" [queryParams]="{ category: 'fruit-chaat' }">
+            <div class="cat-img-wrap">
+              <img src="assets/images/mix-fruit-chaat.jpg" alt="Fruit Chaat">
+            </div>
             <span class="cat-label">Fruit Chaat</span>
-          </div>
-          <div class="category-item" routerLink="/menu">
-            <div class="cat-img-wrap"><img src="assets/images/masala-sprouts.jpg" alt="Sprouts"></div>
+          </a>
+          <a class="category-item" [routerLink]="['/menu']" [queryParams]="{ category: 'sprouts' }">
+            <div class="cat-img-wrap">
+              <img src="assets/images/masala-sprouts.jpg" alt="Sprouts">
+            </div>
             <span class="cat-label">Sprouts</span>
-          </div>
-          <div class="category-item" routerLink="/menu">
-            <div class="cat-img-wrap"><img src="assets/images/fresh-juice.jpg" alt="Juices"></div>
+          </a>
+          <a class="category-item" [routerLink]="['/menu']" [queryParams]="{ category: 'juices' }">
+            <div class="cat-img-wrap">
+              <img src="assets/images/fresh-juice.jpg" alt="Juices">
+            </div>
             <span class="cat-label">Juices</span>
-          </div>
-          <div class="category-item" routerLink="/menu">
-            <div class="cat-img-wrap cat-combo">&#129367;</div>
+          </a>
+          <a class="category-item" [routerLink]="['/menu']" [queryParams]="{ category: 'combo' }">
+            <div class="cat-img-wrap cat-combo-img">
+              <img src="assets/images/masala-sprouts.jpg" alt="Combos">
+              <span class="cat-combo-badge">Combo</span>
+            </div>
             <span class="cat-label">Combos</span>
-          </div>
+          </a>
         </div>
       </section>
 
-      <!-- POPULAR ITEMS - Manual slider (no description) -->
+      <!-- POPULAR ITEMS - Compact height slider -->
       <section class="container popular-section">
         <div class="section-title">
           <span>Popular Items</span>
@@ -88,13 +97,13 @@ import { Product } from '../../core/models/product.model';
             <div class="pop-card">
               <a [routerLink]="['/product', product.id]" class="pop-img-wrap">
                 <img [src]="product.image" [alt]="product.name" class="pop-img" loading="lazy">
-                @if (product.isBestseller) { <span class="pop-badge-best">Best</span> }
-                @if (product.originalPrice) { <span class="pop-badge-off">{{ getDiscount(product) }}%</span> }
+                @if (product.isBestseller) { <span class="pop-badge-best">⭐ Best</span> }
+                @if (product.originalPrice) { <span class="pop-badge-off">{{ getDiscount(product) }}% OFF</span> }
               </a>
               <div class="pop-body">
                 <div class="pop-meta">
-                  <span class="veg-dot">&#127807;</span>
-                  <div class="pop-rating"><span class="si">&#9733;</span><span class="sv">{{ product.rating }}</span></div>
+                  <span class="veg-badge"><span class="veg-badge-inner"></span></span>
+                  <div class="pop-rating"><span class="si">★</span><span class="sv">{{ product.rating }}</span></div>
                 </div>
                 <a [routerLink]="['/product', product.id]" class="pop-name">{{ product.name }}</a>
                 <div class="pop-footer">
@@ -103,7 +112,7 @@ import { Product } from '../../core/models/product.model';
                     <button class="btn-add-sm" (click)="addToCart($event, product)">Add</button>
                   } @else {
                     <div class="mini-stepper-sm">
-                      <button class="step-btn-sm" (click)="decrease($event, product)">-</button>
+                      <button class="step-btn-sm" (click)="decrease($event, product)">−</button>
                       <span class="step-val-sm">{{ getCartQty(product.id) }}</span>
                       <button class="step-btn-sm" (click)="increase($event, product)">+</button>
                     </div>
@@ -176,8 +185,8 @@ import { Product } from '../../core/models/product.model';
     .home-page { background: #F8F9FA; overflow-x: hidden; max-width: 100vw; }
     .container { padding-left: 14px; padding-right: 14px; }
     .section-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .section-title span { font-size: 14px; font-weight: 700; color: #1A1A1A; }
-    .view-all { font-size: 11px; font-weight: 600; color: #2E7D32; text-decoration: none; }
+    .section-title span { font-size: 15px; font-weight: 800; color: #1A1A1A; letter-spacing: -0.2px; }
+    .view-all { font-size: 11px; font-weight: 700; color: #2E7D32; text-decoration: none; }
 
     /* ===== HERO BANNER SLIDER ===== */
     .banner-section {
@@ -257,54 +266,219 @@ import { Product } from '../../core/models/product.model';
     .search-bar input { flex: 1; border: none; outline: none; font-size: 12px; color: #1A1A1A; background: transparent; }
     .search-bar input::placeholder { color: #bbb; }
 
-    /* ===== CATEGORIES ===== */
-    .categories-section { padding-top: 16px; }
-    .categories-scroll { display: flex; gap: 18px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-    .categories-scroll::-webkit-scrollbar { display: none; }
-    .category-item { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; flex-shrink: 0; transition: transform 0.2s; }
+    /* ===== CATEGORIES (Full-width 4-column layout like Swiggy / Zomato) ===== */
+    .categories-section { padding-top: 18px; padding-bottom: 4px; }
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+    .category-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
     .category-item:hover { transform: translateY(-2px); }
-    .cat-img-wrap { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; border: 2.5px solid #E8F5E9; box-shadow: 0 3px 10px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; background: #F1F8E9; }
+    .cat-img-wrap {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2.5px solid #E8F5E9;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F1F8E9;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .category-item:hover .cat-img-wrap {
+      border-color: #4CAF50;
+      box-shadow: 0 4px 14px rgba(46,125,50,0.2);
+    }
     .cat-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
-    .cat-combo { background: linear-gradient(135deg,#FFF3E0,#FFE0B2); font-size: 22px; }
-    .cat-label { font-size: 10px; font-weight: 600; color: #444; }
+    .cat-combo-img { position: relative; }
+    .cat-combo-badge {
+      position: absolute;
+      bottom: 2px;
+      background: #FF6B35;
+      color: #fff;
+      font-size: 7px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .cat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #2D3748;
+      margin-top: 6px;
+      text-align: center;
+      line-height: 1.2;
+    }
 
-    /* ===== POPULAR SLIDER ===== */
+    /* ===== POPULAR SLIDER (Compact Height) ===== */
     .popular-section { padding-top: 20px; }
-    .pop-slider { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+    .pop-slider {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
     .pop-slider::-webkit-scrollbar { display: none; }
-    .pop-card { flex-shrink: 0; width: 46vw; max-width: 170px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.07); scroll-snap-align: start; transition: transform 0.2s, box-shadow 0.2s; }
-    .pop-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.10); }
-    .pop-img-wrap { position: relative; display: block; aspect-ratio: 1/1; overflow: hidden; }
+    .pop-card {
+      flex-shrink: 0;
+      width: 148px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #EFEFEF;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      scroll-snap-align: start;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pop-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); border-color: #E0E0E0; }
+    .pop-img-wrap {
+      position: relative;
+      display: block;
+      aspect-ratio: 16/10;
+      overflow: hidden;
+      background: #f5f5f5;
+    }
     .pop-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-    .pop-img-wrap:hover .pop-img { transform: scale(1.05); }
-    .pop-badge-best { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.62); color: #fff; font-size: 7px; font-weight: 700; padding: 2px 6px; border-radius: 999px; }
-    .pop-badge-off { position: absolute; top: 5px; right: 5px; background: #FF6B35; color: #fff; font-size: 7px; font-weight: 700; padding: 2px 6px; border-radius: 999px; }
-    .pop-body { padding: 8px 9px 10px; }
-    .pop-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
-    .veg-dot { font-size: 10px; }
-    .pop-rating { display: flex; align-items: center; gap: 2px; background: #F1F8E9; padding: 1px 5px; border-radius: 999px; }
-    .si { color: #FFC107; font-size: 9px; }
-    .sv { font-size: 9px; font-weight: 700; color: #2E7D32; }
-    .pop-name { display: block; font-size: 12px; font-weight: 700; color: #1A1A1A; text-decoration: none; line-height: 1.3; margin-bottom: 7px; }
+    .pop-img-wrap:hover .pop-img { transform: scale(1.06); }
+    .pop-badge-best {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      background: rgba(0,0,0,0.72);
+      color: #FFD700;
+      font-size: 7px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+    .pop-badge-off {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: #E53935;
+      color: #fff;
+      font-size: 7px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(229,57,53,0.3);
+    }
+    .pop-body { padding: 6px 8px 8px; }
+    .pop-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+    .veg-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid #24963F;
+      border-radius: 3px;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .veg-badge-inner {
+      width: 5px;
+      height: 5px;
+      background: #24963F;
+      border-radius: 50%;
+    }
+    .pop-rating {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: #24963F;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .si { color: #fff; font-size: 8px; }
+    .sv { font-size: 8px; font-weight: 700; color: #fff; }
+    .pop-name {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1A1A1A;
+      text-decoration: none;
+      line-height: 1.25;
+      margin: 2px 0 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .pop-footer { display: flex; align-items: center; justify-content: space-between; }
-    .pop-price { font-size: 13px; font-weight: 800; color: #1A1A1A; }
+    .pop-price { font-size: 12px; font-weight: 800; color: #1A1A1A; }
 
     /* SHARED DOTS */
-    .slider-dots { display: flex; justify-content: center; gap: 4px; margin-top: 10px; }
+    .slider-dots { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
     .dot { width: 5px; height: 5px; border-radius: 50%; background: #D0D0D0; cursor: pointer; transition: all 0.25s; }
     .dot.active { background: #2E7D32; width: 16px; border-radius: 3px; }
 
-    /* SMALL ADD / STEPPER */
-    .btn-add-sm { background: #2E7D32; color: #fff; border: none; border-radius: 7px; font-size: 11px; font-weight: 700; padding: 5px 14px; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-    .btn-add-sm:hover { background: #1B5E20; }
-    .mini-stepper-sm { display: flex; align-items: center; gap: 3px; background: #F1F8E9; border-radius: 6px; padding: 2px 4px; border: 1.5px solid #4CAF50; }
-    .step-btn-sm { width: 18px; height: 18px; border-radius: 4px; background: #2E7D32; color: #fff; border: none; font-size: 13px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: inherit; }
-    .step-btn-sm:hover { background: #1B5E20; }
-    .step-val-sm { font-weight: 700; font-size: 11px; color: #2E7D32; min-width: 11px; text-align: center; }
+    /* SMALL ADD / STEPPER (Zomato / Swiggy style) */
+    .btn-add-sm {
+      background: #fff;
+      color: #1B7A36;
+      border: 1.5px solid #1B7A36;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .btn-add-sm:hover {
+      background: #1B7A36;
+      color: #fff;
+      transform: scale(1.03);
+    }
+    .mini-stepper-sm {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: #1B7A36;
+      border-radius: 6px;
+      padding: 2px 4px;
+      box-shadow: 0 1px 4px rgba(27,122,54,0.25);
+    }
+    .step-btn-sm {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      background: transparent;
+      color: #fff;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .step-btn-sm:hover { background: rgba(255,255,255,0.2); }
+    .step-val-sm { font-weight: 700; font-size: 10px; color: #fff; min-width: 12px; text-align: center; }
 
     /* ===== ALL PRODUCTS ===== */
     .all-products-section { padding-top: 18px; padding-bottom: 4px; }
-    .product-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+    .product-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
 
     /* ===== BOTTOM COMBO BANNER SLIDER (full-width, 4 slides) ===== */
     .combo-banner-section {
