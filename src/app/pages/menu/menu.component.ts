@@ -91,14 +91,29 @@ import { Product } from '../../core/models/product.model';
         }
       </div>
 
-      <!-- FLOATING CART -->
+      <!-- FLOATING VIEW CART TOASTER -->
       @if (cartService.totalItems() > 0) {
-        <a routerLink="/cart" class="floating-cart">
+        <a routerLink="/cart" class="floating-cart" aria-label="View Cart">
           <div class="fc-left">
-            <span class="fc-count">{{ cartService.totalItems() }} item{{ cartService.totalItems() > 1 ? 's' : '' }}</span>
+            <div class="fc-cart-pill">
+              <svg class="fc-cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+              <span class="fc-count">{{ cartService.totalItems() }} {{ cartService.totalItems() === 1 ? 'item' : 'items' }}</span>
+            </div>
+            <div class="fc-divider"></div>
+            <span class="fc-price">₹{{ cartService.grandTotal() }}</span>
           </div>
-          <span class="fc-label">View Cart</span>
-          <span class="fc-price">₹{{ cartService.grandTotal() }}</span>
+          <div class="fc-right">
+            <span class="fc-label">View Cart</span>
+            <div class="fc-arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </div>
+          </div>
         </a>
       }
     </div>
@@ -312,30 +327,133 @@ import { Product } from '../../core/models/product.model';
       p { color: #999; font-size: 14px; }
     }
 
+    /* FLOATING VIEW CART TOASTER */
     .floating-cart {
       position: fixed;
-      bottom: 90px;
+      bottom: 74px;
       left: 50%;
       transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 480px;
-      background: #2E7D32;
+      width: calc(100% - 24px);
+      max-width: 440px;
+      background: linear-gradient(135deg, #155523 0%, #1e702e 52%, #24963F 100%);
       color: #fff;
-      border-radius: 14px;
-      padding: 14px 20px;
+      border-radius: 16px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       text-decoration: none;
-      box-shadow: 0 8px 32px rgba(46,125,50,0.4);
-      z-index: 500;
-      transition: transform 0.2s;
-      &:hover { transform: translateX(-50%) translateY(-2px); }
-      .fc-count { font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 999px; }
-      .fc-label { font-size: 15px; font-weight: 700; }
-      .fc-price { font-size: 15px; font-weight: 700; }
+      box-shadow: 0 10px 28px -4px rgba(21, 85, 35, 0.48), 0 4px 12px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 990;
+      animation: slideUpFloat 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
 
-      @media (min-width: 768px) { bottom: 20px; }
+      &:hover {
+        transform: translateX(-50%) translateY(-2px);
+        box-shadow: 0 14px 34px -4px rgba(21, 85, 35, 0.58), 0 6px 16px rgba(0, 0, 0, 0.15);
+
+        .fc-arrow {
+          transform: translateX(3px);
+          background: rgba(255, 255, 255, 0.32);
+        }
+      }
+
+      &:active {
+        transform: translateX(-50%) scale(0.98);
+      }
+
+      @media (min-width: 768px) {
+        bottom: 24px;
+        max-width: 420px;
+      }
+    }
+
+    .fc-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .fc-cart-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      padding: 4px 9px;
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+    }
+
+    .fc-cart-icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      stroke: #fff;
+    }
+
+    .fc-count {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .fc-divider {
+      width: 1px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .fc-price {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.2px;
+    }
+
+    .fc-right {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .fc-label {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+
+    .fc-arrow {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      svg {
+        stroke: #fff;
+      }
+    }
+
+    @keyframes slideUpFloat {
+      from {
+        transform: translateX(-50%) translateY(40px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
     }
 
     @keyframes fadeInUp {
