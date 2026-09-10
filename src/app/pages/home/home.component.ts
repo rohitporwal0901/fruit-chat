@@ -1,4 +1,4 @@
-import { Component, inject, signal, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -47,96 +47,110 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
+      <!-- PROMO STRIP (Swiggy/Zomato style deal ticker) -->
+      <div class="container promo-section">
+        <div class="promo-card">
+          <div class="promo-left">
+            <span class="promo-badge">OFFER</span>
+            <span class="promo-msg">Flat <strong>20% OFF</strong> on first 3 orders</span>
+          </div>
+          <span class="promo-code-btn">CODE: <strong>HEALTH20</strong></span>
+        </div>
+      </div>
+
       <!-- SEARCH BAR -->
       <div class="container search-section">
         <div class="search-bar">
-          <span class="search-icon">&#128269;</span>
-          <input type="text" placeholder="Search for fruit chaat, sprouts..." [(ngModel)]="searchQuery" (input)="onSearch()">
+          <svg class="search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" placeholder="Search fresh fruit chaat, sprouts, juices..." [(ngModel)]="searchQuery" (input)="onSearch()">
+          @if (searchQuery) {
+            <button class="clear-search-btn" (click)="clearHomeSearch()">✕</button>
+          }
         </div>
       </div>
 
       <!-- CATEGORY CHIPS (Full-width 4-column layout like Swiggy) -->
       <section class="container categories-section">
+        <div class="sec-title-clean">
+          <span>What's on your mind?</span>
+        </div>
         <div class="categories-grid">
-          <a class="category-item" [routerLink]="['/menu']" [queryParams]="{ category: 'fruit-chaat' }">
+          <div class="category-item" [class.active]="selectedCategory() === 'fruit-chaat'" (click)="toggleCategory('fruit-chaat')">
             <div class="cat-img-wrap">
               <img src="assets/images/mix-fruit-chaat.jpg" alt="Fruit Chaat">
             </div>
             <span class="cat-label">Fruit Chaat</span>
-          </a>
-          <a class="category-item" [routerLink]="['/menu']" [queryParams]="{ category: 'sprouts' }">
+          </div>
+          <div class="category-item" [class.active]="selectedCategory() === 'sprouts'" (click)="toggleCategory('sprouts')">
             <div class="cat-img-wrap">
               <img src="assets/images/masala-sprouts.jpg" alt="Sprouts">
             </div>
             <span class="cat-label">Sprouts</span>
-          </a>
-          <a class="category-item" [routerLink]="['/menu']" [queryParams]="{ category: 'juices' }">
+          </div>
+          <div class="category-item" [class.active]="selectedCategory() === 'juices'" (click)="toggleCategory('juices')">
             <div class="cat-img-wrap">
               <img src="assets/images/fresh-juice.jpg" alt="Juices">
             </div>
             <span class="cat-label">Juices</span>
-          </a>
-          <a class="category-item" [routerLink]="['/menu']" [queryParams]="{ category: 'combo' }">
+          </div>
+          <div class="category-item" [class.active]="selectedCategory() === 'combo'" (click)="toggleCategory('combo')">
             <div class="cat-img-wrap cat-combo-img">
               <img src="assets/images/masala-sprouts.jpg" alt="Combos">
               <span class="cat-combo-badge">Combo</span>
             </div>
             <span class="cat-label">Combos</span>
-          </a>
+          </div>
         </div>
       </section>
 
-      <!-- POPULAR ITEMS - Compact height slider -->
-      <section class="container popular-section">
-        <div class="section-title">
-          <span>Popular Items</span>
-          <a routerLink="/menu" class="view-all">View All</a>
-        </div>
-        <div class="pop-slider" #popularSlider (scroll)="onPopularScroll()">
-          @for (product of popularProducts(); track product.id) {
-            <div class="pop-card">
-              <a [routerLink]="['/product', product.id]" class="pop-img-wrap">
-                <img [src]="product.image" [alt]="product.name" class="pop-img" loading="lazy">
-                @if (product.isBestseller) { <span class="pop-badge-best">⭐ Best</span> }
-                @if (product.originalPrice) { <span class="pop-badge-off">{{ getDiscount(product) }}% OFF</span> }
-              </a>
-              <div class="pop-body">
-                <div class="pop-meta">
-                  <span class="veg-badge"><span class="veg-badge-inner"></span></span>
-                  <div class="pop-rating"><span class="si">★</span><span class="sv">{{ product.rating }}</span></div>
-                </div>
-                <a [routerLink]="['/product', product.id]" class="pop-name">{{ product.name }}</a>
-                <div class="pop-footer">
-                  <span class="pop-price">&#8377;{{ product.price }}</span>
-                  @if (getCartQty(product.id) === 0) {
-                    <button class="btn-add-sm" (click)="addToCart($event, product)">Add</button>
-                  } @else {
-                    <div class="mini-stepper-sm">
-                      <button class="step-btn-sm" (click)="decrease($event, product)">−</button>
-                      <span class="step-val-sm">{{ getCartQty(product.id) }}</span>
-                      <button class="step-btn-sm" (click)="increase($event, product)">+</button>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-        <div class="slider-dots">
-          @for (d of popularDots(); track $index; let i = $index) {
-            <span class="dot" [class.active]="activePopular() === i" (click)="goToPopular(i)"></span>
-          }
+      <!-- QUICK FILTER PILLS (Zomato / Swiggy Style) -->
+      <section class="container filter-pills-section">
+        <div class="filter-pills-scroll">
+          <button class="filter-pill" [class.active]="selectedCategory() === 'all'" (click)="setCategory('all')">
+            🍽️ All ({{ totalCount }})
+          </button>
+          <button class="filter-pill" [class.active]="selectedCategory() === 'fruit-chaat'" (click)="setCategory('fruit-chaat')">
+            🍎 Fruit Chaat
+          </button>
+          <button class="filter-pill" [class.active]="selectedCategory() === 'sprouts'" (click)="setCategory('sprouts')">
+            🌱 Sprouts
+          </button>
+          <button class="filter-pill" [class.active]="selectedCategory() === 'juices'" (click)="setCategory('juices')">
+            🥤 Juices
+          </button>
+          <button class="filter-pill" [class.active]="selectedCategory() === 'combo'" (click)="setCategory('combo')">
+            🥗 Combos
+          </button>
         </div>
       </section>
 
       <!-- ALL PRODUCTS -->
       <section class="container all-products-section">
-        <div class="section-title"><span>All Items</span></div>
-        <div class="product-grid">
-          @for (product of allProducts(); track product.id) {
-            <app-product-card [product]="product" mode="grid"></app-product-card>
+        <div class="section-title">
+          <div class="title-with-pill">
+            <span>{{ getSectionTitle() }}</span>
+            <span class="items-count-tag">{{ displayProducts().length }} Items</span>
+          </div>
+          @if (selectedCategory() !== 'all') {
+            <button class="clear-filter-link" (click)="setCategory('all')">Show All ✕</button>
           }
         </div>
+        @if (displayProducts().length === 0) {
+          <div class="empty-state-home">
+            <span class="empty-icon">🔍</span>
+            <p>No items found</p>
+            <button class="reset-filter-btn" (click)="resetSearchAndFilter()">Show All Items</button>
+          </div>
+        } @else {
+          <div class="product-grid">
+            @for (product of displayProducts(); track product.id) {
+              <app-product-card [product]="product" mode="grid"></app-product-card>
+            }
+          </div>
+        }
       </section>
 
       <!-- BOTTOM COMBO BANNER SLIDER - Full width, 4 slides, auto-scroll -->
@@ -184,8 +198,26 @@ import { Product } from '../../core/models/product.model';
   styles: [`
     .home-page { background: #F8F9FA; overflow-x: hidden; max-width: 100vw; }
     .container { padding-left: 14px; padding-right: 14px; }
-    .section-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .section-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .section-title span { font-size: 15px; font-weight: 800; color: #1A1A1A; letter-spacing: -0.2px; }
+    .title-with-pill { display: flex; align-items: center; gap: 8px; }
+    .fire-badge {
+      background: #FFF3E0;
+      color: #E65100;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.2px;
+    }
+    .items-count-tag {
+      font-size: 10px;
+      font-weight: 700;
+      color: #2E7D32;
+      background: #E8F5E9;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
     .view-all { font-size: 11px; font-weight: 700; color: #2E7D32; text-decoration: none; }
 
     /* ===== HERO BANNER SLIDER ===== */
@@ -254,20 +286,83 @@ import { Product } from '../../core/models/product.model';
     .bdot { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,0,0,0.2); cursor: pointer; transition: all 0.25s; }
     .bdot.active { background: #2E7D32; width: 18px; border-radius: 3px; }
 
+    /* ===== PROMO STRIP ===== */
+    .promo-section { padding-top: 12px; }
+    .promo-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(90deg, #F1F8E9 0%, #E8F5E9 100%);
+      border: 1px dashed #81C784;
+      border-radius: 10px;
+      padding: 7px 12px;
+      box-shadow: 0 1px 4px rgba(46,125,50,0.06);
+    }
+    .promo-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #1B5E20;
+    }
+    .promo-badge {
+      background: #2E7D32;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .promo-msg { font-size: 11px; color: #2E7D32; }
+    .promo-msg strong { color: #1B5E20; font-weight: 800; }
+    .promo-code-btn {
+      font-size: 10px;
+      color: #2E7D32;
+      background: #fff;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid #A5D6A7;
+      font-weight: 700;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
     /* ===== SEARCH ===== */
-    .search-section { padding-top: 14px; padding-bottom: 2px; }
+    .search-section { padding-top: 10px; padding-bottom: 2px; }
     .search-bar {
       display: flex; align-items: center; gap: 8px;
-      background: #fff; border-radius: 999px; padding: 10px 16px;
+      background: #fff; border-radius: 999px; padding: 9px 16px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 1.5px solid #EEE; transition: all 0.25s;
     }
     .search-bar:focus-within { border-color: #4CAF50; box-shadow: 0 0 0 3px rgba(76,175,80,0.12); }
-    .search-icon { font-size: 14px; }
-    .search-bar input { flex: 1; border: none; outline: none; font-size: 12px; color: #1A1A1A; background: transparent; }
-    .search-bar input::placeholder { color: #bbb; }
+    .search-icon-svg { flex-shrink: 0; }
+    .search-bar input { flex: 1; border: none; outline: none; font-size: 12px; color: #1A1A1A; background: transparent; font-family: inherit; }
+    .search-bar input::placeholder { color: #aaa; }
+    .clear-search-btn {
+      background: #E0E0E0;
+      border: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #666;
+      cursor: pointer;
+      padding: 0;
+    }
 
     /* ===== CATEGORIES (Full-width 4-column layout like Swiggy / Zomato) ===== */
-    .categories-section { padding-top: 18px; padding-bottom: 4px; }
+    .categories-section { padding-top: 16px; padding-bottom: 4px; }
+    .sec-title-clean {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1A1A1A;
+      letter-spacing: -0.2px;
+      margin-bottom: 12px;
+    }
     .categories-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -324,157 +419,93 @@ import { Product } from '../../core/models/product.model';
       line-height: 1.2;
     }
 
-    /* ===== POPULAR SLIDER (Compact Height) ===== */
-    .popular-section { padding-top: 20px; }
-    .pop-slider {
+    .category-item.active .cat-img-wrap {
+      border-color: #2E7D32;
+      box-shadow: 0 0 0 3px rgba(46,125,50,0.22), 0 4px 14px rgba(46,125,50,0.18);
+      transform: scale(1.04);
+    }
+    .category-item.active .cat-label {
+      color: #2E7D32;
+      font-weight: 800;
+    }
+
+    /* ===== QUICK FILTER PILLS ===== */
+    .filter-pills-section {
+      padding-top: 14px;
+      padding-bottom: 2px;
+    }
+    .filter-pills-scroll {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       overflow-x: auto;
-      scroll-snap-type: x mandatory;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: 4px;
+      padding-bottom: 2px;
     }
-    .pop-slider::-webkit-scrollbar { display: none; }
-    .pop-card {
-      flex-shrink: 0;
-      width: 148px;
-      background: #fff;
-      border-radius: 12px;
-      border: 1px solid #EFEFEF;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      scroll-snap-align: start;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .pop-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); border-color: #E0E0E0; }
-    .pop-img-wrap {
-      position: relative;
-      display: block;
-      aspect-ratio: 16/10;
-      overflow: hidden;
-      background: #f5f5f5;
-    }
-    .pop-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-    .pop-img-wrap:hover .pop-img { transform: scale(1.06); }
-    .pop-badge-best {
-      position: absolute;
-      top: 5px;
-      left: 5px;
-      background: rgba(0,0,0,0.72);
-      color: #FFD700;
-      font-size: 7px;
-      font-weight: 700;
-      padding: 2px 5px;
-      border-radius: 4px;
-      backdrop-filter: blur(4px);
-    }
-    .pop-badge-off {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: #E53935;
-      color: #fff;
-      font-size: 7px;
-      font-weight: 800;
-      padding: 2px 5px;
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(229,57,53,0.3);
-    }
-    .pop-body { padding: 6px 8px 8px; }
-    .pop-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-    .veg-badge {
+    .filter-pills-scroll::-webkit-scrollbar { display: none; }
+    .filter-pill {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      width: 12px;
-      height: 12px;
-      border: 1.5px solid #24963F;
-      border-radius: 3px;
-      background: #fff;
-      flex-shrink: 0;
-    }
-    .veg-badge-inner {
-      width: 5px;
-      height: 5px;
-      background: #24963F;
-      border-radius: 50%;
-    }
-    .pop-rating {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      background: #24963F;
-      padding: 1px 5px;
-      border-radius: 4px;
-    }
-    .si { color: #fff; font-size: 8px; }
-    .sv { font-size: 8px; font-weight: 700; color: #fff; }
-    .pop-name {
-      display: block;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 999px;
       font-size: 11px;
-      font-weight: 700;
-      color: #1A1A1A;
-      text-decoration: none;
-      line-height: 1.25;
-      margin: 2px 0 6px;
+      font-weight: 600;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .pop-footer { display: flex; align-items: center; justify-content: space-between; }
-    .pop-price { font-size: 12px; font-weight: 800; color: #1A1A1A; }
-
-    /* SHARED DOTS */
-    .slider-dots { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
-    .dot { width: 5px; height: 5px; border-radius: 50%; background: #D0D0D0; cursor: pointer; transition: all 0.25s; }
-    .dot.active { background: #2E7D32; width: 16px; border-radius: 3px; }
-
-    /* SMALL ADD / STEPPER (Zomato / Swiggy style) */
-    .btn-add-sm {
-      background: #fff;
-      color: #1B7A36;
-      border: 1.5px solid #1B7A36;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 11px;
       cursor: pointer;
       transition: all 0.2s;
+      border: 1.5px solid #E5E7EB;
+      background: #fff;
+      color: #4B5563;
       font-family: inherit;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      flex-shrink: 0;
     }
-    .btn-add-sm:hover {
-      background: #1B7A36;
+    .filter-pill:hover {
+      border-color: #4CAF50;
+      color: #2E7D32;
+    }
+    .filter-pill.active {
+      background: #2E7D32;
       color: #fff;
-      transform: scale(1.03);
+      border-color: #2E7D32;
+      box-shadow: 0 3px 10px rgba(46,125,50,0.28);
     }
-    .mini-stepper-sm {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      background: #1B7A36;
-      border-radius: 6px;
-      padding: 2px 4px;
-      box-shadow: 0 1px 4px rgba(27,122,54,0.25);
+
+    .clear-filter-link {
+      background: none;
+      border: none;
+      color: #E53935;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
     }
-    .step-btn-sm {
-      width: 16px;
-      height: 16px;
-      border-radius: 3px;
-      background: transparent;
+    .clear-filter-link:hover { text-decoration: underline; }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state-home {
+      text-align: center;
+      padding: 36px 16px;
+      background: #fff;
+      border-radius: 14px;
+      border: 1px dashed #DDD;
+      margin: 10px 0;
+    }
+    .empty-state-home .empty-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+    .empty-state-home p { font-size: 13px; color: #777; margin-bottom: 12px; }
+    .reset-filter-btn {
+      background: #2E7D32;
       color: #fff;
       border: none;
-      font-size: 13px;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 11px;
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       cursor: pointer;
       font-family: inherit;
     }
-    .step-btn-sm:hover { background: rgba(255,255,255,0.2); }
-    .step-val-sm { font-weight: 700; font-size: 10px; color: #fff; min-width: 12px; text-align: center; }
 
     /* ===== ALL PRODUCTS ===== */
     .all-products-section { padding-top: 18px; padding-bottom: 4px; }
@@ -557,8 +588,24 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   cartService = inject(CartService);
   searchQuery = '';
 
-  popularProducts = signal<Product[]>(this.productService.getPopular());
-  allProducts     = signal<Product[]>(this.productService.getAll());
+  selectedCategory = signal<string>('all');
+  totalCount = this.productService.getAll().length;
+
+  displayProducts = computed<Product[]>(() => {
+    let list = this.productService.getAll();
+    if (this.selectedCategory() !== 'all') {
+      list = list.filter(p => p.category === this.selectedCategory());
+    }
+    if (this.searchQuery.trim()) {
+      const q = this.searchQuery.toLowerCase();
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  });
 
   // Hero slides (5 slides) - colors matched per background
   heroSlides = [
@@ -663,30 +710,14 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   activeCombo = signal(0);
   private comboTimer: ReturnType<typeof setInterval> | null = null;
 
-  @ViewChild('popularSlider') popularSliderRef!: ElementRef<HTMLDivElement>;
-  activePopular = signal(0);
-  popularDots   = signal<number[]>([]);
-
   ngAfterViewInit(): void {
     this.startHeroAuto();
     this.startComboAuto();
-    setTimeout(() => this.initPopularDots(), 120);
   }
 
   ngOnDestroy(): void {
     if (this.heroTimer)  clearInterval(this.heroTimer);
     if (this.comboTimer) clearInterval(this.comboTimer);
-  }
-
-  private initPopularDots(): void {
-    const el = this.popularSliderRef?.nativeElement;
-    if (!el) return;
-    const card = el.querySelector('.pop-card') as HTMLElement;
-    if (!card) return;
-    const cardW = card.offsetWidth + 10;
-    const visible = Math.floor(el.offsetWidth / cardW);
-    const pages = Math.max(1, this.popularProducts().length - visible + 1);
-    this.popularDots.set(Array.from({ length: pages }, (_, i) => i));
   }
 
   // Hero
@@ -701,22 +732,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     this.startHeroAuto();
   }
 
-  // Popular
-  onPopularScroll(): void {
-    const el = this.popularSliderRef?.nativeElement;
-    if (!el) return;
-    const card = el.querySelector('.pop-card') as HTMLElement;
-    if (!card) return;
-    this.activePopular.set(Math.round(el.scrollLeft / (card.offsetWidth + 10)));
-  }
-  goToPopular(i: number): void {
-    this.activePopular.set(i);
-    const el = this.popularSliderRef?.nativeElement;
-    if (!el) return;
-    const card = el.querySelector('.pop-card') as HTMLElement;
-    el.scrollTo({ left: i * (card ? card.offsetWidth + 10 : 170), behavior: 'smooth' });
-  }
-
   // Combo banner auto-scroll
   private startComboAuto(): void {
     this.comboTimer = setInterval(() => {
@@ -729,6 +744,25 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     this.startComboAuto();
   }
 
+  // Category Filtering
+  setCategory(cat: string): void {
+    this.selectedCategory.set(cat);
+  }
+
+  toggleCategory(cat: string): void {
+    this.selectedCategory.set(this.selectedCategory() === cat ? 'all' : cat);
+  }
+
+  getSectionTitle(): string {
+    switch (this.selectedCategory()) {
+      case 'fruit-chaat': return 'Fresh Fruit Chaat';
+      case 'sprouts': return 'Healthy Sprouts';
+      case 'juices': return 'Cold-Pressed Juices';
+      case 'combo': return 'Healthy Combos';
+      default: return 'All Items';
+    }
+  }
+
   // Helpers
   getDiscount(p: Product): number {
     if (!p.originalPrice) return 0;
@@ -738,9 +772,17 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   addToCart(e: Event, p: Product): void { e.preventDefault(); e.stopPropagation(); this.cartService.addToCart(p); }
   increase(e: Event, p: Product): void { e.preventDefault(); e.stopPropagation(); this.cartService.updateQty(p.id, this.getCartQty(p.id) + 1); }
   decrease(e: Event, p: Product): void { e.preventDefault(); e.stopPropagation(); this.cartService.updateQty(p.id, this.getCartQty(p.id) - 1); }
+  
   onSearch(): void {
-    this.allProducts.set(this.searchQuery.trim()
-      ? this.productService.search(this.searchQuery)
-      : this.productService.getAll());
+    // computed displayProducts triggers automatically
+  }
+
+  clearHomeSearch(): void {
+    this.searchQuery = '';
+  }
+
+  resetSearchAndFilter(): void {
+    this.searchQuery = '';
+    this.selectedCategory.set('all');
   }
 }

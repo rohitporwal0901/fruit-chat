@@ -38,7 +38,7 @@ import { CartService } from '../../core/services/cart.service';
               }
             </div>
             @if (cartQty === 0) {
-              <button class="btn-add" (click)="addToCart($event)">Add</button>
+              <button class="btn-add" (click)="addToCart($event)">ADD</button>
             } @else {
               <div class="mini-stepper">
                 <button class="step-btn" (click)="decrease($event)">−</button>
@@ -265,14 +265,16 @@ import { CartService } from '../../core/services/cart.service';
       color: #1B7A36;
       border: 1.5px solid #1B7A36;
       border-radius: 6px;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 13px;
       cursor: pointer;
       transition: all 0.2s;
       white-space: nowrap;
       font-family: inherit;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     .btn-add:hover {
       background: #1B7A36;

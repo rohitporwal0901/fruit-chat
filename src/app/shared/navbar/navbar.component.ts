@@ -21,7 +21,7 @@ import { CartService } from '../../core/services/cart.service';
           </div>
           <div class="brand-text">
             <span class="brand-name"><span class="gradient-text">FruitChat</span></span>
-            <span class="brand-tagline">Fresh Fruits + Healthy Sprouts</span>
+            <span class="brand-tagline">⚡ 15-20 Mins • Pure Veg 🌿</span>
           </div>
         </a>
         <a routerLink="/cart" class="mobile-cart-btn">
@@ -180,8 +180,10 @@ import { CartService } from '../../core/services/cart.service';
 
     .brand-tagline {
       font-size: 10px;
-      color: #888;
-      font-weight: 400;
+      color: #2E7D32;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      margin-top: 1px;
     }
 
     .mobile-cart-btn {
