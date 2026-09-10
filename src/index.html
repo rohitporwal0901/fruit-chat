@@ -17,5 +17,23 @@
 </head>
 <body>
   <app-root></app-root>
+  <script>
+    // Prevent double-click and double-tap zoom on mobile devices
+    document.addEventListener('dblclick', function (e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    let lastTouchTime = 0;
+    document.addEventListener('touchend', function (e) {
+      const now = Date.now();
+      if (now - lastTouchTime <= 320) {
+        const isInteractive = e.target && e.target.closest && e.target.closest('button, a, input, textarea, select, .qty-btn, .step-btn');
+        if (!isInteractive) {
+          e.preventDefault();
+        }
+      }
+      lastTouchTime = now;
+    }, { passive: false });
+  </script>
 </body>
 </html>
