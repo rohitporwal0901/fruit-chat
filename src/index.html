@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>FruitChat - Fresh Fruits & Healthy Sprouts</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, user-scalable=0, shrink-to-fit=no, viewport-fit=cover">
   <meta name="description" content="FruitChat - Order fresh fruit chaat, masala sprouts, and healthy juices. Fast delivery, pure freshness.">
   <meta name="theme-color" content="#2E7D32">
   <meta name="mobile-web-app-capable" content="yes">
@@ -18,21 +18,44 @@
 <body>
   <app-root></app-root>
   <script>
-    // Prevent double-click and double-tap zoom on mobile devices
+    // 1. Prevent double-click zoom
     document.addEventListener('dblclick', function (e) {
       e.preventDefault();
     }, { passive: false });
 
-    let lastTouchTime = 0;
+    // 2. Prevent gesture zoom (pinch zoom)
+    document.addEventListener('gesturestart', function (e) {
+      e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('gesturechange', function (e) {
+      e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('gestureend', function (e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    // 3. Prevent double-tap zoom on iOS Safari and Android browsers
+    var lastTouchTime = 0;
     document.addEventListener('touchend', function (e) {
-      const now = Date.now();
-      if (now - lastTouchTime <= 320) {
-        const isInteractive = e.target && e.target.closest && e.target.closest('button, a, input, textarea, select, .qty-btn, .step-btn');
-        if (!isInteractive) {
-          e.preventDefault();
+      var now = Date.now();
+      if (now - lastTouchTime <= 450) {
+        e.preventDefault();
+        // Trigger click programmatically so buttons/links still respond immediately
+        if (e.target) {
+          var clickable = e.target.closest ? e.target.closest('button, a, input, textarea, select, [tabindex]') : e.target;
+          if (clickable && typeof clickable.click === 'function') {
+            clickable.click();
+          }
         }
       }
       lastTouchTime = now;
+    }, { passive: false });
+
+    // 4. Prevent multi-finger pinch zoom
+    document.addEventListener('touchstart', function (e) {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
     }, { passive: false });
   </script>
 </body>
