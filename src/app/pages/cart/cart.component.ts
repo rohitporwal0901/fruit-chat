@@ -12,13 +12,18 @@ import { CartService } from '../../core/services/cart.service';
     <div class="cart-page">
       <!-- HEADER -->
       <div class="cart-header">
-        <button class="back-btn" (click)="router.navigate(['/menu'])">&#8592;</button>
+        <button class="back-btn" (click)="router.navigate(['/menu'])" aria-label="Back to Menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
         <h2 class="cart-title">My Cart</h2>
-        @if (cartService.totalItems() > 0) {
-          <button class="clear-btn" (click)="clearCart()">&#128465; Clear</button>
-        } @else {
-          <span class="clear-btn-placeholder"></span>
-        }
+        <div class="header-right-slot">
+          @if (cartService.totalItems() > 0) {
+            <button class="clear-btn" (click)="clearCart()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span>Clear</span>
+            </button>
+          }
+        </div>
       </div>
 
       @if (cartService.items().length === 0) {
@@ -114,10 +119,10 @@ import { CartService } from '../../core/services/cart.service';
 
     .cart-header {
       background: #fff;
-      padding: 14px 16px;
-      display: flex;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 60px 1fr 60px;
       align-items: center;
-      justify-content: space-between;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       position: sticky;
       top: 0;
@@ -126,42 +131,54 @@ import { CartService } from '../../core/services/cart.service';
     }
 
     .back-btn {
-      background: #F1F8E9;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #F4F4F5;
       border: none;
-      font-size: 16px;
-      font-weight: 700;
-      color: #2E7D32;
+      color: #1A1A1A;
       cursor: pointer;
-      font-family: 'Poppins', sans-serif;
-      padding: 6px 10px;
-      border-radius: 8px;
-      min-width: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
+      justify-self: start;
+      transition: all 0.2s;
+      &:active { background: #E4E4E7; transform: scale(0.95); }
     }
 
     .cart-title {
-      flex: 1;
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 800;
       text-align: center;
       color: #1A1A1A;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+
+    .header-right-slot {
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
 
     .clear-btn {
-      background: none;
-      border: none;
-      font-size: 12px;
-      color: #FF6B35;
+      background: #FFF3E0;
+      border: 1px solid #FFE0B2;
+      font-size: 11px;
+      color: #E65100;
       cursor: pointer;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      min-width: 60px;
-      text-align: right;
+      font-family: inherit;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+      &:hover { background: #FFE0B2; }
+      &:active { transform: scale(0.96); }
     }
-
-    .clear-btn-placeholder { min-width: 60px; }
 
     /* EMPTY */
     .empty-cart {
@@ -262,33 +279,65 @@ import { CartService } from '../../core/services/cart.service';
       margin-top: 16px;
       background: #fff;
       border-radius: 14px;
-      padding: 14px;
+      padding: 10px 14px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px dashed #C8E6C9;
     }
 
     .coupon-input-wrap {
       display: flex;
       align-items: center;
       gap: 10px;
-      .coupon-icon { font-size: 20px; }
+      width: 100%;
+
+      .coupon-icon {
+        font-size: 18px;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+
       .coupon-input {
-        flex: 1;
+        flex: 1 1 0%;
+        min-width: 0;
+        width: 100%;
         border: none;
         outline: none;
-        font-family: 'Poppins', sans-serif;
-        font-size: 14px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
         color: #1A1A1A;
-        &::placeholder { color: #bbb; }
+        background: transparent;
+
+        &::placeholder {
+          color: #9CA3AF;
+          font-weight: 500;
+        }
       }
+
       .apply-btn {
-        background: none;
+        flex-shrink: 0;
+        background: #2E7D32;
         border: none;
-        color: #2E7D32;
-        font-size: 14px;
-        font-weight: 700;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
         cursor: pointer;
-        font-family: 'Poppins', sans-serif;
-        padding: 0;
+        font-family: inherit;
+        padding: 7px 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(46,125,50,0.25);
+        transition: all 0.2s;
+
+        &:hover {
+          background: #1B5E20;
+          box-shadow: 0 3px 8px rgba(46,125,50,0.35);
+        }
+
+        &:active {
+          transform: scale(0.96);
+        }
       }
     }
 

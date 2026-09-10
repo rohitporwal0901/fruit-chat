@@ -26,7 +26,6 @@ import { Product } from '../../core/models/product.model';
             </a>
             <div class="header-title-wrap">
               <h1 class="menu-title">Our Menu</h1>
-              <span class="menu-subtitle">⚡ 15-20 Mins • Pure Veg 🌿</span>
             </div>
             <a routerLink="/cart" class="header-cart-btn">
               <div class="cart-icon-box">

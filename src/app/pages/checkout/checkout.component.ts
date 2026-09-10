@@ -12,9 +12,12 @@ import { CartService } from '../../core/services/cart.service';
     <div class="checkout-page">
       <!-- HEADER -->
       <div class="checkout-header">
-        <button class="back-btn" (click)="router.navigate(['/cart'])">← Cart</button>
-        <h2>Checkout</h2>
-        <span></span>
+        <button class="back-btn" (click)="router.navigate(['/cart'])" aria-label="Back to Cart">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>Cart</span>
+        </button>
+        <h2 class="checkout-title">Checkout</h2>
+        <div class="header-spacer"></div>
       </div>
 
       <!-- STEPPER -->
@@ -184,19 +187,48 @@ import { CartService } from '../../core/services/cart.service';
 
     .checkout-header {
       background: #fff;
-      padding: 16px 20px;
-      display: flex;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 75px 1fr 75px;
       align-items: center;
-      justify-content: space-between;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       position: sticky;
       top: 0;
       z-index: 100;
-      h2 { font-size: 18px; font-weight: 800; }
       @media (min-width: 768px) { top: 72px; }
     }
 
-    .back-btn { background: none; border: none; font-size: 14px; font-weight: 600; color: #2E7D32; cursor: pointer; font-family: 'Poppins', sans-serif; }
+    .checkout-title {
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+      color: #1A1A1A;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+
+    .back-btn {
+      background: #F4F4F5;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1A1A1A;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 6px 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      justify-self: start;
+      transition: all 0.2s;
+      &:active { background: #E4E4E7; transform: scale(0.95); }
+    }
+
+    .header-spacer {
+      width: 75px;
+      justify-self: end;
+    }
 
     /* STEPPER */
     .stepper-wrap { background: #fff; padding: 16px 20px; border-bottom: 1px solid #EEE; }
