@@ -44,16 +44,66 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
-      <!-- PROMO STRIP (Swiggy/Zomato style deal ticker) -->
-      <div class="container promo-section">
-        <div class="promo-card">
-          <div class="promo-left">
-            <span class="promo-badge">OFFER</span>
-            <span class="promo-msg">Flat <strong>20% OFF</strong> on first 3 orders</span>
+      <!-- SWIGGY STYLE COMPACT GREEN WAVY OFFER BANNER (FULL BLEED) -->
+      <section class="offer-banner-container">
+        <div class="offer-ticket-wrap" (click)="copyOfferCode($event)">
+          <!-- Top Wavy Scallop Edge (Wide gentle 28px wave matching image 2) -->
+          <svg class="scallop-edge scallop-top" width="100%" height="7" preserveAspectRatio="none">
+            <defs>
+              <pattern id="wave-top-pat" x="0" y="0" width="28" height="7" patternUnits="userSpaceOnUse">
+                <path d="M 0,0 C 7,7 21,7 28,0 Z" fill="#ffffff"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="7" fill="url(#wave-top-pat)"/>
+          </svg>
+
+          <!-- Main Compact Banner Body -->
+          <div class="offer-banner-body">
+            <!-- Background Twinkling Sparkles -->
+            <div class="sparkle-layer">
+              <span class="sp-item s1">✦</span>
+              <span class="sp-item s2">★</span>
+              <span class="sp-item s3">•</span>
+              <span class="sp-item s4">✦</span>
+              <span class="sp-item s5">•</span>
+            </div>
+
+            <div class="offer-body-inner">
+              <!-- Left Details (exact match to image 2) -->
+              <div class="offer-left-col">
+                <h3 class="offer-main-title">
+                  Hurry, ₹50 Free Cash<br>expiring soon!
+                </h3>
+                <p class="offer-subtitle">Valid on food orders above ₹99</p>
+              </div>
+
+              <!-- Right 3D Glowing Lozenge Pill (exact match to image 2) -->
+              <div class="offer-right-col">
+                <div class="floating-cash-pill" [class.claimed]="offerCopied()">
+                  <div class="pill-glass-glare"></div>
+                  @if (offerCopied()) {
+                    <span class="cash-avail-label">CODE COPIED</span>
+                    <span class="cash-amount-text applied-text">✓ APPLIED</span>
+                  } @else {
+                    <span class="cash-avail-label">CASH AVAILABLE</span>
+                    <span class="cash-amount-text">₹50</span>
+                  }
+                </div>
+              </div>
+            </div>
           </div>
-          <span class="promo-code-btn">CODE: <strong>HEALTH20</strong></span>
+
+          <!-- Bottom Wavy Scallop Edge (Wide gentle 28px wave matching image 2) -->
+          <svg class="scallop-edge scallop-bottom" width="100%" height="7" preserveAspectRatio="none">
+            <defs>
+              <pattern id="wave-bot-pat" x="0" y="0" width="28" height="7" patternUnits="userSpaceOnUse">
+                <path d="M 0,7 C 7,0 21,0 28,7 Z" fill="#ffffff"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="7" fill="url(#wave-bot-pat)"/>
+          </svg>
         </div>
-      </div>
+      </section>
 
       <!-- SEARCH BAR -->
       <div class="container search-section">
@@ -350,46 +400,219 @@ import { Product } from '../../core/models/product.model';
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
 
-    /* ===== PROMO STRIP ===== */
-    .promo-section { padding-top: 12px; }
-    .promo-card {
+    /* ===== SWIGGY STYLE COMPACT GREEN WAVY OFFER BANNER (FULL BLEED MATCHING IMAGE 2) ===== */
+    .offer-banner-container {
+      width: 100%;
+      padding: 0;
+      margin: 10px 0 6px;
+      position: relative;
+    }
+
+    .offer-ticket-wrap {
+      position: relative;
+      width: 100%;
+      background: linear-gradient(108deg, #0A4019 0%, #115723 45%, #18712F 80%, #208C3B 100%);
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 14px -2px rgba(17, 87, 35, 0.28);
+      transition: opacity 0.2s ease;
+      &:active {
+        opacity: 0.95;
+      }
+    }
+
+    /* Scallop borders on top & bottom with pure repeating pattern */
+    .scallop-edge {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 7px;
+      z-index: 10;
+      pointer-events: none;
+      display: block;
+    }
+
+    .scallop-top {
+      top: 0;
+    }
+
+    .scallop-bottom {
+      bottom: 0;
+    }
+
+    /* Main compact banner face (chota compact height) */
+    .offer-banner-body {
+      padding: 11px 16px 11px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Sparkles layer */
+    .sparkle-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .sp-item {
+      position: absolute;
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 700;
+      text-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+      animation: sparkleTwinkle 2.5s ease-in-out infinite alternate;
+    }
+
+    .s1 { top: 15%; left: 8%; font-size: 10px; animation-delay: 0s; }
+    .s2 { top: 65%; left: 18%; font-size: 8px; animation-delay: 0.8s; }
+    .s3 { top: 20%; left: 52%; font-size: 12px; opacity: 0.35; animation-delay: 1.4s; }
+    .s4 { top: 16%; right: 38%; font-size: 10px; animation-delay: 0.4s; }
+    .s5 { bottom: 20%; right: 34%; font-size: 8px; animation-delay: 1.1s; }
+
+    @keyframes sparkleTwinkle {
+      0% { opacity: 0.3; transform: scale(0.85); }
+      100% { opacity: 0.95; transform: scale(1.15); }
+    }
+
+    .offer-body-inner {
+      position: relative;
+      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: linear-gradient(90deg, #F1F8E9 0%, #E8F5E9 100%);
-      border: 1px dashed #81C784;
-      border-radius: 10px;
-      padding: 7px 12px;
-      box-shadow: 0 1px 4px rgba(46,125,50,0.06);
+      gap: 12px;
     }
-    .promo-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: #1B5E20;
+
+    /* Left col */
+    .offer-left-col {
+      flex: 1;
+      min-width: 0;
     }
-    .promo-badge {
-      background: #2E7D32;
-      color: #fff;
-      font-size: 8px;
+
+    .offer-main-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14.5px;
       font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
-      letter-spacing: 0.5px;
+      color: #ffffff;
+      line-height: 1.22;
+      margin: 0;
+      letter-spacing: -0.2px;
     }
-    .promo-msg { font-size: 11px; color: #2E7D32; }
-    .promo-msg strong { color: #1B5E20; font-weight: 800; }
-    .promo-code-btn {
-      font-size: 10px;
-      color: #2E7D32;
-      background: #fff;
-      padding: 3px 8px;
-      border-radius: 6px;
-      border: 1px solid #A5D6A7;
-      font-weight: 700;
+
+    .offer-subtitle {
+      font-size: 10.5px;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 400;
+      margin: 3px 0 0;
       white-space: nowrap;
-      letter-spacing: 0.3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Right Col: Floating 3D glowing lozenge pill matching image 2 */
+    .offer-right-col {
+      flex-shrink: 0;
+    }
+
+    .floating-cash-pill {
+      position: relative;
+      background: linear-gradient(135deg, #FF6EA7 0%, #FF1A75 52%, #D80054 100%);
+      border-radius: 12px;
+      padding: 6px 14px 5px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(216, 0, 84, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      min-width: 86px;
+      transition: all 0.25s ease;
+      transform: rotate(-1deg);
+    }
+
+    .floating-cash-pill.claimed {
+      background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+      box-shadow: 0 4px 14px rgba(0, 200, 83, 0.5);
+    }
+
+    .pill-glass-glare {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      border-radius: 12px 12px 0 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+    }
+
+    .cash-avail-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 7px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.95);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .cash-amount-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 21px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .applied-text {
+      font-size: 13px !important;
+      letter-spacing: 0.2px;
+      color: #063A17 !important;
+      font-weight: 850 !important;
+    }
+
+    .pill-glass-glare {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      border-radius: 12px 12px 0 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+    }
+
+    .cash-avail-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 7.5px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.95);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .cash-amount-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 21px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .applied-text {
+      font-size: 13px !important;
+      letter-spacing: 0.2px;
+      color: #063A17 !important;
+      font-weight: 850 !important;
     }
 
     /* ===== SEARCH ===== */
@@ -908,7 +1131,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   heroTransition = signal(true);
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
-  // Combo banner slides (Authentic combos with combo data)
+  // Combo banner slides (Authentic combos with combo data - Distinct Vibrant Backgrounds)
   comboSlides = [
     {
       id: 1,
@@ -920,7 +1143,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       btnText: 'Order Combo',
       link: '/product/8',
       image: 'assets/images/masala-sprouts.jpg',
-      bg: 'linear-gradient(125deg, #103318 0%, #184A24 50%, #226632 100%)',
+      bg: 'linear-gradient(125deg, #0A3D18 0%, #15662B 50%, #239441 100%)',
     },
     {
       id: 2,
@@ -932,7 +1155,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       btnText: 'Order Combo',
       link: '/product/8',
       image: 'assets/images/fresh-juice.jpg',
-      bg: 'linear-gradient(125deg, #152E1B 0%, #1F4528 50%, #2A5E38 100%)',
+      bg: 'linear-gradient(125deg, #7C2D12 0%, #C2410C 50%, #EA580C 100%)',
     },
     {
       id: 3,
@@ -944,7 +1167,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       btnText: 'Order Combo',
       link: '/product/8',
       image: 'assets/images/mix-fruit-chaat.jpg',
-      bg: 'linear-gradient(125deg, #133D1A 0%, #1B5625 50%, #257032 100%)',
+      bg: 'linear-gradient(125deg, #4A044E 0%, #701A75 50%, #A21CAF 100%)',
     },
     {
       id: 4,
@@ -956,7 +1179,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       btnText: 'Order Combo',
       link: '/product/8',
       image: 'assets/images/pineapple-chaat.jpg',
-      bg: 'linear-gradient(125deg, #0E2B14 0%, #153E1E 50%, #1E5429 100%)',
+      bg: 'linear-gradient(125deg, #042F2E 0%, #0F766E 50%, #14B8A6 100%)',
     },
   ];
 
@@ -968,15 +1191,49 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   comboIndex = signal(0);
   comboTransition = signal(true);
   private comboTimer: ReturnType<typeof setInterval> | null = null;
+  // Offer Banner Suspense & Accordion State
+  isOfferExpanded = signal(false);
+  offerTimeLeft = signal('12:45');
+  offerCopied = signal(false);
+  private offerTimer: ReturnType<typeof setInterval> | null = null;
+  private offerSeconds = 12 * 60 + 45;
 
   ngAfterViewInit(): void {
     this.startHeroAuto();
     this.startComboAuto();
+    this.startOfferTimer();
   }
 
   ngOnDestroy(): void {
     if (this.heroTimer)  clearInterval(this.heroTimer);
     if (this.comboTimer) clearInterval(this.comboTimer);
+    if (this.offerTimer) clearInterval(this.offerTimer);
+  }
+
+  toggleOfferAccordion(): void {
+    this.isOfferExpanded.update(v => !v);
+  }
+
+  copyOfferCode(e: Event): void {
+    e.stopPropagation();
+    try {
+      navigator.clipboard?.writeText('HEALTH50');
+    } catch (_) {}
+    this.offerCopied.set(true);
+    setTimeout(() => this.offerCopied.set(false), 2500);
+  }
+
+  private startOfferTimer(): void {
+    this.offerTimer = setInterval(() => {
+      if (this.offerSeconds > 0) {
+        this.offerSeconds--;
+        const m = Math.floor(this.offerSeconds / 60);
+        const s = this.offerSeconds % 60;
+        this.offerTimeLeft.set(`${m}:${s < 10 ? '0' : ''}${s}`);
+      } else {
+        this.offerSeconds = 15 * 60;
+      }
+    }, 1000);
   }
 
   // Hero auto-loop
