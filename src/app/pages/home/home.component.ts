@@ -44,56 +44,14 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
-      <!-- OFFER BANNER — exact image-2 layout, green color, smooth scallop edges -->
+      <!-- OFFER CARD — zig-zag via clip-path, transparent cutouts, entrance animation -->
       <section class="offer-section">
-
-        <!-- TOP scallop strip: page-bg fills above, smooth bumps eat into top of green -->
-        <!-- The single SVG path covers the full width so zero tile-gap artifacts -->
-        <svg class="wave-strip wave-top" viewBox="0 0 375 18" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <!--
-            Shape: rectangle from y=0..18, MINUS the bumps at the bottom.
-            Bumps (radius ~9) pointing downward, spaced every 18px.
-            This fills the page-bg color above the scalloped line.
-          -->
-          <path
-            d="M0,0 L375,0 L375,18
-               C366,18 366,9 357,9 C348,9 348,18 339,18
-               C330,18 330,9 321,9 C312,9 312,18 303,18
-               C294,18 294,9 285,9 C276,9 276,18 267,18
-               C258,18 258,9 249,9 C240,9 240,18 231,18
-               C222,18 222,9 213,9 C204,9 204,18 195,18
-               C186,18 186,9 177,9 C168,9 168,18 159,18
-               C150,18 150,9 141,9 C132,9 132,18 123,18
-               C114,18 114,9 105,9 C96,9 96,18 87,18
-               C78,18 78,9 69,9 C60,9 60,18 51,18
-               C42,18 42,9 33,9 C24,9 24,18 15,18
-               C6,18 6,9 0,9
-               Z"
-            fill="#F8F9FA"
-          />
-        </svg>
-
-        <!-- GREEN BODY -->
         <div class="offer-body" (click)="copyOfferCode($event)">
-          <!-- Floating sparkle dots -->
-          <div class="sparkle-layer">
-            <span class="sp-item s1">✦</span>
-            <span class="sp-item s2">✦</span>
-            <span class="sp-item s3">✦</span>
-            <span class="sp-item s4">•</span>
-            <span class="sp-item s5">•</span>
-          </div>
-          <!-- Diagonal shimmer -->
-          <div class="offer-shine"></div>
-
           <div class="offer-row">
-            <!-- LEFT: text (matches image 2 exactly) -->
             <div class="offer-text-col">
-              <h3 class="offer-heading">Hurry,&nbsp;₹50 Free Cash<br>expiring soon!</h3>
+              <h3 class="offer-heading">Hurry, ₹50 Free Cash<br>expiring soon!</h3>
               <p class="offer-sub">Valid on food orders above ₹99</p>
             </div>
-
-            <!-- RIGHT: pink cash pill (matches image 2 exactly) -->
             <div class="offer-pill-col">
               <div class="offer-pill" [class.claimed]="offerCopied()">
                 <div class="pill-glare"></div>
@@ -108,27 +66,6 @@ import { Product } from '../../core/models/product.model';
             </div>
           </div>
         </div>
-
-        <!-- BOTTOM scallop strip: page-bg fills below, smooth bumps eat into bottom of green -->
-        <svg class="wave-strip wave-bottom" viewBox="0 0 375 18" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M0,18 L375,18 L375,0
-               C366,0 366,9 357,9 C348,9 348,0 339,0
-               C330,0 330,9 321,9 C312,9 312,0 303,0
-               C294,0 294,9 285,9 C276,9 276,0 267,0
-               C258,0 258,9 249,9 C240,9 240,0 231,0
-               C222,0 222,9 213,9 C204,9 204,0 195,0
-               C186,0 186,9 177,9 C168,9 168,0 159,0
-               C150,0 150,9 141,9 C132,9 132,0 123,0
-               C114,0 114,9 105,9 C96,9 96,0 87,0
-               C78,0 78,9 69,9 C60,9 60,0 51,0
-               C42,0 42,9 33,9 C24,9 24,0 15,0
-               C6,0 6,9 0,9
-               Z"
-            fill="#F8F9FA"
-          />
-        </svg>
-
       </section>
 
       <!-- SEARCH BAR -->
@@ -426,94 +363,69 @@ import { Product } from '../../core/models/product.model';
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
 
-    /* ===== OFFER BANNER — image-2 clone, green ===== */
+    /* ===== OFFER CARD — clip-path zig-zag, transparent cutouts ===== */
     .offer-section {
-      width: 100%;
-      margin: 8px 0 4px;
-      display: flex;
-      flex-direction: column;
-      /* entrance animation */
-      animation: offerIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      margin: 8px 16px 6px;
+      animation: offerSlide 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
-    @keyframes offerIn {
-      from { opacity: 0; transform: translateY(-14px); }
+    @keyframes offerSlide {
+      from { opacity: 0; transform: translateY(-12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Scallop SVG strips (above + below green body) */
-    .wave-strip {
-      display: block;
-      width: 100%;
-      height: 18px;
-      flex-shrink: 0;
-    }
-    .wave-top    { margin-bottom: -1px; }
-    .wave-bottom { margin-top: -1px; }
-
-    /* Green body — matches image-2 proportions */
+    /* Green body with clip-path zig-zag on top + bottom */
+    /* Percentage x-values = works at any screen width */
+    /* 12px tooth height = visible and clean */
     .offer-body {
-      position: relative;
-      background: linear-gradient(105deg, #0a4a1c 0%, #146226 40%, #1a7d30 70%, #21993b 100%);
-      overflow: hidden;
+      background: linear-gradient(105deg, #0b4d1e 0%, #16652a 40%, #1c8034 72%, #229e3e 100%);
       cursor: pointer;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      padding: 14px 16px;
+      padding: 20px 16px;
       transition: filter 0.15s ease;
       &:active { filter: brightness(0.88); }
-    }
-
-    /* Diagonal shimmer sweep */
-    .offer-shine {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        112deg,
-        transparent 20%,
-        rgba(255,255,255,0.09) 46%,
-        rgba(255,255,255,0.03) 54%,
-        transparent 76%
+      box-shadow: 0 3px 14px rgba(10, 74, 28, 0.22);
+      clip-path: polygon(
+        /* ─ TOP zig-zag: peaks at y=0, valleys at y=12px ─ */
+        0% 12px,   2.5% 0,    5% 12px,
+        7.5% 0,    10% 12px,  12.5% 0,   15% 12px,
+        17.5% 0,   20% 12px,  22.5% 0,   25% 12px,
+        27.5% 0,   30% 12px,  32.5% 0,   35% 12px,
+        37.5% 0,   40% 12px,  42.5% 0,   45% 12px,
+        47.5% 0,   50% 12px,  52.5% 0,   55% 12px,
+        57.5% 0,   60% 12px,  62.5% 0,   65% 12px,
+        67.5% 0,   70% 12px,  72.5% 0,   75% 12px,
+        77.5% 0,   80% 12px,  82.5% 0,   85% 12px,
+        87.5% 0,   90% 12px,  92.5% 0,   95% 12px,
+        97.5% 0,   100% 12px,
+        /* ─ RIGHT side straight ─ */
+        100% calc(100% - 12px),
+        /* ─ BOTTOM zig-zag: valleys at 100%, peaks at calc(100% - 12px) ─ */
+        97.5% 100%,  95% calc(100% - 12px),
+        92.5% 100%,  90% calc(100% - 12px),
+        87.5% 100%,  85% calc(100% - 12px),
+        82.5% 100%,  80% calc(100% - 12px),
+        77.5% 100%,  75% calc(100% - 12px),
+        72.5% 100%,  70% calc(100% - 12px),
+        67.5% 100%,  65% calc(100% - 12px),
+        62.5% 100%,  60% calc(100% - 12px),
+        57.5% 100%,  55% calc(100% - 12px),
+        52.5% 100%,  50% calc(100% - 12px),
+        47.5% 100%,  45% calc(100% - 12px),
+        42.5% 100%,  40% calc(100% - 12px),
+        37.5% 100%,  35% calc(100% - 12px),
+        32.5% 100%,  30% calc(100% - 12px),
+        27.5% 100%,  25% calc(100% - 12px),
+        22.5% 100%,  20% calc(100% - 12px),
+        17.5% 100%,  15% calc(100% - 12px),
+        12.5% 100%,  10% calc(100% - 12px),
+        7.5% 100%,    5% calc(100% - 12px),
+        2.5% 100%,    0% calc(100% - 12px)
       );
-      background-size: 300% 100%;
-      background-position: -200% 0;
-      animation: offerShimmer 4s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 0;
-    }
-    @keyframes offerShimmer {
-      0%   { background-position: -200% 0; }
-      55%  { background-position: 250% 0; }
-      100% { background-position: 250% 0; }
-    }
-
-    /* Sparkles */
-    .sparkle-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 1;
-    }
-    .sp-item {
-      position: absolute;
-      color: rgba(255,255,255,0.7);
-      font-weight: 700;
-      animation: spFloat 3s ease-in-out infinite alternate;
-    }
-    .s1 { top: 14%; left: 5%;   font-size: 9px;  animation-delay: 0s;    }
-    .s2 { bottom: 16%; left: 12%; font-size: 7px;  animation-delay: 0.6s; }
-    .s3 { top: 20%; left: 44%;  font-size: 11px; animation-delay: 1.2s; opacity: 0.35; }
-    .s4 { top: 10%; right: 36%; font-size: 8px;  animation-delay: 0.3s; }
-    .s5 { bottom: 18%; right: 30%; font-size: 7px;  animation-delay: 1s; }
-    @keyframes spFloat {
-      0%   { opacity: 0.15; transform: translateY(0px)  scale(0.8); }
-      100% { opacity: 0.85; transform: translateY(-5px) scale(1.2); }
     }
 
     /* Content row */
     .offer-row {
-      position: relative;
-      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -522,60 +434,48 @@ import { Product } from '../../core/models/product.model';
     .offer-text-col { flex: 1; min-width: 0; }
     .offer-pill-col  { flex-shrink: 0; }
 
-    /* Left text — image 2 exact typography */
+    /* Left text */
     .offer-heading {
       font-family: 'Outfit', sans-serif;
       font-size: 15px;
       font-weight: 800;
-      color: #ffffff;
+      color: #fff;
       line-height: 1.22;
       margin: 0 0 4px;
       letter-spacing: -0.2px;
     }
     .offer-sub {
       font-size: 11px;
-      color: rgba(255,255,255,0.82);
+      color: rgba(255,255,255,0.8);
       font-weight: 400;
       margin: 0;
     }
 
-    /* Right pink pill — image 2 exact style */
+    /* Right pink pill */
     .offer-pill {
       position: relative;
       background: linear-gradient(145deg, #FF7AB7 0%, #FF2080 52%, #D4006A 100%);
-      border-radius: 14px;
-      padding: 8px 14px 7px;
+      border-radius: 13px;
+      padding: 7px 13px;
       min-width: 82px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow:
-        0 6px 18px rgba(212, 0, 106, 0.5),
-        inset 0 1.5px 0 rgba(255,255,255,0.5);
-      border: 1.5px solid rgba(255,255,255,0.35);
-      animation: pillLev 2.8s ease-in-out infinite alternate;
-      transition: transform 0.2s ease;
-    }
-    @keyframes pillLev {
-      from { transform: rotate(-2deg) translateY(0px);  }
-      to   { transform: rotate(-2deg) translateY(-5px); }
+      box-shadow: 0 5px 16px rgba(212,0,106,0.48), inset 0 1px 0 rgba(255,255,255,0.5);
+      border: 1.5px solid rgba(255,255,255,0.32);
     }
     .offer-pill.claimed {
       background: linear-gradient(145deg, #00E676 0%, #00B04A 100%);
-      box-shadow: 0 6px 18px rgba(0,176,74,0.5);
-      animation: none;
-      transform: rotate(-2deg);
+      box-shadow: 0 5px 16px rgba(0,176,74,0.45);
     }
-
-    /* Glare highlight inside pill */
     .pill-glare {
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 50%;
-      border-radius: 14px 14px 0 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, transparent 100%);
+      border-radius: 13px 13px 0 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.42) 0%, transparent 100%);
       pointer-events: none;
     }
     .pill-label {
