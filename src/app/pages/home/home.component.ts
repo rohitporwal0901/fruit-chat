@@ -44,17 +44,38 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
-      <!-- OFFER BANNER — smooth scalloped ticket matching reference image 2 -->
+      <!-- OFFER BANNER — exact image-2 layout, green color, smooth scallop edges -->
       <section class="offer-section">
 
-        <!-- TOP zig-zag: page-bg solid fill, triangular teeth point DOWN into green -->
-        <svg class="scallop-svg scallop-svg-top" viewBox="0 0 420 16" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,0 L420,0 L420,16 L410,0 L400,16 L390,0 L380,16 L370,0 L360,16 L350,0 L340,16 L330,0 L320,16 L310,0 L300,16 L290,0 L280,16 L270,0 L260,16 L250,0 L240,16 L230,0 L220,16 L210,0 L200,16 L190,0 L180,16 L170,0 L160,16 L150,0 L140,16 L130,0 L120,16 L110,0 L100,16 L90,0 L80,16 L70,0 L60,16 L50,0 L40,16 L30,0 L20,16 L10,0 L0,16 Z" fill="#F8F9FA"/>
+        <!-- TOP scallop strip: page-bg fills above, smooth bumps eat into top of green -->
+        <!-- The single SVG path covers the full width so zero tile-gap artifacts -->
+        <svg class="wave-strip wave-top" viewBox="0 0 375 18" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <!--
+            Shape: rectangle from y=0..18, MINUS the bumps at the bottom.
+            Bumps (radius ~9) pointing downward, spaced every 18px.
+            This fills the page-bg color above the scalloped line.
+          -->
+          <path
+            d="M0,0 L375,0 L375,18
+               C366,18 366,9 357,9 C348,9 348,18 339,18
+               C330,18 330,9 321,9 C312,9 312,18 303,18
+               C294,18 294,9 285,9 C276,9 276,18 267,18
+               C258,18 258,9 249,9 C240,9 240,18 231,18
+               C222,18 222,9 213,9 C204,9 204,18 195,18
+               C186,18 186,9 177,9 C168,9 168,18 159,18
+               C150,18 150,9 141,9 C132,9 132,18 123,18
+               C114,18 114,9 105,9 C96,9 96,18 87,18
+               C78,18 78,9 69,9 C60,9 60,18 51,18
+               C42,18 42,9 33,9 C24,9 24,18 15,18
+               C6,18 6,9 0,9
+               Z"
+            fill="#F8F9FA"
+          />
         </svg>
 
         <!-- GREEN BODY -->
         <div class="offer-body" (click)="copyOfferCode($event)">
-          <!-- Sparkles -->
+          <!-- Floating sparkle dots -->
           <div class="sparkle-layer">
             <span class="sp-item s1">✦</span>
             <span class="sp-item s2">✦</span>
@@ -62,20 +83,19 @@ import { Product } from '../../core/models/product.model';
             <span class="sp-item s4">•</span>
             <span class="sp-item s5">•</span>
           </div>
-          <!-- Shine sweep -->
+          <!-- Diagonal shimmer -->
           <div class="offer-shine"></div>
 
           <div class="offer-row">
-            <!-- Left -->
+            <!-- LEFT: text (matches image 2 exactly) -->
             <div class="offer-text-col">
-              <h3 class="offer-heading">Hurry, ₹50 Free Cash<br>expiring soon!</h3>
+              <h3 class="offer-heading">Hurry,&nbsp;₹50 Free Cash<br>expiring soon!</h3>
               <p class="offer-sub">Valid on food orders above ₹99</p>
             </div>
 
-            <!-- Right pill —  exact match to reference image 2 -->
+            <!-- RIGHT: pink cash pill (matches image 2 exactly) -->
             <div class="offer-pill-col">
               <div class="offer-pill" [class.claimed]="offerCopied()">
-                <div class="pill-pulse-ring"></div>
                 <div class="pill-glare"></div>
                 @if (offerCopied()) {
                   <span class="pill-label">COPIED!</span>
@@ -89,9 +109,24 @@ import { Product } from '../../core/models/product.model';
           </div>
         </div>
 
-        <!-- BOTTOM zig-zag: page-bg solid fill, triangular teeth point UP into green -->
-        <svg class="scallop-svg scallop-svg-bottom" viewBox="0 0 420 16" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,16 L420,16 L420,0 L410,16 L400,0 L390,16 L380,0 L370,16 L360,0 L350,16 L340,0 L330,16 L320,0 L310,16 L300,0 L290,16 L280,0 L270,16 L260,0 L250,16 L240,0 L230,16 L220,0 L210,16 L200,0 L190,16 L180,0 L170,16 L160,0 L150,16 L140,0 L130,16 L120,0 L110,16 L100,0 L90,16 L80,0 L70,16 L60,0 L50,16 L40,0 L30,16 L20,0 L10,16 L0,0 Z" fill="#F8F9FA"/>
+        <!-- BOTTOM scallop strip: page-bg fills below, smooth bumps eat into bottom of green -->
+        <svg class="wave-strip wave-bottom" viewBox="0 0 375 18" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M0,18 L375,18 L375,0
+               C366,0 366,9 357,9 C348,9 348,0 339,0
+               C330,0 330,9 321,9 C312,9 312,0 303,0
+               C294,0 294,9 285,9 C276,9 276,0 267,0
+               C258,0 258,9 249,9 C240,9 240,0 231,0
+               C222,0 222,9 213,9 C204,9 204,0 195,0
+               C186,0 186,9 177,9 C168,9 168,0 159,0
+               C150,0 150,9 141,9 C132,9 132,0 123,0
+               C114,0 114,9 105,9 C96,9 96,0 87,0
+               C78,0 78,9 69,9 C60,9 60,0 51,0
+               C42,0 42,9 33,9 C24,9 24,0 15,0
+               C6,0 6,9 0,9
+               Z"
+            fill="#F8F9FA"
+          />
         </svg>
 
       </section>
@@ -391,66 +426,67 @@ import { Product } from '../../core/models/product.model';
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
 
-    /* ===== OFFER BANNER — smooth scalloped ticket (reference image 2 style) ===== */
+    /* ===== OFFER BANNER — image-2 clone, green ===== */
     .offer-section {
       width: 100%;
       margin: 8px 0 4px;
       display: flex;
       flex-direction: column;
-      animation: offerEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+      /* entrance animation */
+      animation: offerIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
-    @keyframes offerEntrance {
-      from { opacity: 0; transform: translateY(-16px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    @keyframes offerIn {
+      from { opacity: 0; transform: translateY(-14px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Scallop SVGs — render page-bg color overtop the green edges */
-    .scallop-svg {
+    /* Scallop SVG strips (above + below green body) */
+    .wave-strip {
       display: block;
       width: 100%;
-      height: 16px;
+      height: 18px;
       flex-shrink: 0;
     }
-    .scallop-svg-top    { margin-bottom: -1px; }
-    .scallop-svg-bottom { margin-top: -1px; }
+    .wave-top    { margin-bottom: -1px; }
+    .wave-bottom { margin-top: -1px; }
 
-    /* Green ticket body */
+    /* Green body — matches image-2 proportions */
     .offer-body {
       position: relative;
-      background: linear-gradient(100deg, #0e5220 0%, #197a30 45%, #1f9939 80%, #25b847 100%);
+      background: linear-gradient(105deg, #0a4a1c 0%, #146226 40%, #1a7d30 70%, #21993b 100%);
       overflow: hidden;
       cursor: pointer;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      padding: 13px 16px 14px;
-      transition: filter 0.16s ease;
-      &:active { filter: brightness(0.9); }
+      padding: 14px 16px;
+      transition: filter 0.15s ease;
+      &:active { filter: brightness(0.88); }
     }
 
-    /* Diagonal glimmer sweep — matches reference */
+    /* Diagonal shimmer sweep */
     .offer-shine {
       position: absolute;
       inset: 0;
       background: linear-gradient(
-        115deg,
-        transparent 25%,
-        rgba(255,255,255,0.10) 48%,
-        rgba(255,255,255,0.04) 52%,
-        transparent 72%
+        112deg,
+        transparent 20%,
+        rgba(255,255,255,0.09) 46%,
+        rgba(255,255,255,0.03) 54%,
+        transparent 76%
       );
-      background-size: 250% 100%;
-      background-position: -100% 0;
-      animation: shimmerSweep 4s ease-in-out infinite;
+      background-size: 300% 100%;
+      background-position: -200% 0;
+      animation: offerShimmer 4s ease-in-out infinite;
       pointer-events: none;
       z-index: 0;
     }
-    @keyframes shimmerSweep {
-      0%   { background-position: -100% 0; }
-      55%  { background-position: 220% 0; }
-      100% { background-position: 220% 0; }
+    @keyframes offerShimmer {
+      0%   { background-position: -200% 0; }
+      55%  { background-position: 250% 0; }
+      100% { background-position: 250% 0; }
     }
 
-    /* Floating sparkle stars */
+    /* Sparkles */
     .sparkle-layer {
       position: absolute;
       inset: 0;
@@ -460,18 +496,18 @@ import { Product } from '../../core/models/product.model';
     }
     .sp-item {
       position: absolute;
-      color: rgba(255,255,255,0.75);
+      color: rgba(255,255,255,0.7);
       font-weight: 700;
-      animation: spFloat 3.2s ease-in-out infinite alternate;
+      animation: spFloat 3s ease-in-out infinite alternate;
     }
-    .s1 { top: 18%; left: 6%;   font-size: 10px; animation-delay: 0s;    }
-    .s2 { bottom: 18%; left: 14%; font-size: 8px;  animation-delay: 0.65s; }
-    .s3 { top: 22%; left: 48%;  font-size: 12px; animation-delay: 1.3s; opacity:0.4; }
-    .s4 { top: 12%; right: 38%; font-size: 9px;  animation-delay: 0.35s; }
-    .s5 { bottom: 20%; right: 32%; font-size: 8px; animation-delay: 1.05s; }
+    .s1 { top: 14%; left: 5%;   font-size: 9px;  animation-delay: 0s;    }
+    .s2 { bottom: 16%; left: 12%; font-size: 7px;  animation-delay: 0.6s; }
+    .s3 { top: 20%; left: 44%;  font-size: 11px; animation-delay: 1.2s; opacity: 0.35; }
+    .s4 { top: 10%; right: 36%; font-size: 8px;  animation-delay: 0.3s; }
+    .s5 { bottom: 18%; right: 30%; font-size: 7px;  animation-delay: 1s; }
     @keyframes spFloat {
-      0%   { opacity: 0.2;  transform: translateY(0px)   scale(0.8);  }
-      100% { opacity: 0.85; transform: translateY(-5px)  scale(1.2);  }
+      0%   { opacity: 0.15; transform: translateY(0px)  scale(0.8); }
+      100% { opacity: 0.85; transform: translateY(-5px) scale(1.2); }
     }
 
     /* Content row */
@@ -481,71 +517,56 @@ import { Product } from '../../core/models/product.model';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
     .offer-text-col { flex: 1; min-width: 0; }
     .offer-pill-col  { flex-shrink: 0; }
 
-    /* Left text — exact reference image 2 typography */
+    /* Left text — image 2 exact typography */
     .offer-heading {
       font-family: 'Outfit', sans-serif;
       font-size: 15px;
       font-weight: 800;
       color: #ffffff;
       line-height: 1.22;
-      margin: 0 0 3px;
+      margin: 0 0 4px;
       letter-spacing: -0.2px;
     }
     .offer-sub {
-      font-size: 10.5px;
+      font-size: 11px;
       color: rgba(255,255,255,0.82);
       font-weight: 400;
       margin: 0;
     }
 
-    /* Right pill — salmon/pink lozenge from reference image 2 */
+    /* Right pink pill — image 2 exact style */
     .offer-pill {
       position: relative;
-      background: linear-gradient(145deg, #FF6CAB 0%, #FF1E78 55%, #D10059 100%);
+      background: linear-gradient(145deg, #FF7AB7 0%, #FF2080 52%, #D4006A 100%);
       border-radius: 14px;
-      padding: 7px 14px 6px;
-      min-width: 80px;
+      padding: 8px 14px 7px;
+      min-width: 82px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       box-shadow:
-        0 6px 20px rgba(209, 0, 89, 0.52),
-        inset 0 1.5px 0 rgba(255,255,255,0.55);
-      border: 1.5px solid rgba(255,255,255,0.38);
+        0 6px 18px rgba(212, 0, 106, 0.5),
+        inset 0 1.5px 0 rgba(255,255,255,0.5);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      animation: pillLev 2.8s ease-in-out infinite alternate;
       transition: transform 0.2s ease;
-      animation: pillLevitate 2.6s ease-in-out infinite alternate;
     }
-    @keyframes pillLevitate {
-      0%   { transform: rotate(-2deg) translateY(0px);  }
-      100% { transform: rotate(-2deg) translateY(-5px); }
+    @keyframes pillLev {
+      from { transform: rotate(-2deg) translateY(0px);  }
+      to   { transform: rotate(-2deg) translateY(-5px); }
     }
     .offer-pill.claimed {
-      background: linear-gradient(145deg, #00E676 0%, #00B248 100%);
-      box-shadow: 0 6px 20px rgba(0,178,72,0.48);
+      background: linear-gradient(145deg, #00E676 0%, #00B04A 100%);
+      box-shadow: 0 6px 18px rgba(0,176,74,0.5);
       animation: none;
       transform: rotate(-2deg);
-    }
-
-    /* Pulse ring on pill */
-    .pill-pulse-ring {
-      position: absolute;
-      inset: -6px;
-      border-radius: 20px;
-      border: 2px solid rgba(255,108,171,0.7);
-      pointer-events: none;
-      animation: pulsRing 2s ease-out infinite;
-    }
-    @keyframes pulsRing {
-      0%   { opacity: 0.9; transform: scale(1);    }
-      65%  { opacity: 0;   transform: scale(1.3);  }
-      100% { opacity: 0;   transform: scale(1.3);  }
     }
 
     /* Glare highlight inside pill */
@@ -554,10 +575,9 @@ import { Product } from '../../core/models/product.model';
       top: 0; left: 0; right: 0;
       height: 50%;
       border-radius: 14px 14px 0 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.48) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, transparent 100%);
       pointer-events: none;
     }
-
     .pill-label {
       font-family: 'Outfit', sans-serif;
       font-size: 7.5px;
@@ -576,12 +596,9 @@ import { Product } from '../../core/models/product.model';
       color: #fff;
       line-height: 1.05;
       letter-spacing: -0.5px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.22);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
       position: relative;
       z-index: 1;
-    }
-    .pill-amount.claimed-check {
-      font-size: 20px !important;
     }
 
     /* ===== SEARCH ===== */
