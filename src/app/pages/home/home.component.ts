@@ -26,7 +26,7 @@ import { Product } from '../../core/models/product.model';
                 <div class="banner-left">
                   <span class="card-brand" [style.color]="slide.brandColor">{{ slide.brand }}</span>
                   <h2 class="card-title" [style.color]="slide.titleColor" [innerHTML]="slide.headlineHtml"></h2>
-                  <a [routerLink]="slide.link" class="card-btn" [class.btn-white]="slide.btnStyle === 'white'" [class.btn-green]="slide.btnStyle === 'green'">
+                  <a [routerLink]="slide.link" class="card-btn" [class.btn-white]="slide.btnStyle === 'white'" [class.btn-green]="slide.btnStyle === 'green'" [style.color]="slide.btnTextColor || null">
                     {{ slide.btnText }}
                   </a>
                 </div>
@@ -330,8 +330,8 @@ import { Product } from '../../core/models/product.model';
       pointer-events: none;
       overflow: hidden;
       z-index: 1;
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%);
-      mask-image: linear-gradient(to right, transparent 0%, black 12%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 18%);
+      mask-image: linear-gradient(to right, transparent 0%, black 18%);
     }
     .corner-photo {
       width: 100%;
@@ -944,67 +944,72 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     return list;
   });
 
-  // Hero slides (5 category cards matched to reference UI)
+  // Hero slides (Authentic Swiggy & Zomato signature food palettes)
   heroSlides = [
     {
       id: 1,
       brand: 'FruitChat',
-      brandColor: '#ffffff',
+      brandColor: '#FFE4E6',
       headlineHtml: 'FRESH FRUIT CHAAT.<br>DISCOVER YOUR<br>FAVORITE MIX!',
       titleColor: '#ffffff',
       btnText: 'Order Now',
       btnStyle: 'white',
+      btnTextColor: '#B91C1C',
       link: '/product/1',
       image: 'assets/images/mix-fruit-chaat.jpg',
-      bg: 'linear-gradient(110deg, #113819 0%, #174E23 45%, #1F632E 100%)',
+      bg: 'linear-gradient(120deg, #991B1B 0%, #C92A36 45%, #E23744 100%)',
     },
     {
       id: 2,
       brand: 'FruitChat',
-      brandColor: '#ffffff',
+      brandColor: '#DCFCE7',
       headlineHtml: 'BOOST YOUR HEALTH<br>with MASALA SPROUTS!',
       titleColor: '#ffffff',
       btnText: 'Explore Sprouts',
       btnStyle: 'white',
+      btnTextColor: '#0F6832',
       link: '/product/2',
       image: 'assets/images/masala-sprouts.jpg',
-      bg: 'linear-gradient(110deg, #164220 0%, #205C2E 45%, #2C783D 100%)',
+      bg: 'linear-gradient(120deg, #0F6832 0%, #188644 45%, #24A255 100%)',
     },
     {
       id: 3,
       brand: 'FruitChat',
-      brandColor: '#FFA726',
+      brandColor: '#FEF3C7',
       headlineHtml: 'STAY REFRESHED.<br>PURE ORANGE JUICE.',
       titleColor: '#ffffff',
       btnText: 'Shop Juices',
       btnStyle: 'white',
+      btnTextColor: '#B54A00',
       link: '/product/3',
       image: 'assets/images/fresh-juice.jpg',
-      bg: 'linear-gradient(110deg, #0F1210 0%, #181C19 45%, #222723 100%)',
+      bg: 'linear-gradient(120deg, #B54A00 0%, #D86300 45%, #FC8019 100%)',
     },
     {
       id: 4,
       brand: 'FruitChat',
-      brandColor: '#ffffff',
+      brandColor: '#FEF9C3',
       headlineHtml: 'TASTE THE SEASON.<br>SEASONAL FRUIT CHAAT.',
       titleColor: '#ffffff',
       btnText: 'Order Today',
       btnStyle: 'white',
+      btnTextColor: '#8A5200',
       link: '/product/4',
       image: 'assets/images/pineapple-chaat.jpg',
-      bg: 'linear-gradient(115deg, #1B5226 0%, #257034 50%, #328E44 100%)',
+      bg: 'linear-gradient(120deg, #8A5200 0%, #AF6D00 45%, #D48800 100%)',
     },
     {
       id: 5,
       brand: 'FruitChat',
-      brandColor: '#ffffff',
+      brandColor: '#CCFBF1',
       headlineHtml: 'THE PERFECT BALANCE.<br>ORDER THE HEALTHY COMBO.',
       titleColor: '#ffffff',
       btnText: 'Order Combo',
       btnStyle: 'white',
+      btnTextColor: '#0F766E',
       link: '/product/8',
       image: 'assets/images/masala-sprouts.jpg',
-      bg: 'linear-gradient(110deg, #0F2E16 0%, #164621 45%, #1F5F2D 100%)',
+      bg: 'linear-gradient(120deg, #042F2E 0%, #0F766E 45%, #0D9488 100%)',
     },
   ];
 
@@ -1053,7 +1058,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       btnText: 'Order Combo',
       link: '/product/8',
       image: 'assets/images/mix-fruit-chaat.jpg',
-      bg: 'linear-gradient(125deg, #4A044E 0%, #701A75 50%, #A21CAF 100%)',
+      bg: 'linear-gradient(125deg, #7F1D1D 0%, #B91C1C 50%, #DC2626 100%)',
     },
     {
       id: 4,
