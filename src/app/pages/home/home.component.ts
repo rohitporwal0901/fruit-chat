@@ -245,10 +245,11 @@ import { Product } from '../../core/models/product.model';
       position: relative;
       z-index: 2;
       height: 100%;
-      padding: 16px 16px 22px 18px;
+      padding: 16px 14px 22px 18px;
     }
     .banner-left {
-      width: 58%;
+      width: 50%;
+      max-width: 50%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -256,22 +257,23 @@ import { Product } from '../../core/models/product.model';
       min-width: 0;
     }
     .card-brand {
-      font-family: inherit;
+      font-family: 'Outfit', sans-serif;
       font-size: 15px;
       font-weight: 800;
-      letter-spacing: -0.3px;
+      letter-spacing: -0.2px;
       line-height: 1.1;
       display: block;
     }
     .card-title {
-      font-family: inherit;
-      font-size: 18px;
-      font-weight: 900;
-      line-height: 1.14;
-      letter-spacing: 0.1px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.22;
+      letter-spacing: 0.3px;
       text-transform: uppercase;
       margin: 4px 0 6px;
       text-shadow: 0 1px 3px rgba(0,0,0,0.22);
+      word-wrap: break-word;
     }
     .card-btn {
       align-self: flex-start;
@@ -585,11 +587,12 @@ import { Product } from '../../core/models/product.model';
       backdrop-filter: blur(4px);
     }
     .combo-card-title {
+      font-family: 'Outfit', sans-serif;
       color: #ffffff;
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 800;
       line-height: 1.2;
-      letter-spacing: -0.2px;
+      letter-spacing: -0.1px;
       margin: 2px 0 3px;
       white-space: nowrap;
       overflow: hidden;
