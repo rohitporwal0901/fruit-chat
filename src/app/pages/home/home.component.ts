@@ -14,35 +14,32 @@ import { Product } from '../../core/models/product.model';
   template: `
     <div class="home-page">
 
-      <!-- HERO BANNER SLIDER (5 slides, tall, reference-style) -->
+      <!-- HERO BANNER SLIDER (Auto-looping, Reference Card Style) -->
       <section class="banner-section">
-        <div class="banner-track" [style.transform]="'translateX(-' + activeHero() * 100 + '%)'">
-          @for (slide of heroSlides; track slide.id) {
+        <div class="banner-track"
+             [style.transform]="'translateX(-' + heroIndex() * 100 + '%)'"
+             [style.transition]="heroTransition() ? 'transform 0.48s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'"
+             (transitionend)="onHeroTransitionEnd()">
+          @for (slide of heroDisplaySlides(); track slide.uniqueKey) {
             <div class="banner-slide" [style.background]="slide.bg">
               <div class="banner-content">
-                <div class="banner-text">
-                  <span class="banner-tag" [style.color]="slide.tagColor" [style.background]="slide.tagBg">{{ slide.tag }}</span>
-                  <h1 class="banner-title" [style.color]="slide.titleColor" [innerHTML]="slide.titleHtml"></h1>
-                  <p class="banner-sub" [style.color]="slide.subColor">{{ slide.sub }}</p>
-                  @if (slide.price) {
-                    <span class="banner-price" [style.color]="slide.titleColor">
-                      &#8377;{{ slide.price }}
-                      @if (slide.originalPrice) { <del>&#8377;{{ slide.originalPrice }}</del> }
-                    </span>
-                  }
-                  <a [routerLink]="slide.link" class="banner-btn" [class.light-btn]="slide.lightBtn">Order Now &#8594;</a>
+                <div class="banner-left">
+                  <span class="card-brand" [style.color]="slide.brandColor">{{ slide.brand }}</span>
+                  <h2 class="card-title" [style.color]="slide.titleColor" [innerHTML]="slide.headlineHtml"></h2>
+                  <a [routerLink]="slide.link" class="card-btn" [class.btn-white]="slide.btnStyle === 'white'" [class.btn-green]="slide.btnStyle === 'green'">
+                    {{ slide.btnText }}
+                  </a>
                 </div>
-                <div class="banner-img-wrap">
-                  <img [src]="slide.image" [alt]="slide.title" class="banner-img">
-                  <div class="banner-img-badge" [style.color]="slide.badgeColor">&#127807; 100% Fresh</div>
-                </div>
+              </div>
+              <div class="banner-img-corner">
+                <img [src]="slide.image" [alt]="slide.brand" class="corner-photo">
               </div>
             </div>
           }
         </div>
         <div class="banner-dots">
           @for (slide of heroSlides; track slide.id; let i = $index) {
-            <span class="bdot" [class.active]="activeHero() === i" (click)="goToHero(i)"></span>
+            <span class="bdot" [class.active]="(heroIndex() % heroSlides.length) === i" (click)="goToHero(i)"></span>
           }
         </div>
       </section>
@@ -106,27 +103,6 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
-      <!-- QUICK FILTER PILLS (Zomato / Swiggy Style) -->
-      <section class="container filter-pills-section">
-        <div class="filter-pills-scroll">
-          <button class="filter-pill" [class.active]="selectedCategory() === 'all'" (click)="setCategory('all')">
-            🍽️ All ({{ totalCount }})
-          </button>
-          <button class="filter-pill" [class.active]="selectedCategory() === 'fruit-chaat'" (click)="setCategory('fruit-chaat')">
-            🍎 Fruit Chaat
-          </button>
-          <button class="filter-pill" [class.active]="selectedCategory() === 'sprouts'" (click)="setCategory('sprouts')">
-            🌱 Sprouts
-          </button>
-          <button class="filter-pill" [class.active]="selectedCategory() === 'juices'" (click)="setCategory('juices')">
-            🥤 Juices
-          </button>
-          <button class="filter-pill" [class.active]="selectedCategory() === 'combo'" (click)="setCategory('combo')">
-            🥗 Combos
-          </button>
-        </div>
-      </section>
-
       <!-- ALL PRODUCTS -->
       <section class="container all-products-section">
         <div class="section-title">
@@ -153,26 +129,33 @@ import { Product } from '../../core/models/product.model';
         }
       </section>
 
-      <!-- BOTTOM COMBO BANNER SLIDER - Full width, 4 slides, auto-scroll -->
+      <!-- BOTTOM COMBO BANNER SLIDER - Clean, Compact & Premium -->
       <section class="combo-banner-section">
-        <div class="combo-banner-track" [style.transform]="'translateX(-' + activeCombo() * 100 + '%)'">
-          @for (slide of comboSlides; track slide.id) {
+        <div class="combo-banner-track"
+             [style.transform]="'translateX(-' + comboIndex() * 100 + '%)'"
+             [style.transition]="comboTransition() ? 'transform 0.48s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'"
+             (transitionend)="onComboTransitionEnd()">
+          @for (slide of comboDisplaySlides(); track slide.uniqueKey) {
             <div class="combo-banner-slide" [style.background]="slide.bg">
               <div class="combo-banner-content">
-                <div class="combo-banner-text">
-                  <span class="combo-banner-tag" [style.color]="slide.tagColor" [style.background]="slide.tagBg">{{ slide.tag }}</span>
-                  <h3 class="combo-banner-title" [style.color]="slide.titleColor">{{ slide.title }}</h3>
-                  <p class="combo-banner-sub" [style.color]="slide.subColor">{{ slide.sub }}</p>
-                  <div class="combo-banner-bottom">
-                    <span class="combo-banner-price" [style.color]="slide.titleColor">
-                      &#8377;{{ slide.price }}
-                      @if (slide.originalPrice) { <del>&#8377;{{ slide.originalPrice }}</del> }
-                    </span>
-                    <a [routerLink]="slide.link" class="combo-banner-btn" [class.light-btn]="slide.lightBtn">Order Now</a>
+                <div class="combo-left">
+                  <div class="combo-badge-row">
+                    <span class="combo-pill-tag">{{ slide.tag }}</span>
                   </div>
+                  <h3 class="combo-card-title">{{ slide.title }}</h3>
+                  <div class="combo-price-row">
+                    <span class="combo-curr-price">&#8377;{{ slide.price }}</span>
+                    <del class="combo-old-price">&#8377;{{ slide.originalPrice }}</del>
+                    <span class="combo-save-badge">SAVE &#8377;{{ slide.savings }}</span>
+                  </div>
+                  <a [routerLink]="slide.link" class="combo-btn">
+                    {{ slide.btnText }} &#8594;
+                  </a>
                 </div>
-                <div class="combo-banner-img-wrap">
-                  <img [src]="slide.image" [alt]="slide.title" class="combo-banner-img">
+                <div class="combo-right">
+                  <div class="combo-dish-frame">
+                    <img [src]="slide.image" [alt]="slide.title" class="combo-dish-img">
+                  </div>
                 </div>
               </div>
             </div>
@@ -180,7 +163,7 @@ import { Product } from '../../core/models/product.model';
         </div>
         <div class="combo-banner-dots">
           @for (slide of comboSlides; track slide.id; let i = $index) {
-            <span class="bdot" [class.active]="activeCombo() === i" (click)="goToCombo(i)"></span>
+            <span class="bdot" [class.active]="(comboIndex() % comboSlides.length) === i" (click)="goToCombo(i)"></span>
           }
         </div>
       </section>
@@ -237,71 +220,133 @@ import { Product } from '../../core/models/product.model';
     }
     .view-all { font-size: 11px; font-weight: 700; color: #2E7D32; text-decoration: none; }
 
-    /* ===== HERO BANNER SLIDER ===== */
+    /* ===== HERO BANNER SLIDER (REFERENCE CARD STYLE) ===== */
     .banner-section {
-      position: relative; margin: 14px 14px 0;
-      border-radius: 20px; overflow: hidden; height: 210px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      position: relative;
+      margin: 14px 14px 0;
+      border-radius: 20px;
+      overflow: hidden;
+      height: 185px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.14);
     }
     .banner-track {
-      display: flex; height: 100%;
-      transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
+      display: flex;
+      height: 100%;
       will-change: transform;
     }
     .banner-slide {
-      flex-shrink: 0; width: 100%; height: 210px;
-      position: relative; overflow: hidden;
-    }
-    .banner-slide::before {
-      content: ''; position: absolute;
-      top: -40px; right: -40px; width: 150px; height: 150px;
-      background: rgba(255,255,255,0.1); border-radius: 50%;
-    }
-    .banner-slide::after {
-      content: ''; position: absolute;
-      bottom: -20px; left: -20px; width: 90px; height: 90px;
-      background: rgba(255,255,255,0.07); border-radius: 50%;
+      flex-shrink: 0;
+      width: 100%;
+      height: 185px;
+      position: relative;
+      overflow: hidden;
     }
     .banner-content {
-      display: flex; align-items: center; justify-content: space-between;
-      height: 100%; padding: 18px 16px 28px 20px; gap: 10px;
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      padding: 16px 16px 22px 18px;
     }
-    .banner-text { flex: 1; min-width: 0; }
-    .banner-tag {
-      display: inline-block; font-size: 9px; font-weight: 700;
-      padding: 3px 9px; border-radius: 999px;
-      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
+    .banner-left {
+      width: 58%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      min-width: 0;
     }
-    .banner-title {
-      font-size: 26px; font-weight: 900;
-      line-height: 1.1; margin-bottom: 6px;
+    .card-brand {
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      line-height: 1.1;
+      display: block;
     }
-    .banner-title .hl { color: #2E7D32; }
-    .banner-sub { font-size: 10px; margin-bottom: 10px; line-height: 1.5; }
-    .banner-price { display: block; font-size: 14px; font-weight: 800; margin-bottom: 10px; }
-    .banner-price del { font-size: 10px; font-weight: 400; opacity: 0.55; margin-left: 4px; }
-    .banner-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: #2E7D32; color: #fff; padding: 8px 16px;
-      border-radius: 999px; font-size: 11px; font-weight: 700;
-      text-decoration: none; box-shadow: 0 4px 14px rgba(46,125,50,0.35);
-      transition: all 0.2s;
+    .card-title {
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.14;
+      letter-spacing: 0.1px;
+      text-transform: uppercase;
+      margin: 4px 0 6px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.22);
     }
-    .banner-btn.light-btn { background: #fff; color: #2E7D32; box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
-    .banner-btn:hover { transform: translateY(-1px); }
-    .banner-img-wrap { flex-shrink: 0; width: 120px; height: 120px; position: relative; }
-    .banner-img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; box-shadow: 0 10px 28px rgba(0,0,0,0.18); }
-    .banner-img-badge {
-      position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
-      background: #fff; padding: 3px 10px; border-radius: 999px;
-      font-size: 8px; font-weight: 700; box-shadow: 0 3px 10px rgba(0,0,0,0.12); white-space: nowrap;
+    .card-btn {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.16);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .card-btn.btn-white {
+      background: #ffffff;
+      color: #164220;
+    }
+    .card-btn.btn-white:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(0,0,0,0.24);
+    }
+    .card-btn.btn-green {
+      background: #2E7D32;
+      color: #ffffff;
+    }
+    .card-btn.btn-green:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(46,125,50,0.35);
+    }
+    .banner-img-corner {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 48%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%);
+      mask-image: linear-gradient(to right, transparent 0%, black 12%);
+    }
+    .corner-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
     }
     .banner-dots {
-      position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 5px; z-index: 10;
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+      z-index: 10;
     }
-    .bdot { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,0,0,0.2); cursor: pointer; transition: all 0.25s; }
-    .bdot.active { background: #2E7D32; width: 18px; border-radius: 3px; }
+    .bdot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.45);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .bdot.active {
+      background: #ffffff;
+      width: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
 
     /* ===== PROMO STRIP ===== */
     .promo-section { padding-top: 12px; }
@@ -446,49 +491,6 @@ import { Product } from '../../core/models/product.model';
       font-weight: 800;
     }
 
-    /* ===== QUICK FILTER PILLS ===== */
-    .filter-pills-section {
-      padding-top: 14px;
-      padding-bottom: 2px;
-    }
-    .filter-pills-scroll {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 2px;
-    }
-    .filter-pills-scroll::-webkit-scrollbar { display: none; }
-    .filter-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 1.5px solid #E5E7EB;
-      background: #fff;
-      color: #4B5563;
-      font-family: inherit;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-      flex-shrink: 0;
-    }
-    .filter-pill:hover {
-      border-color: #4CAF50;
-      color: #2E7D32;
-    }
-    .filter-pill.active {
-      background: #2E7D32;
-      color: #fff;
-      border-color: #2E7D32;
-      box-shadow: 0 3px 10px rgba(46,125,50,0.28);
-    }
-
     .clear-filter-link {
       background: none;
       border: none;
@@ -528,55 +530,146 @@ import { Product } from '../../core/models/product.model';
     .all-products-section { padding-top: 18px; padding-bottom: 4px; }
     .product-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
 
-    /* ===== BOTTOM COMBO BANNER SLIDER (full-width, 4 slides) ===== */
+    /* ===== BOTTOM COMBO BANNER SLIDER ===== */
     .combo-banner-section {
-      position: relative; margin: 20px 14px 30px;
-      border-radius: 18px; overflow: hidden; height: 130px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      position: relative;
+      margin: 20px 14px 28px;
+      border-radius: 20px;
+      overflow: hidden;
+      height: 135px;
+      box-shadow: 0 6px 22px rgba(0,0,0,0.12);
     }
     .combo-banner-track {
-      display: flex; height: 100%;
-      transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
+      display: flex;
+      height: 100%;
       will-change: transform;
     }
     .combo-banner-slide {
-      flex-shrink: 0; width: 100%; height: 130px;
-      position: relative; overflow: hidden;
-    }
-    .combo-banner-slide::before {
-      content: ''; position: absolute;
-      top: -25px; right: -25px; width: 100px; height: 100px;
-      background: rgba(255,255,255,0.1); border-radius: 50%;
+      flex-shrink: 0;
+      width: 100%;
+      height: 135px;
+      position: relative;
+      overflow: hidden;
     }
     .combo-banner-content {
-      display: flex; align-items: center; justify-content: space-between;
-      height: 100%; padding: 14px 14px 22px 18px; gap: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+      padding: 12px 16px 16px 18px;
+      gap: 12px;
+      position: relative;
+      z-index: 2;
     }
-    .combo-banner-text { flex: 1; min-width: 0; }
-    .combo-banner-tag {
-      display: inline-block; font-size: 8px; font-weight: 700;
-      padding: 2px 8px; border-radius: 999px;
-      text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 4px;
+    .combo-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      min-width: 0;
     }
-    .combo-banner-title { font-size: 17px; font-weight: 900; line-height: 1.15; margin-bottom: 3px; }
-    .combo-banner-sub { font-size: 9px; line-height: 1.4; margin-bottom: 6px; }
-    .combo-banner-bottom { display: flex; align-items: center; gap: 10px; }
-    .combo-banner-price { font-size: 13px; font-weight: 800; }
-    .combo-banner-price del { font-size: 9px; font-weight: 400; opacity: 0.55; margin-left: 3px; }
-    .combo-banner-btn {
-      display: inline-flex; align-items: center;
-      background: #2E7D32; color: #fff; padding: 5px 12px;
-      border-radius: 999px; font-size: 9px; font-weight: 700;
-      text-decoration: none; transition: all 0.2s;
-      box-shadow: 0 3px 10px rgba(46,125,50,0.3);
+    .combo-badge-row {
+      display: flex;
+      align-items: center;
     }
-    .combo-banner-btn.light-btn { background: #fff; color: #2E7D32; box-shadow: 0 3px 10px rgba(0,0,0,0.12); }
-    .combo-banner-btn:hover { transform: translateY(-1px); }
-    .combo-banner-img-wrap { flex-shrink: 0; width: 88px; height: 88px; }
-    .combo-banner-img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+    .combo-pill-tag {
+      background: rgba(255,255,255,0.2);
+      color: #ffffff;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2.5px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+    }
+    .combo-card-title {
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.2px;
+      margin: 2px 0 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .combo-price-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+    .combo-curr-price {
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 900;
+    }
+    .combo-old-price {
+      color: rgba(255,255,255,0.55);
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .combo-save-badge {
+      background: #FF6B35;
+      color: #ffffff;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 1.5px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+    .combo-btn {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ffffff;
+      color: #1A5424;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: all 0.2s;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+      cursor: pointer;
+    }
+    .combo-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(0,0,0,0.22);
+    }
+    .combo-right {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .combo-dish-frame {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid rgba(255,255,255,0.38);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+      background: rgba(255,255,255,0.1);
+    }
+    .combo-dish-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
     .combo-banner-dots {
-      position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 4px; z-index: 10;
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      z-index: 10;
     }
 
     /* FLOATING VIEW CART TOASTER */
@@ -722,7 +815,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   searchQuery = '';
 
   selectedCategory = signal<string>('all');
-  totalCount = this.productService.getAll().length;
 
   displayProducts = computed<Product[]>(() => {
     let list = this.productService.getAll();
@@ -740,107 +832,138 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     return list;
   });
 
-  // Hero slides (5 slides) - colors matched per background
+  // Hero slides (5 category cards matched to reference UI)
   heroSlides = [
     {
-      id: 1, tag: 'Fresh & Healthy',
-      title: 'Healthy Tasty Fresh', titleHtml: 'Healthy <span class="hl">Tasty</span> Fresh',
-      sub: 'Fruit Chaat & Sprouts for a better you!',
-      price: null as number|null, originalPrice: null as number|null,
-      link: '/menu', image: 'assets/images/mix-fruit-chaat.jpg',
-      bg: 'linear-gradient(135deg,#E8F5E9 0%,#C8E6C9 50%,#DCEDC8 100%)',
-      titleColor: '#1A1A1A', subColor: '#4a4a4a',
-      tagColor: '#1B5E20', tagBg: 'rgba(46,125,50,0.15)',
-      badgeColor: '#2E7D32', lightBtn: false
+      id: 1,
+      brand: 'FruitChat',
+      brandColor: '#ffffff',
+      headlineHtml: 'FRESH FRUIT CHAAT.<br>DISCOVER YOUR<br>FAVORITE MIX!',
+      titleColor: '#ffffff',
+      btnText: 'Order Now',
+      btnStyle: 'white',
+      link: '/product/1',
+      image: 'assets/images/mix-fruit-chaat.jpg',
+      bg: 'linear-gradient(110deg, #113819 0%, #174E23 45%, #1F632E 100%)',
     },
     {
-      id: 2, tag: 'Protein Rich',
-      title: 'Masala Sprouts', titleHtml: 'Masala <span style="color:#1565C0">Sprouts</span>',
-      sub: 'Healthy protein-packed sprouts — daily fresh!',
-      price: 60 as number|null, originalPrice: null as number|null,
-      link: '/product/2', image: 'assets/images/masala-sprouts.jpg',
-      bg: 'linear-gradient(135deg,#E3F2FD 0%,#90CAF9 55%,#BBDEFB 100%)',
-      titleColor: '#0D2137', subColor: '#1a4a6e',
-      tagColor: '#1565C0', tagBg: 'rgba(21,101,192,0.15)',
-      badgeColor: '#1565C0', lightBtn: false
+      id: 2,
+      brand: 'FruitChat',
+      brandColor: '#ffffff',
+      headlineHtml: 'BOOST YOUR HEALTH<br>with MASALA SPROUTS!',
+      titleColor: '#ffffff',
+      btnText: 'Explore Sprouts',
+      btnStyle: 'white',
+      link: '/product/2',
+      image: 'assets/images/masala-sprouts.jpg',
+      bg: 'linear-gradient(110deg, #164220 0%, #205C2E 45%, #2C783D 100%)',
     },
     {
-      id: 3, tag: 'Best Combo Deal',
-      title: 'Healthy Combo', titleHtml: 'Healthy <span style="color:#A5D6A7">Combo</span>',
-      sub: 'Fruit Chaat + Sprouts — save Rs.41!',
-      price: 99 as number|null, originalPrice: 140 as number|null,
-      link: '/product/8', image: 'assets/images/masala-sprouts.jpg',
-      bg: 'linear-gradient(135deg,#1B5E20 0%,#2E7D32 55%,#388E3C 100%)',
-      titleColor: '#fff', subColor: 'rgba(255,255,255,0.82)',
-      tagColor: '#DCEDC8', tagBg: 'rgba(255,255,255,0.2)',
-      badgeColor: '#2E7D32', lightBtn: true
+      id: 3,
+      brand: 'FruitChat',
+      brandColor: '#FFA726',
+      headlineHtml: 'STAY REFRESHED.<br>PURE ORANGE JUICE.',
+      titleColor: '#ffffff',
+      btnText: 'Shop Juices',
+      btnStyle: 'white',
+      link: '/product/3',
+      image: 'assets/images/fresh-juice.jpg',
+      bg: 'linear-gradient(110deg, #0F1210 0%, #181C19 45%, #222723 100%)',
     },
     {
-      id: 4, tag: 'Fresh Juice',
-      title: 'Orange Juice', titleHtml: 'Fresh <span style="color:#E65100">Orange</span> Juice',
-      sub: 'No added sugar. Pure natural goodness!',
-      price: 70 as number|null, originalPrice: null as number|null,
-      link: '/product/3', image: 'assets/images/fresh-juice.jpg',
-      bg: 'linear-gradient(135deg,#FFF8E1 0%,#FFE082 55%,#FFECB3 100%)',
-      titleColor: '#3E2000', subColor: '#6d4c00',
-      tagColor: '#E65100', tagBg: 'rgba(230,81,0,0.12)',
-      badgeColor: '#E65100', lightBtn: false
+      id: 4,
+      brand: 'FruitChat',
+      brandColor: '#ffffff',
+      headlineHtml: 'TASTE THE SEASON.<br>SEASONAL FRUIT CHAAT.',
+      titleColor: '#ffffff',
+      btnText: 'Order Today',
+      btnStyle: 'white',
+      link: '/product/4',
+      image: 'assets/images/pineapple-chaat.jpg',
+      bg: 'linear-gradient(115deg, #1B5226 0%, #257034 50%, #328E44 100%)',
     },
     {
-      id: 5, tag: "Today's Special",
-      title: 'Pineapple Chaat', titleHtml: 'Pineapple <span style="color:#BF360C">Chaat</span>',
-      sub: 'Sweet & spicy — a perfect treat!',
-      price: 70 as number|null, originalPrice: null as number|null,
-      link: '/product/4', image: 'assets/images/pineapple-chaat.jpg',
-      bg: 'linear-gradient(135deg,#FBE9E7 0%,#FF8A65 55%,#FFCCBC 100%)',
-      titleColor: '#3E0000', subColor: '#7a2000',
-      tagColor: '#BF360C', tagBg: 'rgba(191,54,12,0.12)',
-      badgeColor: '#BF360C', lightBtn: false
+      id: 5,
+      brand: 'FruitChat',
+      brandColor: '#ffffff',
+      headlineHtml: 'THE PERFECT BALANCE.<br>ORDER THE HEALTHY COMBO.',
+      titleColor: '#ffffff',
+      btnText: 'Order Combo',
+      btnStyle: 'white',
+      link: '/product/8',
+      image: 'assets/images/masala-sprouts.jpg',
+      bg: 'linear-gradient(110deg, #0F2E16 0%, #164621 45%, #1F5F2D 100%)',
     },
   ];
-  activeHero = signal(0);
+
+  heroDisplaySlides = computed(() => [
+    ...this.heroSlides.map(s => ({ ...s, uniqueKey: `hero-${s.id}` })),
+    { ...this.heroSlides[0], uniqueKey: 'hero-clone-first' }
+  ]);
+
+  heroIndex = signal(0);
+  heroTransition = signal(true);
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
-  // Combo banner slides (4 slides, bottom section)
+  // Combo banner slides (Authentic combos with combo data)
   comboSlides = [
     {
-      id: 1, tag: 'Limited Offer',
-      title: 'Healthy Combo', sub: 'Fruit Chaat + Sprouts',
-      price: 99, originalPrice: 140, link: '/product/8',
-      bg: 'linear-gradient(135deg,#1B5E20 0%,#2E7D32 55%,#388E3C 100%)',
-      titleColor: '#fff', subColor: 'rgba(255,255,255,0.82)',
-      tagColor: '#DCEDC8', tagBg: 'rgba(255,255,255,0.2)',
-      lightBtn: true, image: 'assets/images/masala-sprouts.jpg'
+      id: 1,
+      tag: 'BESTSELLER COMBO',
+      title: 'Fruit Chaat + Sprouts',
+      price: 99,
+      originalPrice: 140,
+      savings: 41,
+      btnText: 'Order Combo',
+      link: '/product/8',
+      image: 'assets/images/masala-sprouts.jpg',
+      bg: 'linear-gradient(125deg, #103318 0%, #184A24 50%, #226632 100%)',
     },
     {
-      id: 2, tag: 'Fresh Pick',
-      title: 'Mix Fruit Chaat', sub: 'Fresh seasonal fruits with masala',
-      price: 80, originalPrice: 100, link: '/product/1',
-      bg: 'linear-gradient(135deg,#E8F5E9 0%,#A5D6A7 55%,#DCEDC8 100%)',
-      titleColor: '#1A1A1A', subColor: '#4a4a4a',
-      tagColor: '#1B5E20', tagBg: 'rgba(46,125,50,0.15)',
-      lightBtn: false, image: 'assets/images/mix-fruit-chaat.jpg'
+      id: 2,
+      tag: 'FITNESS SPECIAL',
+      title: 'Sprouts + Orange Juice',
+      price: 119,
+      originalPrice: 150,
+      savings: 31,
+      btnText: 'Order Combo',
+      link: '/product/8',
+      image: 'assets/images/fresh-juice.jpg',
+      bg: 'linear-gradient(125deg, #152E1B 0%, #1F4528 50%, #2A5E38 100%)',
     },
     {
-      id: 3, tag: 'Popular',
-      title: 'Fresh Juice', sub: 'Pure natural orange juice — no sugar',
-      price: 70, originalPrice: null as number|null, link: '/product/3',
-      bg: 'linear-gradient(135deg,#FFF8E1 0%,#FFE082 55%,#FFECB3 100%)',
-      titleColor: '#3E2000', subColor: '#6d4c00',
-      tagColor: '#E65100', tagBg: 'rgba(230,81,0,0.12)',
-      lightBtn: false, image: 'assets/images/fresh-juice.jpg'
+      id: 3,
+      tag: 'VALUE DEAL',
+      title: 'Fruit Chaat + Juice',
+      price: 139,
+      originalPrice: 170,
+      savings: 31,
+      btnText: 'Order Combo',
+      link: '/product/8',
+      image: 'assets/images/mix-fruit-chaat.jpg',
+      bg: 'linear-gradient(125deg, #133D1A 0%, #1B5625 50%, #257032 100%)',
     },
     {
-      id: 4, tag: 'Daily Fresh',
-      title: 'Masala Sprouts', sub: 'Protein rich sprouts with masala',
-      price: 60, originalPrice: null as number|null, link: '/product/2',
-      bg: 'linear-gradient(135deg,#E3F2FD 0%,#64B5F6 55%,#BBDEFB 100%)',
-      titleColor: '#0D2137', subColor: '#1a4a6e',
-      tagColor: '#1565C0', tagBg: 'rgba(21,101,192,0.15)',
-      lightBtn: false, image: 'assets/images/masala-sprouts.jpg'
+      id: 4,
+      tag: 'ALL-IN-ONE TRIO',
+      title: 'Chaat + Sprouts + Juice',
+      price: 189,
+      originalPrice: 240,
+      savings: 51,
+      btnText: 'Order Combo',
+      link: '/product/8',
+      image: 'assets/images/pineapple-chaat.jpg',
+      bg: 'linear-gradient(125deg, #0E2B14 0%, #153E1E 50%, #1E5429 100%)',
     },
   ];
-  activeCombo = signal(0);
+
+  comboDisplaySlides = computed(() => [
+    ...this.comboSlides.map(s => ({ ...s, uniqueKey: `combo-${s.id}` })),
+    { ...this.comboSlides[0], uniqueKey: 'combo-clone-first' }
+  ]);
+
+  comboIndex = signal(0);
+  comboTransition = signal(true);
   private comboTimer: ReturnType<typeof setInterval> | null = null;
 
   ngAfterViewInit(): void {
@@ -853,27 +976,99 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     if (this.comboTimer) clearInterval(this.comboTimer);
   }
 
-  // Hero
+  // Hero auto-loop
   private startHeroAuto(): void {
     this.heroTimer = setInterval(() => {
-      this.activeHero.set((this.activeHero() + 1) % this.heroSlides.length);
-    }, 3000);
+      this.nextHero();
+    }, 3200);
   }
+
+  nextHero(): void {
+    if (this.heroIndex() >= this.heroSlides.length) {
+      this.heroTransition.set(false);
+      this.heroIndex.set(0);
+      setTimeout(() => {
+        this.heroTransition.set(true);
+        this.heroIndex.set(1);
+      }, 40);
+      return;
+    }
+    this.heroTransition.set(true);
+    this.heroIndex.update(i => i + 1);
+  }
+
+  onHeroTransitionEnd(): void {
+    if (this.heroIndex() >= this.heroSlides.length) {
+      this.heroTransition.set(false);
+      this.heroIndex.set(0);
+      setTimeout(() => {
+        this.heroTransition.set(true);
+      }, 40);
+    }
+  }
+
   goToHero(i: number): void {
     if (this.heroTimer) clearInterval(this.heroTimer);
-    this.activeHero.set(i);
+    if (this.heroIndex() >= this.heroSlides.length) {
+      this.heroTransition.set(false);
+      this.heroIndex.set(0);
+      setTimeout(() => {
+        this.heroTransition.set(true);
+        this.heroIndex.set(i);
+        this.startHeroAuto();
+      }, 30);
+      return;
+    }
+    this.heroTransition.set(true);
+    this.heroIndex.set(i);
     this.startHeroAuto();
   }
 
   // Combo banner auto-scroll
   private startComboAuto(): void {
     this.comboTimer = setInterval(() => {
-      this.activeCombo.set((this.activeCombo() + 1) % this.comboSlides.length);
-    }, 2800);
+      this.nextCombo();
+    }, 3000);
   }
+
+  nextCombo(): void {
+    if (this.comboIndex() >= this.comboSlides.length) {
+      this.comboTransition.set(false);
+      this.comboIndex.set(0);
+      setTimeout(() => {
+        this.comboTransition.set(true);
+        this.comboIndex.set(1);
+      }, 40);
+      return;
+    }
+    this.comboTransition.set(true);
+    this.comboIndex.update(i => i + 1);
+  }
+
+  onComboTransitionEnd(): void {
+    if (this.comboIndex() >= this.comboSlides.length) {
+      this.comboTransition.set(false);
+      this.comboIndex.set(0);
+      setTimeout(() => {
+        this.comboTransition.set(true);
+      }, 40);
+    }
+  }
+
   goToCombo(i: number): void {
     if (this.comboTimer) clearInterval(this.comboTimer);
-    this.activeCombo.set(i);
+    if (this.comboIndex() >= this.comboSlides.length) {
+      this.comboTransition.set(false);
+      this.comboIndex.set(0);
+      setTimeout(() => {
+        this.comboTransition.set(true);
+        this.comboIndex.set(i);
+        this.startComboAuto();
+      }, 30);
+      return;
+    }
+    this.comboTransition.set(true);
+    this.comboIndex.set(i);
     this.startComboAuto();
   }
 
