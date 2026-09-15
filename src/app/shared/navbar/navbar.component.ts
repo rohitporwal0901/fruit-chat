@@ -57,12 +57,16 @@ import { AddressOption } from '../../core/models/user.model';
 
           @if (authService.isLoggedIn()) {
             <a routerLink="/profile" class="header-action-btn profile-btn-bubble" aria-label="User Profile">
-              <span class="avatar-letter">{{ getUserInitial() }}</span>
+              @if (authService.currentUser()?.photoUrl) {
+                <img [src]="authService.currentUser()?.photoUrl" class="avatar-photo" alt="Profile" />
+              } @else {
+                <span class="avatar-letter">{{ getUserInitial() }}</span>
+              }
             </a>
           } @else {
-            <button class="header-login-btn" (click)="authService.openAuthModal()" type="button">
+            <a routerLink="/auth" class="header-login-btn">
               Login
-            </button>
+            </a>
           }
         </div>
       </header>
@@ -153,13 +157,17 @@ import { AddressOption } from '../../core/models/user.model';
 
           @if (authService.isLoggedIn()) {
             <a routerLink="/profile" routerLinkActive="active" class="nav-link profile-link">
-              <span class="nav-avatar">{{ getUserInitial() }}</span>
+              @if (authService.currentUser()?.photoUrl) {
+                <img [src]="authService.currentUser()?.photoUrl" class="nav-avatar-photo" alt="Profile" />
+              } @else {
+                <span class="nav-avatar">{{ getUserInitial() }}</span>
+              }
               <span>{{ getFirstName() }}</span>
             </a>
           } @else {
-            <button class="nav-login-btn" (click)="authService.openAuthModal()" type="button">
+            <a routerLink="/auth" class="nav-login-btn">
               Login / Signup
-            </button>
+            </a>
           }
 
           <a routerLink="/cart" class="cart-btn">
@@ -217,12 +225,12 @@ import { AddressOption } from '../../core/models/user.model';
           <span class="bnav-label">Profile</span>
         </a>
       } @else {
-        <button class="bnav-item bnav-btn-action" (click)="authService.openAuthModal()" type="button">
+        <a routerLink="/auth" class="bnav-item bnav-btn-action">
           <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
           </svg>
           <span class="bnav-label">Login</span>
-        </button>
+        </a>
       }
     </nav>
 
@@ -442,6 +450,20 @@ import { AddressOption } from '../../core/models/user.model';
       font-size: 14px;
       font-weight: 800;
       color: #1B5E20;
+    }
+
+    .avatar-photo {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .nav-avatar-photo {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      object-fit: cover;
     }
 
     .header-login-btn {

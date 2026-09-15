@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 interface MenuItem {
@@ -25,10 +25,37 @@ interface MenuItem {
           <div class="ph-bg-circle c1"></div>
           <div class="ph-bg-circle c2"></div>
 
-          <!-- AVATAR -->
+          <!-- AVATAR WITH PHOTO UPLOAD (KHANDELWAL ARCHITECTURE) -->
           <div class="avatar-wrap">
-            <div class="avatar">{{ getUserInitials() }}</div>
-            <span class="sprout-dot" title="Health Member">&#127793;</span>
+            <input 
+              type="file" 
+              #photoInput 
+              accept="image/*" 
+              style="display: none" 
+              (change)="onPhotoSelected($event)" 
+            />
+            
+            <div class="avatar" (click)="photoInput.click()" title="Click to upload profile photo">
+              @if (authService.currentUser()?.photoUrl) {
+                <img [src]="authService.currentUser()?.photoUrl" alt="Profile" class="avatar-img" />
+              } @else {
+                <span>{{ getUserInitials() }}</span>
+              }
+            </div>
+
+            <!-- Camera upload badge button -->
+            <button 
+              type="button" 
+              class="camera-badge-btn" 
+              (click)="photoInput.click()" 
+              [title]="isUploadingPhoto() ? 'Uploading...' : 'Upload profile picture'"
+            >
+              @if (isUploadingPhoto()) {
+                <span class="upload-spin">⌛</span>
+              } @else {
+                <span>📷</span>
+              }
+            </button>
           </div>
 
           <!-- USER NAME & INFO -->
@@ -121,21 +148,21 @@ interface MenuItem {
             </div>
           </div>
 
-          <!-- LOGOUT BUTTON -->
-          <button class="logout-btn" (click)="authService.logout()">
+          <!-- LOGOUT BUTTON (KHANDELWAL ARCHITECTURE) -->
+          <button class="logout-btn" (click)="handleLogout()">
             &#128682; Logout of Account
           </button>
         </div>
 
       } @else {
-        <!-- LOGGED-OUT CARD (SWIGGY/ZOMATO STYLE) -->
+        <!-- LOGGED-OUT CARD -->
         <div class="logged-out-container">
           <div class="guest-card">
             <div class="guest-icon">🥑</div>
             <h2 class="guest-title">Account & Preferences</h2>
             <p class="guest-sub">Log in to view your orders, saved addresses, exclusive fruit club offers, and healthy streaks.</p>
             
-            <button class="guest-login-btn" (click)="authService.openAuthModal()">
+            <button class="guest-login-btn" (click)="goToLogin()">
               Login / Sign Up
             </button>
           </div>
@@ -146,67 +173,95 @@ interface MenuItem {
   `,
   styles: [`
     .profile-page {
-      background: #F8F9FA;
-      min-height: 100vh;
-      padding-bottom: 90px;
+      padding-bottom: 20px;
     }
 
-    /* PREMIUM HEALTH PROFILE HEADER */
+    /* HEADER */
     .profile-header {
-      background: linear-gradient(155deg, #155523 0%, #237632 45%, #2e7d32 100%);
-      padding: 30px 20px 22px;
-      text-align: center;
+      background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 60%, #174218 100%);
       color: #fff;
+      padding: 36px 16px 28px;
+      text-align: center;
       position: relative;
       overflow: hidden;
-      border-radius: 0 0 24px 24px;
-      box-shadow: 0 6px 20px rgba(21, 85, 35, 0.18);
     }
-
     .ph-bg-circle {
       position: absolute;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.05);
       pointer-events: none;
     }
-    .ph-bg-circle.c1 { width: 170px; height: 170px; top: -50px; right: -50px; }
-    .ph-bg-circle.c2 { width: 120px; height: 120px; bottom: -30px; left: -30px; }
+    .ph-bg-circle.c1 {
+      width: 220px;
+      height: 220px;
+      top: -60px;
+      right: -50px;
+    }
+    .ph-bg-circle.c2 {
+      width: 160px;
+      height: 160px;
+      bottom: -40px;
+      left: -30px;
+    }
 
-    /* AVATAR */
+    /* AVATAR & CAMERA BADGE */
     .avatar-wrap {
       position: relative;
-      width: 78px;
-      height: 78px;
-      margin: 0 auto 10px;
+      width: 82px;
+      height: 82px;
+      margin: 0 auto 12px;
+      cursor: pointer;
     }
     .avatar {
-      width: 78px;
-      height: 78px;
+      width: 82px;
+      height: 82px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.22);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
+      background: #E8F5E9;
+      color: #2E7D32;
+      font-size: 28px;
       font-weight: 800;
-      color: #fff;
-      border: 3px solid rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid rgba(255, 255, 255, 0.85);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      backdrop-filter: blur(4px);
+      overflow: hidden;
+      transition: transform 0.2s ease;
+      &:hover {
+        transform: scale(1.03);
+      }
     }
-    .sprout-dot {
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .camera-badge-btn {
       position: absolute;
-      top: -2px;
-      right: 2px;
-      background: #fff;
-      width: 22px;
-      height: 22px;
+      bottom: -2px;
+      right: -2px;
+      background: #FFFFFF;
+      border: 2px solid #2E7D32;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+      transition: transform 0.15s ease;
+      &:active {
+        transform: scale(0.92);
+      }
+    }
+    .upload-spin {
+      animation: spin 1s infinite linear;
       font-size: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     /* NAME & PHONE */
@@ -279,50 +334,82 @@ interface MenuItem {
     .stat-divider {
       width: 1px;
       height: 30px;
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.2);
     }
 
-    /* PROFILE CONTENT */
+    /* CONTENT */
     .profile-content {
-      padding-top: 18px;
-      max-width: 480px;
-      margin: 0 auto;
-      padding-left: 16px;
-      padding-right: 16px;
+      margin-top: 14px;
     }
     .profile-section {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .section-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      padding: 0 4px;
     }
     .section-label {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
-      color: #888;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
+      color: #6B7280;
+      margin: 0 0 8px 4px;
+    }
+    .section-top .section-label {
       margin: 0;
     }
     .add-addr-link {
-      background: transparent;
+      background: none;
       border: none;
       color: #2E7D32;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      padding: 0;
       &:hover { text-decoration: underline; }
     }
 
+    /* MENU CARD */
     .menu-card {
       background: #fff;
       border-radius: 16px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid #E5E7EB;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      border: 1px solid #F0F0F0;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 13px 16px;
+      border-bottom: 1px solid #F3F4F6;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+      gap: 12px;
+      &:last-child { border-bottom: none; }
+      &:hover { background: #FAFAFA; }
+    }
+    .mi-icon {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .mi-label {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1F2937;
+    }
+    .mi-arrow {
+      font-size: 18px;
+      color: #9CA3AF;
+      line-height: 1;
     }
 
     /* ADDRESS ROW */
@@ -330,19 +417,19 @@ interface MenuItem {
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      padding: 13px 16px;
-      border-bottom: 1px solid #F6F6F6;
+      padding: 12px 16px;
+      border-bottom: 1px solid #F3F4F6;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.15s;
       &:last-child { border-bottom: none; }
-      &:hover { background: #F8F9FA; }
+      &:hover { background: #F9FAFB; }
       &.active {
         background: #F1F8E9;
       }
     }
     .ar-icon {
-      font-size: 18px;
-      margin-top: 1px;
+      font-size: 20px;
+      margin-top: 2px;
     }
     .ar-info {
       flex: 1;
@@ -353,133 +440,92 @@ interface MenuItem {
     .ar-title {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       font-size: 13.5px;
       color: #111827;
     }
     .ar-badge {
       background: #2E7D32;
       color: #fff;
-      font-size: 9.5px;
+      font-size: 10px;
       font-weight: 700;
       padding: 1px 6px;
-      border-radius: 999px;
+      border-radius: 4px;
     }
     .ar-text {
-      font-size: 11.5px;
+      font-size: 12px;
       color: #6B7280;
-      line-height: 1.4;
-    }
-
-    .menu-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 16px;
-      border-bottom: 1px solid #F6F6F6;
-      cursor: pointer;
-      text-decoration: none;
-      color: #1A1A1A;
-      transition: background 0.2s;
-      &:last-child { border-bottom: none; }
-      &:hover { background: #F8F9FA; }
-    }
-    .mi-icon {
-      font-size: 21px;
-      width: 28px;
-      text-align: center;
-    }
-    .mi-label {
-      flex: 1;
-      font-size: 14px;
-      font-weight: 500;
-      color: #222;
-    }
-    .mi-arrow {
-      color: #ccc;
-      font-size: 20px;
+      line-height: 1.35;
     }
 
     /* TOGGLE */
     .toggle {
       width: 44px;
       height: 24px;
-      background: #DDD;
-      border-radius: 12px;
+      background: #D1D5DB;
+      border-radius: 999px;
+      padding: 2px;
       cursor: pointer;
       transition: background 0.2s;
-      position: relative;
-      &.on { background: #4CAF50; }
+    }
+    .toggle.on {
+      background: #2E7D32;
     }
     .toggle-thumb {
-      position: absolute;
-      top: 2px;
-      left: 2px;
       width: 20px;
       height: 20px;
-      border-radius: 50%;
       background: #fff;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
       transition: transform 0.2s;
     }
     .toggle.on .toggle-thumb {
       transform: translateX(20px);
     }
 
+    /* LOGOUT */
     .logout-btn {
       width: 100%;
       background: #fff;
-      border: 1.5px solid #FFCDD2;
-      border-radius: 14px;
+      border: 1.5px solid #FCA5A5;
+      color: #DC2626;
       padding: 13px;
-      font-family: 'Poppins', sans-serif;
+      border-radius: 14px;
+      font-family: inherit;
       font-size: 14px;
-      font-weight: 600;
-      color: #F44336;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 10px;
-      &:hover { background: #FFEBEE; }
-    }
-
-    /* GUEST / LOGGED-OUT CARD */
-    .logged-out-container {
-      padding: 40px 20px;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 4px;
       display: flex;
+      align-items: center;
       justify-content: center;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
+      &:hover { background: #FEF2F2; }
+      &:active { transform: scale(0.98); }
     }
 
+    /* LOGGED OUT STATE */
+    .logged-out-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+      padding: 24px 16px;
+    }
     .guest-card {
       background: #ffffff;
       border-radius: 24px;
-      padding: 32px 24px;
+      padding: 36px 24px;
       text-align: center;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      max-width: 380px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       border: 1px solid #E5E7EB;
     }
-
-    .guest-icon {
-      font-size: 48px;
-      margin-bottom: 14px;
-    }
-
-    .guest-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: #111827;
-      margin: 0 0 8px;
-    }
-
-    .guest-sub {
-      font-size: 13.5px;
-      color: #6B7280;
-      line-height: 1.5;
-      margin: 0 0 24px;
-    }
-
+    .guest-icon { font-size: 48px; margin-bottom: 12px; }
+    .guest-title { font-size: 22px; font-weight: 800; color: #111827; margin: 0 0 8px; }
+    .guest-sub { font-size: 13.5px; color: #6B7280; line-height: 1.5; margin: 0 0 24px; }
     .guest-login-btn {
       width: 100%;
       background: #2E7D32;
@@ -499,6 +545,9 @@ interface MenuItem {
 })
 export class ProfileComponent {
   authService = inject(AuthService);
+  private router = inject(Router);
+
+  readonly isUploadingPhoto = signal<boolean>(false);
 
   getUserInitials(): string {
     const user = this.authService.currentUser();
@@ -508,6 +557,71 @@ export class ProfileComponent {
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
     return user.name.slice(0, 2).toUpperCase();
+  }
+
+  // ─── Photo Upload & Canvas Resizing (Khandelwal Architecture) ─
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (PNG, JPG, etc.)');
+        return;
+      }
+
+      this.isUploadingPhoto.set(true);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target?.result as string;
+        img.onload = async () => {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 300; // Optimal 300x300 for Firestore storage
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+          try {
+            const user = this.authService.currentUser();
+            if (user?.uid) {
+              await this.authService.updateProfilePhoto(user.uid, base64);
+            }
+          } catch (err) {
+            alert('Failed to update profile picture. Please try again.');
+          } finally {
+            this.isUploadingPhoto.set(false);
+          }
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  async handleLogout(): Promise<void> {
+    await this.authService.logout();
+    this.router.navigate(['/auth']);
+  }
+
+  goToLogin(): void {
+    this.router.navigate(['/auth']);
   }
 
   activityItems: MenuItem[] = [

@@ -15,6 +15,7 @@ export interface User {
   name: string;
   pin: string;          // 4-digit security PIN
   email?: string;
+  photoUrl?: string;    // Base64 or URL profile picture
   addresses: AddressOption[];
   activeAddress?: AddressOption;
   createdAt: string;
