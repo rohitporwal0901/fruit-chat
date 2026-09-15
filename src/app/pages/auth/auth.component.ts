@@ -824,7 +824,6 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.62);
-      backdrop-filter: blur(4px);
       z-index: 1000;
       display: flex;
       align-items: flex-end;
