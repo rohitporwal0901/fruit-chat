@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ProductCardComponent } from '../../shared/product-card/product-card.component';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Product } from '../../core/models/product.model';
 
 @Component({
@@ -67,6 +68,24 @@ import { Product } from '../../core/models/product.model';
           </div>
         </div>
       </section>
+
+      <!-- USER WELCOME & ADDRESS STRIP (Swiggy / Zomato style) -->
+      @if (authService.isLoggedIn()) {
+        <div class="container welcome-strip-wrap">
+          <div class="user-welcome-strip">
+            <div class="uws-left">
+              <span class="uws-hello">Hello, <b>{{ getFirstName() }}</b>! 👋</span>
+              <span class="uws-addr">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>{{ authService.activeAddress().label }}: {{ authService.activeAddress().detail }}</span>
+              </span>
+            </div>
+            <button class="uws-map-btn" (click)="authService.openMapPicker()" type="button">
+              🗺️ Change on Map
+            </button>
+          </div>
+        </div>
+      }
 
       <!-- SEARCH BAR -->
       <div class="container search-section">
@@ -919,12 +938,77 @@ import { Product } from '../../core/models/product.model';
       .pop-card { max-width: 190px; width: 22vw; }
       .floating-cart { max-width: 420px; bottom: 24px; }
     }
+
+    /* USER WELCOME STRIP */
+    .welcome-strip-wrap {
+      margin-top: 10px;
+      margin-bottom: -4px;
+    }
+
+    .user-welcome-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #F1F8E9;
+      border: 1px solid #DCEDC8;
+      border-radius: 14px;
+      padding: 9px 14px;
+      box-shadow: 0 2px 6px rgba(46, 125, 50, 0.06);
+    }
+
+    .uws-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .uws-hello {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13.5px;
+      color: #1B5E20;
+      font-weight: 700;
+    }
+
+    .uws-addr {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      color: #374151;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 260px;
+    }
+
+    .uws-map-btn {
+      background: #2E7D32;
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      &:active { transform: scale(0.96); background: #1B5E20; }
+    }
   `]
 })
 export class HomeComponent implements AfterViewInit, OnDestroy {
   private productService = inject(ProductService);
   cartService = inject(CartService);
+  authService = inject(AuthService);
   searchQuery = '';
+
+  getFirstName(): string {
+    const u = this.authService.currentUser();
+    return u?.name ? u.name.split(' ')[0] : 'Foodie';
+  }
 
   selectedCategory = signal<string>('all');
 

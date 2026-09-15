@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartService } from '../../core/services/cart.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-checkout',
@@ -52,12 +53,15 @@ import { CartService } from '../../core/services/cart.service';
               <div class="addr-icon">📍</div>
               <div class="addr-info">
                 <p class="addr-name">{{ address.name || 'Add your name' }}</p>
-                <p class="addr-text">{{ address.addressLine1 || '123, Green Park, Indore' }}</p>
-                <p class="addr-city">{{ address.city || 'Madhya Pradesh - 452001' }}</p>
+                <p class="addr-text">{{ address.addressLine1 || 'Select delivery address' }}</p>
+                <p class="addr-city">{{ address.city }}</p>
               </div>
-              <button class="edit-btn" (click)="editingAddress.set(!editingAddress())">
-                {{ editingAddress() ? 'Done' : 'Edit' }}
-              </button>
+              <div class="addr-actions">
+                <button class="map-chip-btn" (click)="authService.openMapPicker()" type="button">🗺️ Map</button>
+                <button class="edit-btn" (click)="editingAddress.set(!editingAddress())">
+                  {{ editingAddress() ? 'Done' : 'Edit' }}
+                </button>
+              </div>
             </div>
 
             @if (editingAddress()) {
@@ -250,6 +254,8 @@ import { CartService } from '../../core/services/cart.service';
     .saved-address { background: #fff; border-radius: 14px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
     .addr-icon { font-size: 24px; }
     .addr-info { flex: 1; .addr-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; } .addr-text { font-size: 13px; color: #555; } .addr-city { font-size: 12px; color: #999; } }
+    .addr-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .map-chip-btn { background: #E8F5E9; border: 1px solid #C8E6C9; color: #1B5E20; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; &:active { background: #DCEDC8; } }
     .edit-btn { background: none; border: none; color: #2E7D32; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; }
 
     .address-form { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
@@ -301,6 +307,7 @@ import { CartService } from '../../core/services/cart.service';
 export class CheckoutComponent {
   router = inject(Router);
   cartService = inject(CartService);
+  authService = inject(AuthService);
 
   currentStep = signal(1);
   loading = signal(false);
@@ -308,7 +315,29 @@ export class CheckoutComponent {
   selectedPayment = signal('upi');
   paymentVal = 'upi';
 
-  address = { name: 'Rohit Porwal', phone: '9876543210', addressLine1: '123, Green Park, Indore', addressLine2: '', city: 'Indore', pincode: '452001' };
+  address = { 
+    name: this.authService.currentUser()?.name || '', 
+    phone: this.authService.currentUser()?.phone || '', 
+    addressLine1: this.authService.activeAddress().fullAddress || '123, Green Park, Indore', 
+    addressLine2: '', 
+    city: this.authService.activeAddress().detail || 'Indore', 
+    pincode: '452001' 
+  };
+
+  constructor() {
+    effect(() => {
+      const active = this.authService.activeAddress();
+      const user = this.authService.currentUser();
+      if (user) {
+        if (user.name) this.address.name = user.name;
+        if (user.phone) this.address.phone = user.phone;
+      }
+      if (active) {
+        this.address.addressLine1 = active.fullAddress;
+        this.address.city = active.detail;
+      }
+    });
+  }
 
   steps = [
     { num: 1, label: 'Address' },

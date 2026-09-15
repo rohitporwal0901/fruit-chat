@@ -1,12 +1,12 @@
 export const environment = {
   production: false,
   firebase: {
-    apiKey: "AIzaSyDLW_hLCmk15slBBKLU_bCC5YIYjihz8k0",
-    authDomain: "shoppingapp-28320.firebaseapp.com",
-    projectId: "shoppingapp-28320",
-    storageBucket: "shoppingapp-28320.appspot.com",
-    messagingSenderId: "196313674106",
-    appId: "1:196313674106:web:79fb61bb2397ccee9766c3",
-    measurementId: "G-XF7V5HM495"
+    apiKey: "AIzaSyDagNDyMeE38DQt-kjD1XsfmKmv6EicKBU",
+    authDomain: "fruit-chats.firebaseapp.com",
+    projectId: "fruit-chats",
+    storageBucket: "fruit-chats.firebasestorage.app",
+    messagingSenderId: "715924531061",
+    appId: "1:715924531061:web:6e34606dee046d52b6953c",
+    measurementId: "G-236CZK5YHY"
   }
 };

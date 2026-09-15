@@ -1,0 +1,862 @@
+import { Component, inject, signal, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../core/services/auth.service';
+import { AddressOption, User } from '../../core/models/user.model';
+import { MapPickerComponent } from '../map-picker/map-picker.component';
+import { LocationService } from '../../core/services/location.service';
+
+type AuthStep = 'phone' | 'pin' | 'register';
+
+@Component({
+  selector: 'app-auth-modal',
+  standalone: true,
+  imports: [CommonModule, FormsModule, MapPickerComponent],
+  template: `
+    <div class="auth-backdrop" (click)="close()">
+      <div class="auth-sheet" (click)="$event.stopPropagation()">
+        
+        <!-- DRAG HANDLE -->
+        <div class="sheet-handle"></div>
+
+        <!-- HEADER -->
+        <div class="auth-header">
+          <div class="brand-pill">
+            <span class="brand-emoji">🥑</span>
+            <span class="brand-title">FruitChat</span>
+          </div>
+          <button class="close-btn" (click)="close()" type="button" aria-label="Close">✕</button>
+        </div>
+
+        <!-- ERROR ALERT -->
+        @if (errorMessage()) {
+          <div class="error-banner animate-shake">
+            <span class="err-icon">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- SUCCESS ALERT -->
+        @if (successMessage()) {
+          <div class="success-banner">
+            <span class="succ-icon">✓</span>
+            <span>{{ successMessage() }}</span>
+          </div>
+        }
+
+        <!-- STEP 1: ENTER PHONE NUMBER -->
+        @if (step() === 'phone') {
+          <div class="step-container animate-fade">
+            <div class="title-wrap">
+              <h3 class="step-title">Welcome to FruitChat</h3>
+              <p class="step-subtitle">Enter your 10-digit mobile number to login or signup</p>
+            </div>
+
+            <div class="input-group phone-group">
+              <span class="country-code">+91</span>
+              <input 
+                type="tel" 
+                class="phone-input" 
+                placeholder="Enter Mobile Number" 
+                [(ngModel)]="phone" 
+                maxlength="10"
+                (keyup.enter)="checkPhone()"
+                autofocus
+              />
+            </div>
+
+            <button 
+              type="button" 
+              class="primary-submit-btn" 
+              [disabled]="phone.trim().length !== 10 || isLoading()"
+              (click)="checkPhone()"
+            >
+              @if (isLoading()) {
+                <div class="btn-spinner"></div>
+              } @else {
+                <span>Continue</span>
+              }
+            </button>
+
+            <p class="terms-text">
+              By continuing, you agree to FruitChat's 
+              <span class="link-text">Terms of Service</span> & 
+              <span class="link-text">Privacy Policy</span>
+            </p>
+          </div>
+        }
+
+        <!-- STEP 2: ENTER 4-DIGIT PIN (EXISTING USER) -->
+        @if (step() === 'pin') {
+          <div class="step-container animate-fade">
+            <div class="title-wrap">
+              <div class="phone-tag">
+                <span>+91 {{ phone }}</span>
+                <button class="edit-link" (click)="step.set('phone')">Change</button>
+              </div>
+              <h3 class="step-title">Enter 4-Digit Security PIN</h3>
+              <p class="step-subtitle">Welcome back, <b>{{ existingUserName() }}</b>! Enter your PIN to continue</p>
+            </div>
+
+            <!-- PIN INPUT DIGITS -->
+            <div class="pin-digits-wrap">
+              @for (digit of pinDigits; track $index; let i = $index) {
+                <input 
+                  #pinInput
+                  type="password" 
+                  inputmode="numeric"
+                  maxlength="1" 
+                  class="pin-box"
+                  [value]="digit"
+                  (input)="onPinInput($event, i)"
+                  (keydown)="onPinKeyDown($event, i)"
+                  [class.filled]="digit !== ''"
+                />
+              }
+            </div>
+
+            <button 
+              type="button" 
+              class="primary-submit-btn" 
+              [disabled]="getCompletePin().length !== 4 || isLoading()"
+              (click)="submitPinLogin()"
+            >
+              @if (isLoading()) {
+                <div class="btn-spinner"></div>
+              } @else {
+                <span>Login Securely</span>
+              }
+            </button>
+
+            <div class="extra-actions">
+              <button class="text-action-btn" (click)="resetToRegister()">Forgot PIN or new account?</button>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 3: NEW USER REGISTRATION WITH ADDRESS & PIN -->
+        @if (step() === 'register') {
+          <div class="step-container animate-fade register-container">
+            <div class="title-wrap">
+              <div class="phone-tag">
+                <span>+91 {{ phone }}</span>
+                <button class="edit-link" (click)="step.set('phone')">Change</button>
+              </div>
+              <h3 class="step-title">Create Your Account</h3>
+              <p class="step-subtitle">Set up your profile & delivery location</p>
+            </div>
+
+            <div class="form-fields">
+              <!-- FULL NAME -->
+              <div class="input-field-wrap">
+                <label class="field-label">Your Full Name</label>
+                <input 
+                  type="text" 
+                  class="text-input" 
+                  placeholder="e.g. Rahul Sharma" 
+                  [(ngModel)]="name"
+                />
+              </div>
+
+              <!-- SET 4-DIGIT PIN -->
+              <div class="input-field-wrap">
+                <label class="field-label">Set 4-Digit Security PIN</label>
+                <input 
+                  type="password" 
+                  inputmode="numeric" 
+                  maxlength="4" 
+                  class="text-input pin-set-input" 
+                  placeholder="Set 4-digit PIN" 
+                  [(ngModel)]="newPin"
+                />
+              </div>
+
+              <!-- DELIVERY LOCATION / MAP PICKER -->
+              <div class="location-picker-box">
+                <div class="loc-box-header">
+                  <div class="loc-label-box">
+                    <span class="loc-icon">📍</span>
+                    <span class="loc-title">Delivery Address</span>
+                  </div>
+                  <button type="button" class="map-change-btn" (click)="openMapForRegister()">
+                    🗺️ Pick on Map / GPS
+                  </button>
+                </div>
+
+                <div class="current-selected-addr">
+                  <strong class="addr-tag">{{ selectedAddress.label }}:</strong>
+                  <span class="addr-text">{{ selectedAddress.detail }}</span>
+                  <p class="addr-sub">{{ selectedAddress.fullAddress }}</p>
+                </div>
+
+                <input 
+                  type="text" 
+                  class="text-input flat-input" 
+                  placeholder="Flat / House / Floor No. (Optional)" 
+                  [(ngModel)]="flatNumber"
+                />
+              </div>
+            </div>
+
+            <button 
+              type="button" 
+              class="primary-submit-btn" 
+              [disabled]="!name.trim() || newPin.length !== 4 || isLoading()"
+              (click)="submitRegister()"
+            >
+              @if (isLoading()) {
+                <div class="btn-spinner"></div>
+              } @else {
+                <span>Save Profile & Start Ordering</span>
+              }
+            </button>
+          </div>
+        }
+
+      </div>
+    </div>
+
+    <!-- MAP PICKER SUB-MODAL FOR ADDRESS -->
+    @if (showMapPickerSub()) {
+      <app-map-picker 
+        (onSelect)="onAddressFromMap($event)"
+        (onClose)="showMapPickerSub.set(false)"
+      ></app-map-picker>
+    }
+  `,
+  styles: [`
+    .auth-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 2500;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @media (min-width: 768px) {
+      .auth-backdrop {
+        align-items: center;
+        padding: 20px;
+      }
+    }
+
+    .auth-sheet {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border-radius: 24px 24px 0 0;
+      padding: 14px 22px 28px;
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-sizing: border-box;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+
+    @media (min-width: 768px) {
+      .auth-sheet {
+        border-radius: 24px;
+        padding: 24px 28px 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.22);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: #E0E0E0;
+      border-radius: 2px;
+      margin: 0 auto 12px;
+    }
+
+    .auth-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #F1F8E9;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #DCEDC8;
+    }
+
+    .brand-emoji { font-size: 16px; }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: #2E7D32;
+    }
+
+    .close-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #F3F4F6;
+      border: none;
+      color: #6B7280;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      &:active { background: #E5E7EB; }
+    }
+
+    .title-wrap {
+      margin-bottom: 20px;
+    }
+
+    .step-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #111827;
+      margin: 0 0 5px;
+      letter-spacing: -0.3px;
+    }
+
+    .step-subtitle {
+      font-size: 13px;
+      color: #6B7280;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .step-subtitle b {
+      color: #111827;
+    }
+
+    .phone-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 10px;
+    }
+
+    .edit-link {
+      background: transparent;
+      border: none;
+      color: #2E7D32;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+    }
+
+    /* PHONE INPUT */
+    .phone-group {
+      display: flex;
+      align-items: center;
+      border: 1.5px solid #D1D5DB;
+      border-radius: 14px;
+      background: #ffffff;
+      padding: 0 14px;
+      height: 52px;
+      margin-bottom: 20px;
+      transition: all 0.2s ease;
+      &:focus-within {
+        border-color: #2E7D32;
+        box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.12);
+      }
+    }
+
+    .country-code {
+      font-size: 15px;
+      font-weight: 700;
+      color: #374151;
+      padding-right: 12px;
+      border-right: 1px solid #E5E7EB;
+    }
+
+    .phone-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 17px;
+      font-weight: 700;
+      color: #111827;
+      padding-left: 12px;
+      letter-spacing: 1px;
+      font-family: inherit;
+      &::placeholder {
+        font-weight: 400;
+        font-size: 14px;
+        letter-spacing: 0;
+        color: #9CA3AF;
+      }
+    }
+
+    /* PIN INPUT BOXES (ZOMATO / SWIGGY STYLE) */
+    .pin-digits-wrap {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin: 24px 0 26px;
+    }
+
+    .pin-box {
+      width: 54px;
+      height: 58px;
+      border-radius: 14px;
+      border: 2px solid #D1D5DB;
+      background: #FAFAFA;
+      font-size: 24px;
+      font-weight: 800;
+      text-align: center;
+      color: #111827;
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      &:focus {
+        border-color: #2E7D32;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+        transform: scale(1.05);
+      }
+      &.filled {
+        border-color: #2E7D32;
+        background: #F1F8E9;
+      }
+    }
+
+    /* BUTTONS */
+    .primary-submit-btn {
+      width: 100%;
+      height: 50px;
+      background: #2E7D32;
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(46, 125, 50, 0.35);
+      transition: all 0.2s ease;
+      &:active {
+        transform: scale(0.98);
+        background: #1B5E20;
+      }
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+    }
+
+    .btn-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid #ffffff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .terms-text {
+      font-size: 11px;
+      color: #9CA3AF;
+      text-align: center;
+      margin: 16px 0 0;
+      line-height: 1.5;
+    }
+
+    .link-text {
+      color: #2E7D32;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .extra-actions {
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .text-action-btn {
+      background: transparent;
+      border: none;
+      color: #2E7D32;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 6px;
+      &:hover { text-decoration: underline; }
+    }
+
+    /* REGISTER FORM */
+    .register-container .form-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .input-field-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .text-input {
+      width: 100%;
+      height: 46px;
+      border-radius: 12px;
+      border: 1.5px solid #D1D5DB;
+      padding: 0 14px;
+      font-size: 14px;
+      box-sizing: border-box;
+      outline: none;
+      font-family: inherit;
+      &:focus {
+        border-color: #2E7D32;
+        box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12);
+      }
+    }
+
+    .pin-set-input {
+      font-size: 18px;
+      letter-spacing: 4px;
+      font-weight: 700;
+    }
+
+    /* LOCATION PICKER IN REGISTER */
+    .location-picker-box {
+      background: #F9FAFB;
+      border: 1.5px dashed #D1D5DB;
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .loc-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .loc-label-box {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .loc-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .map-change-btn {
+      background: #E8F5E9;
+      border: 1px solid #C8E6C9;
+      color: #1B5E20;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      &:active { background: #DCEDC8; }
+    }
+
+    .current-selected-addr {
+      background: #ffffff;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .addr-tag {
+      font-size: 12px;
+      color: #2E7D32;
+      font-weight: 800;
+      margin-right: 4px;
+    }
+
+    .addr-text {
+      font-size: 12px;
+      color: #111827;
+      font-weight: 700;
+    }
+
+    .addr-sub {
+      font-size: 11px;
+      color: #6B7280;
+      margin: 2px 0 0;
+      line-height: 1.3;
+    }
+
+    .flat-input {
+      height: 40px;
+      background: #ffffff;
+      font-size: 12.5px;
+    }
+
+    /* ALERTS */
+    .error-banner {
+      background: #FEE2E2;
+      border: 1px solid #FCA5A5;
+      color: #991B1B;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .success-banner {
+      background: #D1FAE5;
+      border: 1px solid #6EE7B7;
+      color: #065F46;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .animate-shake {
+      animation: shake 0.3s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+  `]
+})
+export class AuthModalComponent {
+  private authService = inject(AuthService);
+  private locationService = inject(LocationService);
+
+  @ViewChildren('pinInput') pinInputRefs!: QueryList<ElementRef<HTMLInputElement>>;
+
+  readonly step = signal<AuthStep>('phone');
+  readonly isLoading = signal<boolean>(false);
+  readonly errorMessage = signal<string>('');
+  readonly successMessage = signal<string>('');
+
+  // Step 1
+  phone = '';
+
+  // Step 2
+  existingUserName = signal<string>('');
+  pinDigits = ['', '', '', ''];
+
+  // Step 3
+  name = '';
+  newPin = '';
+  flatNumber = '';
+  selectedAddress: AddressOption = { ...this.authService.activeAddress() };
+  readonly showMapPickerSub = signal<boolean>(false);
+
+  async checkPhone(): Promise<void> {
+    const cleanPhone = this.phone.trim();
+    if (cleanPhone.length !== 10 || !/^\d{10}$/.test(cleanPhone)) {
+      this.errorMessage.set('Please enter a valid 10-digit mobile number');
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+
+    try {
+      const user = await this.authService.checkUser(cleanPhone);
+      if (user) {
+        // Existing user -> Ask for PIN
+        this.existingUserName.set(user.name || 'User');
+        this.pinDigits = ['', '', '', ''];
+        this.step.set('pin');
+        setTimeout(() => this.focusPinIndex(0), 150);
+      } else {
+        // New user -> Register with Name, PIN and Location
+        this.step.set('register');
+        this.detectInitialAddress();
+      }
+    } catch (e: any) {
+      this.errorMessage.set(e.message || 'Network error. Please try again.');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  // --- PIN BOX HANDLERS ---
+  onPinInput(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    const val = input.value.replace(/\D/g, '');
+    this.pinDigits[index] = val ? val[val.length - 1] : '';
+
+    if (val && index < 3) {
+      this.focusPinIndex(index + 1);
+    }
+
+    if (this.getCompletePin().length === 4) {
+      this.submitPinLogin();
+    }
+  }
+
+  onPinKeyDown(event: KeyboardEvent, index: number): void {
+    if (event.key === 'Backspace' && !this.pinDigits[index] && index > 0) {
+      this.pinDigits[index - 1] = '';
+      this.focusPinIndex(index - 1);
+    }
+  }
+
+  private focusPinIndex(index: number): void {
+    const arr = this.pinInputRefs.toArray();
+    if (arr[index]) {
+      arr[index].nativeElement.focus();
+    }
+  }
+
+  getCompletePin(): string {
+    return this.pinDigits.join('');
+  }
+
+  async submitPinLogin(): Promise<void> {
+    const pin = this.getCompletePin();
+    if (pin.length !== 4) return;
+
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+
+    try {
+      await this.authService.loginWithPin(this.phone, pin);
+      this.successMessage.set('Logged in successfully!');
+      setTimeout(() => this.close(), 600);
+    } catch (e: any) {
+      this.errorMessage.set(e.message || 'Invalid PIN');
+      this.pinDigits = ['', '', '', ''];
+      setTimeout(() => this.focusPinIndex(0), 100);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  resetToRegister(): void {
+    this.errorMessage.set('');
+    this.step.set('register');
+    this.detectInitialAddress();
+  }
+
+  // --- REGISTER FLOW ---
+  async detectInitialAddress(): Promise<void> {
+    try {
+      const coords = await this.locationService.getCurrentPosition();
+      const res = await this.locationService.reverseGeocode(coords.lat, coords.lng);
+      this.selectedAddress = {
+        id: 'addr_' + Date.now(),
+        label: 'Home',
+        icon: '🏠',
+        detail: res.detail,
+        fullAddress: res.fullAddress,
+        lat: coords.lat,
+        lng: coords.lng,
+        isDefault: true
+      };
+    } catch (e) {
+      console.warn('Initial address detection skipped:', e);
+    }
+  }
+
+  openMapForRegister(): void {
+    this.showMapPickerSub.set(true);
+  }
+
+  onAddressFromMap(addr: AddressOption): void {
+    this.selectedAddress = addr;
+    this.showMapPickerSub.set(false);
+  }
+
+  async submitRegister(): Promise<void> {
+    if (!this.name.trim()) {
+      this.errorMessage.set('Please enter your full name');
+      return;
+    }
+    if (this.newPin.trim().length !== 4 || !/^\d{4}$/.test(this.newPin)) {
+      this.errorMessage.set('Please set a 4-digit numeric PIN');
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+
+    try {
+      const finalAddress: AddressOption = {
+        ...this.selectedAddress,
+        fullAddress: this.flatNumber.trim() 
+          ? `${this.flatNumber.trim()}, ${this.selectedAddress.fullAddress}`
+          : this.selectedAddress.fullAddress
+      };
+
+      await this.authService.registerUser({
+        phone: this.phone,
+        name: this.name,
+        pin: this.newPin,
+        address: finalAddress
+      });
+
+      this.successMessage.set('Account created successfully!');
+      setTimeout(() => this.close(), 600);
+    } catch (e: any) {
+      this.errorMessage.set(e.message || 'Failed to create account');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  close(): void {
+    this.authService.closeAuthModal();
+  }
+}

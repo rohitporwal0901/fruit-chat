@@ -1,11 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 interface MenuItem {
   icon: string;
   label: string;
   route?: string;
+  action?: () => void;
   toggle?: boolean;
   on?: boolean;
 }
@@ -16,101 +18,130 @@ interface MenuItem {
   imports: [CommonModule, RouterLink],
   template: `
     <div class="profile-page">
-      <!-- PREMIUM HEALTH PROFILE HEADER -->
-      <div class="profile-header">
-        <div class="ph-bg-circle c1"></div>
-        <div class="ph-bg-circle c2"></div>
+      
+      @if (authService.isLoggedIn()) {
+        <!-- LOGGED-IN PROFILE HEADER -->
+        <div class="profile-header">
+          <div class="ph-bg-circle c1"></div>
+          <div class="ph-bg-circle c2"></div>
 
-        <!-- AVATAR -->
-        <div class="avatar-wrap">
-          <div class="avatar">RP</div>
-          <span class="sprout-dot" title="Health Member">&#127793;</span>
-          <button class="edit-avatar" title="Change Photo">&#128247;</button>
-        </div>
-
-        <!-- USER NAME & INFO -->
-        <h2 class="profile-name">Rohit Porwal</h2>
-        <p class="profile-phone">+91 98765 43210</p>
-        <div class="health-member-badge">
-          <span>🥑 Fruit Club • <b>Gold Member</b></span>
-        </div>
-
-        <!-- STATS CARD -->
-        <div class="profile-stats">
-          <div class="stat">
-            <span class="stat-val">24</span>
-            <span class="stat-label">&#129367; Orders</span>
+          <!-- AVATAR -->
+          <div class="avatar-wrap">
+            <div class="avatar">{{ getUserInitials() }}</div>
+            <span class="sprout-dot" title="Health Member">&#127793;</span>
           </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <span class="stat-val">14d</span>
-            <span class="stat-label">&#128293; Streak</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <span class="stat-val">&#8377;1,840</span>
-            <span class="stat-label">&#10024; Saved</span>
-          </div>
-        </div>
-      </div>
 
-      <div class="container profile-content">
-        <!-- ORIGINAL 4 ACTIVITY ITEMS -->
-        <div class="profile-section">
-          <h3 class="section-label">My Activity</h3>
-          <div class="menu-card">
-            @for (item of activityItems; track item.label) {
-              <a [routerLink]="item.route || '/'" class="menu-item">
-                <span class="mi-icon">{{ item.icon }}</span>
-                <span class="mi-label">{{ item.label }}</span>
-                <span class="mi-arrow">›</span>
-              </a>
-            }
+          <!-- USER NAME & INFO -->
+          <h2 class="profile-name">{{ authService.currentUser()?.name }}</h2>
+          <p class="profile-phone">+91 {{ authService.currentUser()?.phone }}</p>
+          <div class="health-member-badge">
+            <span>🥑 Fruit Club • <b>Gold Member</b></span>
           </div>
-        </div>
 
-        <!-- SETTINGS -->
-        <div class="profile-section">
-          <h3 class="section-label">Settings</h3>
-          <div class="menu-card">
-            @for (item of settingsItems; track item.label) {
-              <div class="menu-item">
-                <span class="mi-icon">{{ item.icon }}</span>
-                <span class="mi-label">{{ item.label }}</span>
-                @if (item.toggle) {
-                  <div class="toggle" [class.on]="item.on" (click)="item.on = !item.on">
-                    <div class="toggle-thumb"></div>
-                  </div>
-                } @else {
-                  <span class="mi-arrow">›</span>
-                }
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- RECENT ORDERS -->
-        <div class="profile-section">
-          <h3 class="section-label">Recent Orders</h3>
-          @for (order of recentOrders; track order.id) {
-            <div class="order-card">
-              <div class="order-left">
-                <img [src]="order.image" [alt]="order.name" class="order-img">
-                <div class="order-info">
-                  <p class="order-name">{{ order.name }}</p>
-                  <p class="order-meta">{{ order.date }} • ₹{{ order.price }}</p>
-                </div>
-              </div>
-              <div class="order-right">
-                <span class="order-status delivered">{{ order.statusLabel }}</span>
-                <a routerLink="/menu" class="reorder-btn">Reorder</a>
-              </div>
+          <!-- STATS CARD -->
+          <div class="profile-stats">
+            <div class="stat">
+              <span class="stat-val">24</span>
+              <span class="stat-label">&#129367; Orders</span>
             </div>
-          }
+            <div class="stat-divider"></div>
+            <div class="stat">
+              <span class="stat-val">14d</span>
+              <span class="stat-label">&#128293; Streak</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+              <span class="stat-val">&#8377;1,840</span>
+              <span class="stat-label">&#10024; Saved</span>
+            </div>
+          </div>
         </div>
 
-        <button class="logout-btn">&#128682; Logout</button>
-      </div>
+        <div class="container profile-content">
+          <!-- SAVED ADDRESSES SECTION -->
+          <div class="profile-section">
+            <div class="section-top">
+              <h3 class="section-label">My Saved Addresses</h3>
+              <button class="add-addr-link" (click)="authService.openMapPicker()">+ Add on Map</button>
+            </div>
+            
+            <div class="menu-card">
+              @for (addr of authService.currentUser()?.addresses; track addr.id || addr.fullAddress) {
+                <div 
+                  class="address-row" 
+                  [class.active]="authService.activeAddress().fullAddress === addr.fullAddress"
+                  (click)="authService.setActiveAddress(addr)"
+                >
+                  <span class="ar-icon">{{ addr.icon || '📍' }}</span>
+                  <div class="ar-info">
+                    <div class="ar-title">
+                      <strong>{{ addr.label }}</strong>
+                      @if (authService.activeAddress().fullAddress === addr.fullAddress) {
+                        <span class="ar-badge">Active</span>
+                      }
+                    </div>
+                    <span class="ar-text">{{ addr.fullAddress }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- ACTIVITY ITEMS -->
+          <div class="profile-section">
+            <h3 class="section-label">My Activity</h3>
+            <div class="menu-card">
+              @for (item of activityItems; track item.label) {
+                <a [routerLink]="item.route || '/'" class="menu-item">
+                  <span class="mi-icon">{{ item.icon }}</span>
+                  <span class="mi-label">{{ item.label }}</span>
+                  <span class="mi-arrow">›</span>
+                </a>
+              }
+            </div>
+          </div>
+
+          <!-- SETTINGS -->
+          <div class="profile-section">
+            <h3 class="section-label">Settings</h3>
+            <div class="menu-card">
+              @for (item of settingsItems; track item.label) {
+                <div class="menu-item">
+                  <span class="mi-icon">{{ item.icon }}</span>
+                  <span class="mi-label">{{ item.label }}</span>
+                  @if (item.toggle) {
+                    <div class="toggle" [class.on]="item.on" (click)="item.on = !item.on">
+                      <div class="toggle-thumb"></div>
+                    </div>
+                  } @else {
+                    <span class="mi-arrow">›</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- LOGOUT BUTTON -->
+          <button class="logout-btn" (click)="authService.logout()">
+            &#128682; Logout of Account
+          </button>
+        </div>
+
+      } @else {
+        <!-- LOGGED-OUT CARD (SWIGGY/ZOMATO STYLE) -->
+        <div class="logged-out-container">
+          <div class="guest-card">
+            <div class="guest-icon">🥑</div>
+            <h2 class="guest-title">Account & Preferences</h2>
+            <p class="guest-sub">Log in to view your orders, saved addresses, exclusive fruit club offers, and healthy streaks.</p>
+            
+            <button class="guest-login-btn" (click)="authService.openAuthModal()">
+              Login / Sign Up
+            </button>
+          </div>
+        </div>
+      }
+
     </div>
   `,
   styles: [`
@@ -177,36 +208,20 @@ interface MenuItem {
       font-size: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.18);
     }
-    .edit-avatar {
-      position: absolute;
-      bottom: -1px;
-      right: -1px;
-      background: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      font-size: 11px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    }
 
     /* NAME & PHONE */
     .profile-name {
-      font-size: 19px;
+      font-size: 20px;
       font-weight: 800;
       margin-bottom: 2px;
       letter-spacing: 0.2px;
       color: #fff;
     }
     .profile-phone {
-      font-size: 12px;
-      opacity: 0.85;
+      font-size: 12.5px;
+      opacity: 0.88;
       margin-bottom: 8px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     /* HEALTH MEMBER BADGE */
@@ -235,7 +250,6 @@ interface MenuItem {
       gap: 0;
       background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.22);
       border-radius: 16px;
       padding: 12px 6px;
@@ -272,9 +286,18 @@ interface MenuItem {
     .profile-content {
       padding-top: 18px;
       max-width: 480px;
+      margin: 0 auto;
+      padding-left: 16px;
+      padding-right: 16px;
     }
     .profile-section {
       margin-bottom: 20px;
+    }
+    .section-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
     }
     .section-label {
       font-size: 12px;
@@ -282,8 +305,18 @@ interface MenuItem {
       color: #888;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 10px;
+      margin: 0;
     }
+    .add-addr-link {
+      background: transparent;
+      border: none;
+      color: #2E7D32;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      &:hover { text-decoration: underline; }
+    }
+
     .menu-card {
       background: #fff;
       border-radius: 16px;
@@ -291,6 +324,53 @@ interface MenuItem {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       border: 1px solid #F0F0F0;
     }
+
+    /* ADDRESS ROW */
+    .address-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid #F6F6F6;
+      cursor: pointer;
+      transition: background 0.2s;
+      &:last-child { border-bottom: none; }
+      &:hover { background: #F8F9FA; }
+      &.active {
+        background: #F1F8E9;
+      }
+    }
+    .ar-icon {
+      font-size: 18px;
+      margin-top: 1px;
+    }
+    .ar-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .ar-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      color: #111827;
+    }
+    .ar-badge {
+      background: #2E7D32;
+      color: #fff;
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+    .ar-text {
+      font-size: 11.5px;
+      color: #6B7280;
+      line-height: 1.4;
+    }
+
     .menu-item {
       display: flex;
       align-items: center;
@@ -346,64 +426,6 @@ interface MenuItem {
       transform: translateX(20px);
     }
 
-    /* RECENT ORDERS */
-    .order-card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      border: 1px solid #F0F0F0;
-      margin-bottom: 10px;
-    }
-    .order-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .order-img {
-      width: 52px;
-      height: 52px;
-      border-radius: 10px;
-      object-fit: cover;
-    }
-    .order-name {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 2px;
-      color: #1A1A1A;
-    }
-    .order-meta {
-      font-size: 11px;
-      color: #888;
-    }
-    .order-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 7px;
-    }
-    .order-status {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 999px;
-      &.delivered { background: #E8F5E9; color: #2E7D32; }
-    }
-    .reorder-btn {
-      font-size: 11.5px;
-      font-weight: 700;
-      color: #2E7D32;
-      text-decoration: none;
-      border: 1.5px solid #4CAF50;
-      padding: 3px 11px;
-      border-radius: 999px;
-      transition: all 0.2s;
-      &:hover { background: #2E7D32; color: #fff; }
-    }
-
     .logout-btn {
       width: 100%;
       background: #fff;
@@ -416,15 +438,81 @@ interface MenuItem {
       color: #F44336;
       cursor: pointer;
       transition: all 0.2s;
+      margin-top: 10px;
       &:hover { background: #FFEBEE; }
+    }
+
+    /* GUEST / LOGGED-OUT CARD */
+    .logged-out-container {
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .guest-card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      border: 1px solid #E5E7EB;
+    }
+
+    .guest-icon {
+      font-size: 48px;
+      margin-bottom: 14px;
+    }
+
+    .guest-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: #111827;
+      margin: 0 0 8px;
+    }
+
+    .guest-sub {
+      font-size: 13.5px;
+      color: #6B7280;
+      line-height: 1.5;
+      margin: 0 0 24px;
+    }
+
+    .guest-login-btn {
+      width: 100%;
+      background: #2E7D32;
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(46, 125, 50, 0.35);
+      transition: all 0.2s;
+      &:active { transform: scale(0.98); background: #1B5E20; }
     }
   `]
 })
 export class ProfileComponent {
+  authService = inject(AuthService);
+
+  getUserInitials(): string {
+    const user = this.authService.currentUser();
+    if (!user || !user.name) return 'FC';
+    const parts = user.name.trim().split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return user.name.slice(0, 2).toUpperCase();
+  }
+
   activityItems: MenuItem[] = [
     { icon: '📦', label: 'My Orders', route: '/track-order/FC12345' },
     { icon: '❤️', label: 'Favourites', route: '/menu' },
-    { icon: '📍', label: 'Saved Addresses', route: '/checkout' },
     { icon: '🎟️', label: 'Coupons & Offers', route: '/' },
   ];
 
@@ -434,10 +522,4 @@ export class ProfileComponent {
     { icon: '📞', label: 'Help & Support', toggle: false },
     { icon: 'ℹ️', label: 'About FruitChat', toggle: false },
   ];
-
-  recentOrders = [
-    { id: 'FC12345', name: 'Mix Fruit Chaat', date: '08 Sep', price: 80, image: 'assets/images/mix-fruit-chaat.jpg', statusLabel: 'Delivered' },
-    { id: 'FC12344', name: 'Masala Sprouts', date: '06 Sep', price: 60, image: 'assets/images/masala-sprouts.jpg', statusLabel: 'Delivered' },
-  ];
 }
-

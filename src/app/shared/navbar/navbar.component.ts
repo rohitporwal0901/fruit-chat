@@ -2,18 +2,15 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../core/services/cart.service';
-
-interface AddressOption {
-  icon: string;
-  label: string;
-  detail: string;
-  fullAddress: string;
-}
+import { AuthService } from '../../core/services/auth.service';
+import { AuthModalComponent } from '../auth-modal/auth-modal.component';
+import { MapPickerComponent } from '../map-picker/map-picker.component';
+import { AddressOption } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterLink, RouterLinkActive, CommonModule, AuthModalComponent, MapPickerComponent],
   template: `
     <!-- MOBILE TOP HEADER — only on Home page -->
     @if (isHomePage()) {
@@ -37,9 +34,9 @@ interface AddressOption {
               <circle cx="12" cy="10" r="3"/>
             </svg>
             <span class="loc-text">
-              <strong class="loc-label">{{ currentAddress().label }}</strong>
+              <strong class="loc-label">{{ authService.activeAddress().label }}</strong>
               <span class="loc-sep">-</span>
-              <span class="loc-detail">{{ currentAddress().detail }}</span>
+              <span class="loc-detail">{{ authService.activeAddress().detail }}</span>
             </span>
             <svg class="loc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"/>
@@ -57,12 +54,16 @@ interface AddressOption {
               <span class="action-badge">{{ cartService.totalItems() }}</span>
             }
           </a>
-          <a routerLink="/profile" class="header-action-btn profile-btn-bubble" aria-label="User Profile">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </a>
+
+          @if (authService.isLoggedIn()) {
+            <a routerLink="/profile" class="header-action-btn profile-btn-bubble" aria-label="User Profile">
+              <span class="avatar-letter">{{ getUserInitial() }}</span>
+            </a>
+          } @else {
+            <button class="header-login-btn" (click)="authService.openAuthModal()" type="button">
+              Login
+            </button>
+          }
         </div>
       </header>
 
@@ -79,20 +80,32 @@ interface AddressOption {
             <button class="sheet-close-btn" (click)="closeLocationSheet()">✕</button>
           </div>
 
+          <!-- PICK ON MAP ACTION BUTTON -->
+          <button class="map-action-card" (click)="openMapFromSheet()" type="button">
+            <div class="map-action-icon">🗺️</div>
+            <div class="map-action-info">
+              <span class="map-action-title">Pick on Live Map / GPS</span>
+              <span class="map-action-sub">Pinpoint exact delivery doorstep</span>
+            </div>
+            <span class="map-arrow">›</span>
+          </button>
+
+          <div class="address-section-title">SAVED ADDRESSES</div>
+
           <div class="address-list">
-            @for (addr of savedAddresses; track addr.label) {
+            @for (addr of getAddresses(); track addr.id || addr.label) {
               <div 
                 class="address-card" 
-                [class.active]="currentAddress().label === addr.label"
+                [class.active]="authService.activeAddress().fullAddress === addr.fullAddress"
                 (click)="selectAddress(addr)"
               >
                 <div class="addr-icon-box">
-                  <span class="addr-emoji">{{ addr.icon }}</span>
+                  <span class="addr-emoji">{{ addr.icon || '📍' }}</span>
                 </div>
                 <div class="addr-content">
                   <div class="addr-top">
                     <span class="addr-tag">{{ addr.label }}</span>
-                    @if (currentAddress().label === addr.label) {
+                    @if (authService.activeAddress().fullAddress === addr.fullAddress) {
                       <span class="selected-pill">Delivering here</span>
                     }
                   </div>
@@ -121,10 +134,34 @@ interface AddressOption {
             <span class="brand-tagline">Fresh Fruits • Healthy Sprouts</span>
           </div>
         </a>
+
+        <!-- DESKTOP LOCATION SELECTOR -->
+        <button class="desktop-location-btn" (click)="authService.openMapPicker()" type="button">
+          <svg class="loc-pin" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <div class="desktop-loc-text">
+            <span class="dloc-label">{{ authService.activeAddress().label }}</span>
+            <span class="dloc-detail">{{ authService.activeAddress().detail }}</span>
+          </div>
+        </button>
+
         <nav class="desktop-nav">
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">Home</a>
           <a routerLink="/menu" routerLinkActive="active" class="nav-link">Menu</a>
-          <a routerLink="/profile" routerLinkActive="active" class="nav-link">Profile</a>
+
+          @if (authService.isLoggedIn()) {
+            <a routerLink="/profile" routerLinkActive="active" class="nav-link profile-link">
+              <span class="nav-avatar">{{ getUserInitial() }}</span>
+              <span>{{ getFirstName() }}</span>
+            </a>
+          } @else {
+            <button class="nav-login-btn" (click)="authService.openAuthModal()" type="button">
+              Login / Signup
+            </button>
+          }
+
           <a routerLink="/cart" class="cart-btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -148,6 +185,7 @@ interface AddressOption {
         </svg>
         <span class="bnav-label">Home</span>
       </a>
+
       <a routerLink="/menu" routerLinkActive="active" class="bnav-item">
         <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="6" x2="21" y2="6"/>
@@ -156,6 +194,7 @@ interface AddressOption {
         </svg>
         <span class="bnav-label">Menu</span>
       </a>
+
       <a routerLink="/cart" routerLinkActive="active" class="bnav-item cart-item">
         <div class="bnav-cart-wrap">
           <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -168,14 +207,34 @@ interface AddressOption {
         </div>
         <span class="bnav-label">Cart</span>
       </a>
-      <a routerLink="/profile" routerLinkActive="active" class="bnav-item">
-        <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-        <span class="bnav-label">Profile</span>
-      </a>
+
+      @if (authService.isLoggedIn()) {
+        <a routerLink="/profile" routerLinkActive="active" class="bnav-item">
+          <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span class="bnav-label">Profile</span>
+        </a>
+      } @else {
+        <button class="bnav-item bnav-btn-action" (click)="authService.openAuthModal()" type="button">
+          <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+          </svg>
+          <span class="bnav-label">Login</span>
+        </button>
+      }
     </nav>
+
+    <!-- AUTH MODAL -->
+    @if (authService.showAuthModal()) {
+      <app-auth-modal></app-auth-modal>
+    }
+
+    <!-- MAP PICKER MODAL -->
+    @if (authService.showMapPicker()) {
+      <app-map-picker></app-map-picker>
+    }
   `,
   styles: [`
     /* ===== GRADIENT SHIMMER TEXT ===== */
@@ -370,13 +429,33 @@ interface AddressOption {
     }
 
     .profile-btn-bubble {
-      background: #F8F9FA;
-      border: 1px solid #E9ECEF;
-      color: #495057;
+      background: #E8F5E9;
+      border: 1.5px solid #A5D6A7;
+      color: #1B5E20;
       &:active {
-        background: #E9ECEF;
         transform: scale(0.94);
       }
+    }
+
+    .avatar-letter {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      color: #1B5E20;
+    }
+
+    .header-login-btn {
+      background: #2E7D32;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 7px 13px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(46, 125, 50, 0.25);
+      &:active { transform: scale(0.95); background: #1B5E20; }
     }
 
     .action-badge {
@@ -422,16 +501,8 @@ interface AddressOption {
       animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       max-width: 500px;
       margin: 0 auto;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
+      max-height: 80vh;
+      overflow-y: auto;
     }
 
     .sheet-drag-handle {
@@ -446,7 +517,7 @@ interface AddressOption {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .sheet-title {
@@ -478,6 +549,60 @@ interface AddressOption {
       &:active {
         background: #E5E7EB;
       }
+    }
+
+    /* MAP ACTION BUTTON */
+    .map-action-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      background: #F1F8E9;
+      border: 1.5px solid #C8E6C9;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      &:active { transform: scale(0.98); background: #DCEDC8; }
+    }
+
+    .map-action-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .map-action-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .map-action-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #1B5E20;
+    }
+
+    .map-action-sub {
+      font-size: 11px;
+      color: #4CAF50;
+      margin-top: 1px;
+    }
+
+    .map-arrow {
+      font-size: 20px;
+      color: #2E7D32;
+    }
+
+    .address-section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #9CA3AF;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
     }
 
     .address-list {
@@ -574,6 +699,44 @@ interface AddressOption {
       height: 100%;
     }
 
+    .desktop-location-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #F8F9FA;
+      border: 1px solid #E5E7EB;
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      &:hover {
+        background: #F1F8E9;
+        border-color: #C8E6C9;
+      }
+    }
+
+    .desktop-loc-text {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .dloc-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1F2937;
+    }
+
+    .dloc-detail {
+      font-size: 11px;
+      color: #6B7280;
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .desktop-nav {
       display: flex;
       align-items: center;
@@ -590,6 +753,42 @@ interface AddressOption {
       transition: all 0.2s;
       &:hover { background: #F1F8E9; color: #2E7D32; }
       &.active { background: #F1F8E9; color: #2E7D32; font-weight: 600; }
+    }
+
+    .profile-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-avatar {
+      width: 22px;
+      height: 22px;
+      background: #2E7D32;
+      color: #fff;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .nav-login-btn {
+      background: #F1F8E9;
+      color: #2E7D32;
+      border: 1px solid #C8E6C9;
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:hover {
+        background: #2E7D32;
+        color: #fff;
+      }
     }
 
     .cart-btn {
@@ -649,6 +848,10 @@ interface AddressOption {
       transition: all 0.2s;
       min-width: 56px;
       flex: 1;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      cursor: pointer;
       &.active {
         color: #2E7D32;
         .bnav-icon { transform: translateY(-1px); }
@@ -693,35 +896,50 @@ interface AddressOption {
 })
 export class NavbarComponent {
   cartService = inject(CartService);
+  authService = inject(AuthService);
   private router = inject(Router);
 
   showLocationSheet = false;
 
-  savedAddresses: AddressOption[] = [
+  private defaultSavedAddresses: AddressOption[] = [
     {
+      id: 'addr_default_home',
       icon: '🏠',
       label: 'Home',
       detail: 'Sector 15, City Center',
       fullAddress: 'Flat 402, Green Valley Apartments, Sector 15'
     },
     {
+      id: 'addr_default_work',
       icon: '🏢',
       label: 'Work',
       detail: 'Tech Park, Phase 2',
       fullAddress: 'Tower B, 4th Floor, Tech Park, Phase 2'
-    },
-    {
-      icon: '📍',
-      label: 'Other',
-      detail: 'Model Town, Block C',
-      fullAddress: 'House 142, Block C, Model Town'
     }
   ];
 
-  currentAddress = signal<AddressOption>(this.savedAddresses[0]);
-
   isHomePage(): boolean {
     return this.router.url === '/' || this.router.url === '';
+  }
+
+  getUserInitial(): string {
+    const user = this.authService.currentUser();
+    if (!user || !user.name) return 'U';
+    return user.name.charAt(0).toUpperCase();
+  }
+
+  getFirstName(): string {
+    const user = this.authService.currentUser();
+    if (!user || !user.name) return 'User';
+    return user.name.split(' ')[0];
+  }
+
+  getAddresses(): AddressOption[] {
+    const user = this.authService.currentUser();
+    if (user && user.addresses && user.addresses.length > 0) {
+      return user.addresses;
+    }
+    return this.defaultSavedAddresses;
   }
 
   openLocationSheet(): void {
@@ -732,8 +950,13 @@ export class NavbarComponent {
     this.showLocationSheet = false;
   }
 
+  openMapFromSheet(): void {
+    this.closeLocationSheet();
+    this.authService.openMapPicker();
+  }
+
   selectAddress(addr: AddressOption): void {
-    this.currentAddress.set(addr);
+    this.authService.setActiveAddress(addr);
     this.closeLocationSheet();
   }
 }
