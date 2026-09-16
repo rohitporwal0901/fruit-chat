@@ -47,59 +47,141 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
            ══════════════════════════════════════════════ -->
       @if (showLanding()) {
         <div class="landing">
+          <div class="landing-scroll-body">
 
-          <!-- ── Green showcase area ── -->
-          <div class="showcase">
+            <!-- ── Top Header: F-Logo & Location Pill (No arrow) ── -->
+            <header class="top-header">
+              <div class="brand-logo" aria-label="FruitChat Logo">
+                <svg viewBox="0 0 54 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="f-logo-svg">
+                  <!-- Stem and bars of F with curved leaf top -->
+                  <path d="M10 8C10 6.34315 11.3431 5 13 5H30C31.6569 5 33 6.34315 33 8C33 9.65685 31.6569 11 30 11H17V22H29C30.6569 22 32 23.3431 32 25C32 26.6569 30.6569 28 29 28H17V42C17 43.6569 15.6569 45 14 45C12.3431 45 11 43.6569 11 42V8Z" fill="#1E5E28"/>
+                  <!-- Curved leaf flourishing from the top bar -->
+                  <path d="M31 7C36 6.5 42 4.5 49 2C48 8 44 14.5 37 15C33.5 15.2 31.5 12 31 7Z" fill="#2E7D32"/>
+                  <!-- Delicate leaf center vein -->
+                  <path d="M32 8C37 7.5 43 5.5 47.5 3.5" stroke="#A5D6A7" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+              </div>
 
-            <!-- Swiggy-style rounded-square badge icon -->
-            <div class="showcase-badge">
-              <svg viewBox="0 0 100 100" fill="none" class="badge-svg">
-                <rect x="2" y="2" width="96" height="96" rx="24" ry="24" fill="white"/>
-                <path d="M32 28H64C66.2 28 68 29.8 68 32C68 34.2 66.2 36 64 36H40V50H58C60.2 50 62 51.8 62 54C62 56.2 60.2 58 58 58H40V76C40 78.2 38.2 80 36 80C33.8 80 32 78.2 32 76V28Z"
-                      fill="#2E7D32"/>
-                <circle cx="68" cy="24" r="9" fill="#66BB6A"/>
-                <circle cx="68" cy="24" r="5" fill="#C8E6C9"/>
-              </svg>
+              <!-- Location Pill: Indore (Single Location, No Arrow) -->
+              <div class="location-pill">
+                <span class="loc-pin">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="#E53935">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+                  </svg>
+                </span>
+                <span class="loc-city">Indore</span>
+              </div>
+            </header>
+
+            <!-- ── Hero Headings & Tagline Row (Perfect Alignment) ── -->
+            <div class="hero-block">
+              <div class="hero-meta-row">
+                <span class="tagline">FRESH &bull; HEALTHY &bull; DELICIOUS</span>
+                <span class="doodle-chip">
+                  <span class="doodle-sparkle">~</span>
+                  Good Food, Good Mood <span class="doodle-heart">💚</span>
+                  <span class="doodle-sparkle">~</span>
+                </span>
+              </div>
+
+              <h1 class="main-heading">
+                One app for fresh fruits,<br>
+                juices, bowls &amp; more <span class="mins-wrap">in mins!
+                  <svg class="brush-svg" viewBox="0 0 110 12" fill="none">
+                    <path d="M2 6C30 2 80 2 108 6" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+                  </svg>
+                </span>
+              </h1>
             </div>
 
-            <!-- Heading -->
-            <h2 class="showcase-heading">
-              One app for fresh fruits,<br>juices, bowls and more in mins!
-            </h2>
-
-            <!-- ── PHOTO CAROUSEL (Swiggy page-over style) ── -->
-            <div class="carousel">
-              <!-- Current slide (stationary) -->
-              <div class="slide slide-current">
-                <img [src]="photos[currentSlide()]" alt="FruitChat food" class="slide-img"/>
-              </div>
-
-              <!-- Entering slide (slides OVER current from right) -->
-              @if (enteringSlide() >= 0) {
-                <div class="slide slide-entering" (animationend)="onSlideEnd()">
-                  <img [src]="photos[enteringSlide()]" alt="FruitChat food" class="slide-img"/>
+            <!-- ── 4 Feature Highlight Badges ── -->
+            <div class="features-row">
+              <div class="feature-item">
+                <div class="feature-icon-circle f-green">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                  </svg>
                 </div>
-              }
-
-              <!-- 100% Fresh badge overlay on photo -->
-              <div class="slide-badge">
-                <span>🌿</span>
-                <span class="slide-badge-text">100% Farm Fresh &amp; Pure</span>
+                <span class="feature-label">Fresh<br>Ingredients</span>
               </div>
 
-              <!-- Dot indicators -->
-              <div class="carousel-dots">
-                @for (p of photos; track $index) {
-                  <div class="cdot" [class.cdot-active]="$index === currentSlide()"></div>
+              <div class="feature-item">
+                <div class="feature-icon-circle f-pink">
+                  <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#E53935" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </div>
+                <span class="feature-label">Healthy<br>Choices</span>
+              </div>
+
+              <div class="feature-item">
+                <div class="feature-icon-circle f-amber">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#F57F17" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                </div>
+                <span class="feature-label">Quick<br>Delivery</span>
+              </div>
+
+              <div class="feature-item">
+                <div class="feature-icon-circle f-purple">
+                  <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#7E57C2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <polyline points="9 12 11 14 15 10"/>
+                  </svg>
+                </div>
+                <span class="feature-label">Safe &amp;<br>Hygienic</span>
+              </div>
+            </div>
+
+            <!-- ── Hero Food Dish Card / Carousel ── -->
+            <div class="dish-showcase">
+              <div class="carousel">
+                <!-- 100% Fresh Angled Sticker Badge -->
+                <div class="fresh-sticker">
+                  <span class="sticker-text">100% Fresh</span>
+                  <span class="sticker-leaf">🌿</span>
+                </div>
+
+                <!-- Current slide -->
+                <div class="slide slide-current">
+                  <img [src]="photos[currentSlide()]" alt="FruitChat Fresh Food" class="slide-img"/>
+                </div>
+
+                <!-- Entering slide (Swiggy page-over) -->
+                @if (enteringSlide() >= 0) {
+                  <div class="slide slide-entering" (animationend)="onSlideEnd()">
+                    <img [src]="photos[enteringSlide()]" alt="FruitChat Fresh Food" class="slide-img"/>
+                  </div>
                 }
+
+                <!-- Dots indicator inside image bottom -->
+                <div class="carousel-dots">
+                  @for (p of photos; track $index) {
+                    <div class="cdot" [class.cdot-active]="$index === currentSlide()"></div>
+                  }
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- ── Bottom white card — slides up like Swiggy ── -->
-          <div class="lcard" [class.lcard-up]="landingCardUp()">
-            <button type="button" class="login-btn" id="login-btn" (click)="openActionSheet()">
-              Login
+          <!-- ── Bottom Action Dock (Sticky & Always Visible on Mini Mobile) ── -->
+          <div class="bottom-action-dock" [class.dock-up]="landingCardUp()">
+            <button type="button" class="login-pill-btn" id="login-btn" (click)="openActionSheet()">
+              <span class="btn-icon user-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <span class="btn-text">Login</span>
+              <span class="btn-icon arrow-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </span>
             </button>
           </div>
         </div>
@@ -384,9 +466,11 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       inset: 0;
       width: 100vw;
       height: 100vh;
-      background: #1B5E20;
+      height: 100dvh;
+      background: #FAF8F5;
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       overflow: hidden;
+      color: #111827;
     }
 
     /* ═══════════════════════════════════════════════
@@ -467,64 +551,227 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
     }
 
     /* ═══════════════════════════════════════════════
-       LANDING SCREEN
+       LANDING SCREEN (Modern Fresh Light Aesthetic)
        ═══════════════════════════════════════════════ */
     .landing {
       position: absolute;
       inset: 0;
-      z-index: 1;                 /* behind splash */
+      z-index: 1;
       display: flex;
       flex-direction: column;
-      background: #2E7D32;
+      justify-content: space-between;
+      background: #FAF8F5;
+      max-width: 480px;
+      margin: 0 auto;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
     }
 
-    /* ── Green showcase area — flex:1 fills remaining space above lcard ── */
-    .showcase {
+    .landing-scroll-body {
       flex: 1;
-      background: linear-gradient(175deg, #1B5E20 0%, #2E7D32 55%, #388E3C 100%);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: clamp(10px, 1.6vh, 16px) clamp(14px, 4vw, 20px) 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      scrollbar-width: none;
+      &::-webkit-scrollbar { display: none; }
+    }
+
+    /* ── Top Header ── */
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: max(4px, env(safe-area-inset-top));
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .f-logo-svg {
+      width: 42px;
+      height: 44px;
+      filter: drop-shadow(0 2px 4px rgba(27, 94, 32, 0.12));
+    }
+
+    .location-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFFFFF;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      &:active { transform: scale(0.97); }
+    }
+
+    .loc-pin {
+      display: flex;
+      align-items: center;
+    }
+
+    .loc-city {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1F2937;
+    }
+
+    /* ── Hero Headings Block ── */
+    .hero-block {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin: 4px 0 8px;
+    }
+
+    .hero-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .tagline {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 1.8px;
+      color: #1E6E28;
+      text-transform: uppercase;
+      margin: 0;
+      text-align: left;
+    }
+
+    .doodle-chip {
+      font-family: 'Caveat', cursive, sans-serif;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #2E7D32;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .doodle-sparkle {
+      color: #4CAF50;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .doodle-heart {
+      font-size: 13px;
+      animation: heartbeat 2.2s infinite ease-in-out;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      14% { transform: scale(1.22); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.18); }
+    }
+
+    .main-heading {
+      font-size: clamp(21px, 5.8vw, 27px);
+      font-weight: 900;
+      color: #122818;
+      line-height: 1.2;
+      letter-spacing: -0.4px;
+      margin: 0;
+      text-align: left;
+    }
+
+    .green-highlight {
+      color: #1B5E20;
+    }
+
+    .mins-wrap {
+      position: relative;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .brush-svg {
+      position: absolute;
+      left: -2px;
+      bottom: -3px;
+      width: calc(100% + 4px);
+      height: 7px;
+      pointer-events: none;
+    }
+
+    /* ── Features Badges ── */
+    .features-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin: 4px 0 8px;
+      flex-shrink: 0;
+    }
+
+    .feature-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 36px 16px 0;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Swiggy-style square badge */
-    .showcase-badge {
-      width: 50px;
-      height: 50px;
-      border-radius: 14px;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.22));
-      margin-bottom: 10px;
-      flex-shrink: 0;
-    }
-
-    .badge-svg { width: 100%; height: 100%; border-radius: 12px; }
-
-    .showcase-heading {
-      font-size: 21px;          /* slightly smaller */
-      font-weight: 800;
-      color: #FFFFFF;
-      line-height: 1.28;
       text-align: center;
-      margin: 0 0 10px;         /* tighter margin */
-      max-width: 300px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      flex-shrink: 0;
+      gap: 5px;
     }
 
-    /* ── CAROUSEL — Swiggy "page over" style ── */
-    .carousel {
-      width: 100%;
-      max-width: 100%;
-      flex: 1;               /* fill remaining height in showcase */
+    .feature-icon-circle {
+      width: clamp(36px, 9.6vw, 44px);
+      height: clamp(36px, 9.6vw, 44px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      transition: transform 0.18s ease;
+      &:hover { transform: scale(1.05); }
+    }
+
+    .f-green  { background: #E8F5E9; border: 1.2px solid #C8E6C9; }
+    .f-pink   { background: #FFEBEE; border: 1.2px solid #FFCDD2; }
+    .f-amber  { background: #FFF8E1; border: 1.2px solid #FFE082; }
+    .f-purple { background: #EDE7F6; border: 1.2px solid #D1C4E9; }
+
+    .feature-label {
+      font-size: clamp(9.5px, 2.6vw, 11px);
+      font-weight: 700;
+      color: #374151;
+      line-height: 1.2;
+      letter-spacing: -0.2px;
+    }
+
+    /* ── Dish Showcase / Carousel (Fills vertical space right to login) ── */
+    .dish-showcase {
       position: relative;
+      width: 100%;
+      flex: 1;
+      min-height: 240px;
+      border-radius: 26px;
       overflow: hidden;
-      border-radius: 18px 18px 0 0;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      background: #E5E7EB;
+      margin: 0 0 10px 0;
+      display: flex;
     }
 
-    /* Each slide is position absolute, fills the carousel */
+    .carousel {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
     .slide {
       position: absolute;
       inset: 0;
@@ -534,15 +781,14 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
       display: block;
     }
 
-    /* Current slide — stays still, lower z-index */
     .slide-current {
       z-index: 1;
     }
 
-    /* Entering slide — slides FROM RIGHT, OVER current (higher z-index) */
     .slide-entering {
       z-index: 2;
       animation: slidePageOver 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -553,91 +799,100 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       to   { transform: translateX(0); }
     }
 
-    /* 100% Fresh badge over photo */
-    .slide-badge {
+    .fresh-sticker {
       position: absolute;
-      bottom: 36px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 3;
-      background: rgba(255,255,255,0.93);
-      backdrop-filter: blur(8px);
-      border-radius: 30px;
-      padding: 6px 16px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      white-space: nowrap;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    }
-
-    .slide-badge-text {
+      top: 12px;
+      left: 12px;
+      z-index: 5;
+      background: #1B5E20;
+      color: #FFFFFF;
+      padding: 5px 12px;
+      border-radius: 9999px;
       font-size: 11.5px;
       font-weight: 800;
-      color: #1B5E20;
+      letter-spacing: 0.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+      transform: rotate(-6deg);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
     }
 
-    /* Dot indicators at bottom of carousel */
+    .sticker-leaf {
+      font-size: 12px;
+    }
+
     .carousel-dots {
       position: absolute;
-      bottom: 10px;
+      bottom: 12px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 4;
+      z-index: 6;
       display: flex;
-      gap: 5px;
+      gap: 6px;
+      align-items: center;
     }
 
     .cdot {
-      width: 6px;
-      height: 6px;
+      width: 6.5px;
+      height: 6.5px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.45);
-      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.65);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .cdot-active {
-      width: 18px;
-      border-radius: 4px;
-      background: #FFFFFF;
+      background: #1B5E20;
+      width: 16px;
+      border-radius: 9999px;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
     }
 
-    /* ── Bottom white card ── */
-    .lcard {
-      background: #FFFFFF;
-      border-top-left-radius: 26px;
-      border-top-right-radius: 26px;
-      padding: 20px 20px 24px;
-      box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+    /* ── Sticky Bottom Action Dock (Clean, No Extra Gap) ── */
+    .bottom-action-dock {
+      position: sticky;
+      bottom: 0;
+      z-index: 20;
+      background: linear-gradient(180deg, rgba(250, 248, 245, 0) 0%, rgba(250, 248, 245, 0.95) 20%, #FAF8F5 100%);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 6px 18px max(18px, env(safe-area-inset-bottom));
       display: flex;
       flex-direction: column;
       align-items: center;
-      z-index: 2;
-
-      /* Start off-screen at bottom, slide up */
-      transform: translateY(100%);
-      transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 100%;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      animation: dockSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    .lcard.lcard-up {
-      transform: translateY(0);
+    @keyframes dockSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    .login-btn {
+    .login-pill-btn {
       position: relative;
       overflow: hidden;
       width: 100%;
+      max-width: 440px;
       height: 52px;
-      background: #2E7D32;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #1B6E2C 0%, #155A22 100%);
       color: #FFFFFF;
       border: none;
-      border-radius: 14px;
       font-family: inherit;
       font-size: 17px;
       font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(46,125,50,0.38);
-      transition: transform 0.14s ease, background 0.2s;
+      box-shadow: 0 6px 20px rgba(22, 101, 52, 0.32);
+      transition: transform 0.14s ease, box-shadow 0.2s ease;
 
       &::after {
         content: '';
@@ -649,15 +904,36 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
         background: linear-gradient(
           60deg,
           rgba(255, 255, 255, 0) 0%,
-          rgba(255, 255, 255, 0.4) 50%,
+          rgba(255, 255, 255, 0.35) 50%,
           rgba(255, 255, 255, 0) 100%
         );
         transform: rotate(25deg);
-        animation: btnShimmer 2.8s infinite ease-in-out;
+        animation: btnShimmer 3s infinite ease-in-out;
         pointer-events: none;
       }
 
-      &:active { transform: scale(0.98); background: #1B5E20; }
+      &:active {
+        transform: scale(0.98);
+        box-shadow: 0 3px 10px rgba(22, 101, 52, 0.3);
+      }
+    }
+
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .user-icon {
+      margin-right: -2px;
+    }
+
+    .arrow-icon {
+      margin-left: 2px;
+      transition: transform 0.2s ease;
+    }
+
+    .login-pill-btn:hover .arrow-icon {
+      transform: translateX(3px);
     }
 
     @keyframes btnShimmer {
@@ -1015,12 +1291,10 @@ export class AuthComponent implements OnInit, OnDestroy {
 
   /* ── Carousel ─────────────────────────────────── */
   readonly photos = [
-    'assets/images/mix-fruit-chaat.jpg',
-    'assets/images/fresh-juice.jpg',
-    'assets/images/watermelon-chaat.jpg',
+    'assets/images/fruit-bowl-hero.jpg',
     'assets/images/pineapple-chaat.jpg',
-    'assets/images/masala-sprouts.jpg',
-    'assets/images/boiled-sprouts.jpg'
+    'assets/images/mix-fruit-chaat.jpg',
+    'assets/images/watermelon-chaat.jpg'
   ];
   readonly currentSlide  = signal<number>(0);
   readonly enteringSlide = signal<number>(-1);   // -1 = no transition
@@ -1064,23 +1338,17 @@ export class AuthComponent implements OnInit, OnDestroy {
 
   /* ── Splash → Landing flow ────────────────────── */
   private runSplashFlow(): void {
-    // After 2.4s: start shutter exit AND render landing behind it
+    // Quick brand splash (1.4s), then smooth shutter exit
     this.splashTimer = setTimeout(() => {
       this.splashExiting.set(true);  // shutter starts sliding up
       this.showLanding.set(true);    // landing renders underneath
 
-      // After shutter animation (720ms): remove splash from DOM
       setTimeout(() => {
         this.showSplash.set(false);
-
-        // 100ms later: landing card slides up from bottom
-        setTimeout(() => {
-          this.landingCardUp.set(true);
-          // 400ms later: start carousel cycling
-          setTimeout(() => this.startCarousel(), 400);
-        }, 100);
-      }, 720);
-    }, 2400);
+        this.landingCardUp.set(true);
+        setTimeout(() => this.startCarousel(), 400);
+      }, 600);
+    }, 1400);
   }
 
   /* ── Carousel ─────────────────────────────────── */
