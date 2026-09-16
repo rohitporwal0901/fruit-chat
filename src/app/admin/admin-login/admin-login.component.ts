@@ -27,6 +27,12 @@ export class AdminLoginComponent {
 
   togglePassword() { this.showPassword.update(v => !v); }
 
+  fillDemoCredentials() {
+    this.email = 'admin@fruitchat.com';
+    this.password = '123456';
+    this.errorMsg.set('');
+  }
+
   async onSubmit() {
     if (!this.email || !this.password) {
       this.errorMsg.set('Please enter email and password.');
