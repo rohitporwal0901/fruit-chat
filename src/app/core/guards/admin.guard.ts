@@ -3,14 +3,11 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 export const adminGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
   const router = inject(Router);
 
-  // Admin check: isLoggedIn AND email is admin email
-  const user = auth.currentUser();
-  const adminEmails = ['admin@fruitchat.com', 'fruitchat.admin@gmail.com'];
+  const isLoggedIn = localStorage.getItem('fc_admin_logged_in') === 'true';
 
-  if (user && adminEmails.includes(user.email ?? '')) {
+  if (isLoggedIn) {
     return true;
   }
 

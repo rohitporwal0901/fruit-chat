@@ -18,8 +18,8 @@ export class AdminLoginComponent {
   private router = inject(Router);
   snackbar = inject(SnackbarService);
 
-  email = '';
-  password = '';
+  email = 'admin@fruitchat.com';
+  password = '123456';
 
   isLoading = signal(false);
   errorMsg = signal('');
@@ -33,17 +33,26 @@ export class AdminLoginComponent {
       return;
     }
 
-    const adminEmails = ['admin@fruitchat.com', 'fruitchat.admin@gmail.com'];
-    if (!adminEmails.includes(this.email)) {
-      this.errorMsg.set('Access denied. Not an admin account.');
-      return;
-    }
-
     this.isLoading.set(true);
     this.errorMsg.set('');
 
+    // Quick admin credentials (just like Khandelwal cards)
+    if (
+      (this.email.trim().toLowerCase() === 'admin@fruitchat.com' || this.email.trim().toLowerCase() === 'fruitchat.admin@gmail.com') &&
+      (this.password === '123456' || this.password === 'admin' || this.password === 'admin123')
+    ) {
+      setTimeout(() => {
+        localStorage.setItem('fc_admin_logged_in', 'true');
+        this.snackbar.show('Logged in successfully!', 'success');
+        this.router.navigate(['/admin/dashboard']);
+        this.isLoading.set(false);
+      }, 500);
+      return;
+    }
+
     try {
       await signInWithEmailAndPassword(this.auth, this.email, this.password);
+      localStorage.setItem('fc_admin_logged_in', 'true');
       this.snackbar.show('Logged in successfully!', 'success');
       this.router.navigate(['/admin/dashboard']);
     } catch (err: any) {
