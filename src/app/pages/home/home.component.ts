@@ -69,15 +69,6 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
-      <!-- USER WELCOME STRIP -->
-      @if (authService.isLoggedIn()) {
-        <div class="container welcome-strip-wrap">
-          <div class="user-welcome-strip">
-            <span class="uws-hello">Hello, <b>{{ getFirstName() }}</b>! 👋 Welcome to FruitChat</span>
-          </div>
-        </div>
-      }
-
       <!-- SEARCH BAR -->
       <div class="container search-section">
         <div class="search-bar">
@@ -929,29 +920,6 @@ import { Product } from '../../core/models/product.model';
       .pop-card { max-width: 190px; width: 22vw; }
       .floating-cart { max-width: 420px; bottom: 24px; }
     }
-
-    /* USER WELCOME STRIP */
-    .welcome-strip-wrap {
-      margin-top: 10px;
-      margin-bottom: -4px;
-    }
-
-    .user-welcome-strip {
-      display: flex;
-      align-items: center;
-      background: #F1F8E9;
-      border: 1px solid #DCEDC8;
-      border-radius: 14px;
-      padding: 10px 16px;
-      box-shadow: 0 2px 6px rgba(46, 125, 50, 0.06);
-    }
-
-    .uws-hello {
-      font-family: 'Outfit', sans-serif;
-      font-size: 13.5px;
-      color: #1B5E20;
-      font-weight: 700;
-    }
   `]
 })
 export class HomeComponent implements AfterViewInit, OnDestroy {
@@ -959,11 +927,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   cartService = inject(CartService);
   authService = inject(AuthService);
   searchQuery = '';
-
-  getFirstName(): string {
-    const u = this.authService.currentUser();
-    return u?.name ? u.name.split(' ')[0] : 'Foodie';
-  }
 
   selectedCategory = signal<string>('all');
 

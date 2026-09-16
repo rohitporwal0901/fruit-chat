@@ -4,13 +4,10 @@ import { CommonModule } from '@angular/common';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 import { AuthModalComponent } from '../auth-modal/auth-modal.component';
-import { MapPickerComponent } from '../map-picker/map-picker.component';
-import { AddressOption } from '../../core/models/user.model';
-
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, CommonModule, AuthModalComponent, MapPickerComponent],
+  imports: [RouterLink, RouterLinkActive, CommonModule, AuthModalComponent],
   template: `
     <!-- MOBILE TOP HEADER — only on Home page -->
     @if (isHomePage()) {
@@ -27,21 +24,6 @@ import { AddressOption } from '../../core/models/user.model';
               <span>15-20 MINS</span>
             </div>
           </div>
-
-          <button class="location-btn" (click)="openLocationSheet()" type="button">
-            <svg class="loc-pin" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
-            <span class="loc-text">
-              <strong class="loc-label">{{ authService.activeAddress().label }}</strong>
-              <span class="loc-sep">-</span>
-              <span class="loc-detail">{{ authService.activeAddress().detail }}</span>
-            </span>
-            <svg class="loc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
         </div>
 
         <div class="header-right">
@@ -71,55 +53,6 @@ import { AddressOption } from '../../core/models/user.model';
         </div>
       </header>
 
-      <!-- LOCATION SELECTION BOTTOM SHEET -->
-      @if (showLocationSheet) {
-        <div class="sheet-backdrop" (click)="closeLocationSheet()"></div>
-        <div class="sheet-container">
-          <div class="sheet-drag-handle"></div>
-          <div class="sheet-header">
-            <div>
-              <h3 class="sheet-title">Select Delivery Location</h3>
-              <p class="sheet-subtitle">Fresh fruits & snacks delivered in 15-20 mins</p>
-            </div>
-            <button class="sheet-close-btn" (click)="closeLocationSheet()">✕</button>
-          </div>
-
-          <!-- PICK ON MAP ACTION BUTTON -->
-          <button class="map-action-card" (click)="openMapFromSheet()" type="button">
-            <div class="map-action-icon">🗺️</div>
-            <div class="map-action-info">
-              <span class="map-action-title">Pick on Live Map / GPS</span>
-              <span class="map-action-sub">Pinpoint exact delivery doorstep</span>
-            </div>
-            <span class="map-arrow">›</span>
-          </button>
-
-          <div class="address-section-title">SAVED ADDRESSES</div>
-
-          <div class="address-list">
-            @for (addr of getAddresses(); track addr.id || addr.label) {
-              <div 
-                class="address-card" 
-                [class.active]="authService.activeAddress().fullAddress === addr.fullAddress"
-                (click)="selectAddress(addr)"
-              >
-                <div class="addr-icon-box">
-                  <span class="addr-emoji">{{ addr.icon || '📍' }}</span>
-                </div>
-                <div class="addr-content">
-                  <div class="addr-top">
-                    <span class="addr-tag">{{ addr.label }}</span>
-                    @if (authService.activeAddress().fullAddress === addr.fullAddress) {
-                      <span class="selected-pill">Delivering here</span>
-                    }
-                  </div>
-                  <p class="addr-desc">{{ addr.fullAddress }}</p>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
     }
 
     <!-- DESKTOP TOP NAV -->
@@ -138,18 +71,6 @@ import { AddressOption } from '../../core/models/user.model';
             <span class="brand-tagline">Fresh Fruits • Healthy Sprouts</span>
           </div>
         </a>
-
-        <!-- DESKTOP LOCATION SELECTOR -->
-        <button class="desktop-location-btn" (click)="authService.openMapPicker()" type="button">
-          <svg class="loc-pin" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-          <div class="desktop-loc-text">
-            <span class="dloc-label">{{ authService.activeAddress().label }}</span>
-            <span class="dloc-detail">{{ authService.activeAddress().detail }}</span>
-          </div>
-        </button>
 
         <nav class="desktop-nav">
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">Home</a>
@@ -239,10 +160,6 @@ import { AddressOption } from '../../core/models/user.model';
       <app-auth-modal></app-auth-modal>
     }
 
-    <!-- MAP PICKER MODAL -->
-    @if (authService.showMapPicker()) {
-      <app-map-picker></app-map-picker>
-    }
   `,
   styles: [`
     /* ===== GRADIENT SHIMMER TEXT ===== */
@@ -341,70 +258,7 @@ import { AddressOption } from '../../core/models/user.model';
       flex-shrink: 0;
     }
 
-    .location-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: transparent;
-      border: none;
-      padding: 0;
-      margin: 0;
-      cursor: pointer;
-      text-align: left;
-      font-family: inherit;
-      max-width: 100%;
-      &:active {
-        opacity: 0.75;
-      }
-    }
 
-    .loc-pin {
-      width: 14px;
-      height: 14px;
-      flex-shrink: 0;
-      color: #2E7D32;
-    }
-
-    .loc-text {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-
-    .loc-label {
-      color: #1F2937;
-      font-weight: 700;
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-
-    .loc-sep {
-      color: #9CA3AF;
-      flex-shrink: 0;
-      font-size: 11px;
-    }
-
-    .loc-detail {
-      color: #6B7280;
-      font-weight: 500;
-      font-size: 12px;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-      max-width: 155px;
-    }
-
-    .loc-arrow {
-      width: 12px;
-      height: 12px;
-      flex-shrink: 0;
-      color: #6B7280;
-      margin-left: 1px;
-    }
 
     .header-right {
       display: flex;
@@ -500,263 +354,54 @@ import { AddressOption } from '../../core/models/user.model';
       box-shadow: 0 2px 5px rgba(255, 87, 34, 0.35);
     }
 
-    /* ===== LOCATION BOTTOM SHEET ===== */
-    .sheet-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(2px);
-      z-index: 2000;
-      animation: fadeIn 0.2s ease-out;
-    }
-
-    .sheet-container {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #ffffff;
-      border-radius: 20px 20px 0 0;
-      padding: 12px 18px 28px;
-      z-index: 2001;
-      box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
-      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      max-width: 500px;
-      margin: 0 auto;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-
-    .sheet-drag-handle {
-      width: 40px;
-      height: 4px;
-      border-radius: 2px;
-      background: #E0E0E0;
-      margin: 0 auto 12px;
-    }
-
-    .sheet-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-
-    .sheet-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 17px;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
-    }
-
-    .sheet-subtitle {
-      font-size: 12px;
-      color: #6B7280;
-      margin: 3px 0 0;
-    }
-
-    .sheet-close-btn {
-      background: #F3F4F6;
-      border: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      color: #6B7280;
-      cursor: pointer;
-      &:active {
-        background: #E5E7EB;
-      }
-    }
-
-    /* MAP ACTION BUTTON */
-    .map-action-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      background: #F1F8E9;
-      border: 1.5px solid #C8E6C9;
-      border-radius: 14px;
-      padding: 12px 14px;
-      margin-bottom: 16px;
-      cursor: pointer;
-      text-align: left;
-      font-family: inherit;
-      transition: all 0.2s ease;
-      &:active { transform: scale(0.98); background: #DCEDC8; }
-    }
-
-    .map-action-icon {
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-
-    .map-action-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .map-action-title {
-      font-size: 13.5px;
-      font-weight: 800;
-      color: #1B5E20;
-    }
-
-    .map-action-sub {
-      font-size: 11px;
-      color: #4CAF50;
-      margin-top: 1px;
-    }
-
-    .map-arrow {
-      font-size: 20px;
-      color: #2E7D32;
-    }
-
-    .address-section-title {
-      font-size: 11px;
-      font-weight: 800;
-      color: #9CA3AF;
-      letter-spacing: 0.6px;
-      margin-bottom: 10px;
-    }
-
-    .address-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .address-card {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1.5px solid #E5E7EB;
-      background: #FAFAFA;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      &:active {
-        transform: scale(0.98);
-      }
-      &.active {
-        border-color: #2E7D32;
-        background: #F1F8E9;
-      }
-    }
-
-    .addr-icon-box {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: #FFFFFF;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      flex-shrink: 0;
-    }
-
-    .addr-emoji {
-      font-size: 18px;
-    }
-
-    .addr-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .addr-top {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .addr-tag {
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      color: #111827;
-    }
-
-    .selected-pill {
-      background: #2E7D32;
-      color: #FFFFFF;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 7px;
-      border-radius: 999px;
-      letter-spacing: 0.2px;
-    }
-
-    .addr-desc {
-      margin: 3px 0 0;
-      font-size: 12px;
-      color: #6B7280;
-      line-height: 1.4;
-    }
-
     /* ===== DESKTOP TOP NAV ===== */
     .top-nav {
-      display: none;
+      display: none !important;
       position: fixed;
-      top: 0; left: 0; right: 0;
-      background: #fff;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       z-index: 1000;
-      height: 72px;
+      border-bottom: 1px solid #EEEEEE;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
     }
 
     .top-nav__inner {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 100%;
+      height: 68px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
     }
 
-    .desktop-location-btn {
+    .brand {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: #F8F9FA;
-      border: 1px solid #E5E7EB;
-      border-radius: 999px;
-      padding: 6px 14px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.2s;
-      &:hover {
-        background: #F1F8E9;
-        border-color: #C8E6C9;
-      }
+      gap: 10px;
+      text-decoration: none;
     }
 
-    .desktop-loc-text {
+    .brand-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-text {
       display: flex;
       flex-direction: column;
-      text-align: left;
     }
 
-    .dloc-label {
-      font-size: 12px;
-      font-weight: 800;
-      color: #1F2937;
-    }
-
-    .dloc-detail {
+    .brand-tagline {
       font-size: 11px;
-      color: #6B7280;
-      max-width: 180px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      color: #777;
+      font-weight: 500;
+      letter-spacing: 0.2px;
     }
 
     .desktop-nav {
@@ -910,9 +555,9 @@ import { AddressOption } from '../../core/models/user.model';
     }
 
     @media (min-width: 768px) {
-      .mobile-header { display: none; }
-      .top-nav { display: block; }
-      .bottom-nav { display: none; }
+      .mobile-header { display: none !important; }
+      .top-nav { display: block !important; }
+      .bottom-nav { display: none !important; }
     }
   `]
 })
@@ -920,25 +565,6 @@ export class NavbarComponent {
   cartService = inject(CartService);
   authService = inject(AuthService);
   private router = inject(Router);
-
-  showLocationSheet = false;
-
-  private defaultSavedAddresses: AddressOption[] = [
-    {
-      id: 'addr_default_home',
-      icon: '🏠',
-      label: 'Home',
-      detail: 'Sector 15, City Center',
-      fullAddress: 'Flat 402, Green Valley Apartments, Sector 15'
-    },
-    {
-      id: 'addr_default_work',
-      icon: '🏢',
-      label: 'Work',
-      detail: 'Tech Park, Phase 2',
-      fullAddress: 'Tower B, 4th Floor, Tech Park, Phase 2'
-    }
-  ];
 
   isHomePage(): boolean {
     return this.router.url === '/' || this.router.url === '';
@@ -954,31 +580,5 @@ export class NavbarComponent {
     const user = this.authService.currentUser();
     if (!user || !user.name) return 'User';
     return user.name.split(' ')[0];
-  }
-
-  getAddresses(): AddressOption[] {
-    const user = this.authService.currentUser();
-    if (user && user.addresses && user.addresses.length > 0) {
-      return user.addresses;
-    }
-    return this.defaultSavedAddresses;
-  }
-
-  openLocationSheet(): void {
-    this.showLocationSheet = true;
-  }
-
-  closeLocationSheet(): void {
-    this.showLocationSheet = false;
-  }
-
-  openMapFromSheet(): void {
-    this.closeLocationSheet();
-    this.authService.openMapPicker();
-  }
-
-  selectAddress(addr: AddressOption): void {
-    this.authService.setActiveAddress(addr);
-    this.closeLocationSheet();
   }
 }

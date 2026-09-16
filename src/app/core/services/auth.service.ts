@@ -220,10 +220,12 @@ export class AuthService {
       pin: data.pin.trim(),
       email,
       addresses: data.address ? [data.address] : [],
-      activeAddress: data.address || undefined,
       createdAt: new Date().toISOString(),
       role: 'user'
     };
+    if (data.address) {
+      newUser.activeAddress = data.address;
+    }
 
     // Save profile to Firestore
     const userDocRef = doc(this.firestore, `users/${uid}`);
