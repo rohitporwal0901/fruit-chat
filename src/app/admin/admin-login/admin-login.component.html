@@ -1,83 +1,199 @@
-<div class="fc-login-wrapper">
-  <!-- Left decorative side -->
-  <div class="fc-login-left">
-    <div class="fc-login-brand">
-      <div class="fc-brand-icon">🍉</div>
-      <h1>Fruit Chat</h1>
-      <p>Fresh & Healthy Food Hub</p>
+<div class="fc-login-page">
+  <!-- Left Side: Editorial Brand & Hero Visual (Like Khandelwal Cards) -->
+  <div class="fc-hero-panel">
+    <div class="fc-hero-backdrop">
+      <img src="assets/images/admin-login-hero.jpg" alt="Fruit Chat Fresh Fruits" class="fc-hero-img" />
+      <div class="fc-hero-overlay"></div>
     </div>
-    <div class="fc-login-features">
-      <div class="fc-feature-item">
-        <span class="material-symbols-outlined">dashboard</span>
-        <span>Manage your store</span>
+
+    <div class="fc-hero-content">
+      <!-- Ornate Brand Crest (Matches Khandelwal Gold Crest) -->
+      <div class="fc-brand-emblem">
+        <div class="fc-crest-ring">
+          <svg class="fc-crest-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="46" stroke="#b58738" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <circle cx="50" cy="50" r="41" stroke="#b58738" stroke-width="1"/>
+            <path d="M50 13 L53 21 L61 21 L55 26 L57 34 L50 29 L43 34 L45 26 L39 21 L47 21 Z" fill="#b58738" opacity="0.9"/>
+            <path d="M50 87 L47 79 L39 79 L45 74 L43 66 L50 71 L57 66 L55 74 L61 79 L53 79 Z" fill="#b58738" opacity="0.9"/>
+            <!-- Ornate Leaf flourishes -->
+            <path d="M22 36 C28 33, 33 38, 34 44 C28 43, 23 40, 22 36 Z" fill="#163e26" opacity="0.85"/>
+            <path d="M78 36 C72 33, 67 38, 66 44 C72 43, 77 40, 78 36 Z" fill="#163e26" opacity="0.85"/>
+          </svg>
+          <span class="fc-crest-letter">FC</span>
+        </div>
       </div>
-      <div class="fc-feature-item">
-        <span class="material-symbols-outlined">inventory_2</span>
-        <span>Track products & inventory</span>
+
+      <!-- Brand Typography (Like Khandelwal Cards Title + Script) -->
+      <div class="fc-brand-header">
+        <h1 class="fc-brand-title">Fruit Chat</h1>
+        <div class="fc-brand-script">Fresh & Crisp Delights</div>
       </div>
-      <div class="fc-feature-item">
-        <span class="material-symbols-outlined">shopping_cart</span>
-        <span>Monitor orders in real-time</span>
+
+      <!-- Tagline -->
+      <p class="fc-hero-tagline">
+        Crafting Fresh, Healthy & Wholesome Delights<br>for Every Taste
+      </p>
+
+      <!-- Decorative Gold Filigree Divider -->
+      <div class="fc-filigree-divider">
+        <span class="fc-divider-line"></span>
+        <div class="fc-divider-motif">
+          <svg width="34" height="18" viewBox="0 0 34 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 1 L20 9 L17 17 L14 9 Z" fill="#b58738"/>
+            <circle cx="6" cy="9" r="2.2" fill="#b58738"/>
+            <circle cx="28" cy="9" r="2.2" fill="#b58738"/>
+            <path d="M8 9 C11 5, 14 6, 16 9" stroke="#b58738" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M26 9 C23 5, 20 6, 18 9" stroke="#b58738" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="fc-divider-line"></span>
       </div>
-      <div class="fc-feature-item">
-        <span class="material-symbols-outlined">payments</span>
-        <span>View transactions & revenue</span>
+
+      <!-- Feature Trust Badges (Like Khandelwal's Bottom Badges) -->
+      <div class="fc-trust-badges">
+        <div class="fc-trust-badge">
+          <div class="fc-badge-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 3h12l4 6-10 13L2 9z"/>
+              <path d="M11 3 8 9l4 13 4-13-3-6"/>
+              <path d="M2 9h20"/>
+            </svg>
+          </div>
+          <div class="fc-badge-text">
+            <span>Premium</span>
+            <strong>Quality</strong>
+          </div>
+        </div>
+
+        <div class="fc-trust-badge">
+          <div class="fc-badge-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+            </svg>
+          </div>
+          <div class="fc-badge-text">
+            <span>100% Pure</span>
+            <strong>& Natural</strong>
+          </div>
+        </div>
+
+        <div class="fc-trust-badge">
+          <div class="fc-badge-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13" rx="1"/>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+          </div>
+          <div class="fc-badge-text">
+            <span>Timely</span>
+            <strong>Delivery</strong>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Right form side -->
-  <div class="fc-login-right">
+  <!-- Right Side: Clean Login Card (Like Khandelwal Cards) -->
+  <div class="fc-form-panel">
     <div class="fc-login-card">
-      <div class="fc-login-header">
-        <span class="fc-admin-emoji">🛒</span>
-        <h2>Admin Login</h2>
-        <p>Sign in to manage Fruit Chat</p>
+      <!-- Top Accent Bar (Brand Forest Green, matching Khandelwal's burgundy accent) -->
+      <div class="fc-card-accent"></div>
+
+      <div class="fc-card-body">
+        <div class="fc-card-header">
+          <h2 class="fc-card-title">Fruit Chat</h2>
+          <p class="fc-card-subtitle">Admin Panel Login</p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="fc-login-form">
+          <!-- Email Address -->
+          <div class="fc-field-group">
+            <label class="fc-field-label" for="email">Email Address</label>
+            <div class="fc-input-container">
+              <span class="fc-field-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="16" x="2" y="4" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+              </span>
+              <input
+                id="email"
+                type="email"
+                class="fc-text-input"
+                [(ngModel)]="email"
+                name="email"
+                placeholder="admin@fruitchat.com"
+                required
+                email
+                #emailField="ngModel"
+                [class.has-error]="emailField.invalid && emailField.touched"
+                autocomplete="username"
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="fc-field-group">
+            <label class="fc-field-label" for="password">Password</label>
+            <div class="fc-input-container">
+              <span class="fc-field-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="fc-text-input fc-input-with-eye"
+                [(ngModel)]="password"
+                name="password"
+                placeholder="••••••"
+                required
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="fc-toggle-eye"
+                (click)="togglePassword()"
+                aria-label="Toggle password visibility"
+              >
+                <!-- Eye Open -->
+                <svg *ngIf="!showPassword()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <!-- Eye Closed / Off -->
+                <svg *ngIf="showPassword()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                  <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                  <line x1="2" x2="22" y1="2" y2="22"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error Alert Banner -->
+          <div class="fc-alert-box" *ngIf="errorMsg()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" x2="12" y1="8" y2="12"/>
+              <line x1="12" x2="12.01" y1="16" y2="16"/>
+            </svg>
+            <span>{{ errorMsg() }}</span>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="fc-submit-btn" [disabled]="isLoading()">
+            <span *ngIf="!isLoading()">Login to Dashboard</span>
+            <span *ngIf="isLoading()" class="fc-btn-loader"></span>
+          </button>
+        </form>
       </div>
-
-      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-        <!-- Email -->
-        <div class="fc-form-group">
-          <label class="fc-form-label">Email Address</label>
-          <div class="fc-input-wrap">
-            <span class="material-symbols-outlined fc-input-icon">mail</span>
-            <input type="email" class="fc-form-input"
-                   [(ngModel)]="email" name="email"
-                   placeholder="admin@fruitchat.com" required email
-                   #emailField="ngModel"
-                   [class.invalid]="emailField.invalid && emailField.touched">
-          </div>
-        </div>
-
-        <!-- Password -->
-        <div class="fc-form-group">
-          <label class="fc-form-label">Password</label>
-          <div class="fc-input-wrap">
-            <span class="material-symbols-outlined fc-input-icon">lock</span>
-            <input [type]="showPassword() ? 'text' : 'password'" class="fc-form-input"
-                   [(ngModel)]="password" name="password"
-                   placeholder="••••••••" required>
-            <button type="button" class="fc-eye-btn" (click)="togglePassword()">
-              <span class="material-symbols-outlined">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Error -->
-        <div class="fc-error-msg" *ngIf="errorMsg()">
-          <span class="material-symbols-outlined">error</span>
-          {{ errorMsg() }}
-        </div>
-
-        <!-- Submit -->
-        <button type="submit" class="fc-login-btn" [disabled]="isLoading()">
-          <span *ngIf="!isLoading()">
-            <span class="material-symbols-outlined">login</span>
-            Login to Dashboard
-          </span>
-          <span *ngIf="isLoading()" class="fc-spinner"></span>
-        </button>
-      </form>
     </div>
   </div>
 </div>

@@ -30,9 +30,6 @@
     <span class="material-symbols-outlined">inventory_2</span>
     <h3>No Products Found</h3>
     <p>{{ searchQuery() ? 'No results for "' + searchQuery() + '"' : 'Add your first product!' }}</p>
-    <button *ngIf="!searchQuery()" class="ap-add-btn" (click)="openAddDrawer()">
-      <span class="material-symbols-outlined">add</span> Add Product
-    </button>
   </div>
 
   <table class="ap-table" *ngIf="filteredProducts().length > 0">

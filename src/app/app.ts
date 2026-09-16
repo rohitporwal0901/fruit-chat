@@ -52,6 +52,7 @@ export class App {
   }
 
   private checkCurrentRoute(url: string): void {
-    this.isAuthRoute.set(url.startsWith('/auth'));
+    const cleanUrl = (url || '').split('?')[0].split('#')[0];
+    this.isAuthRoute.set(cleanUrl.startsWith('/auth') || cleanUrl.startsWith('/admin'));
   }
 }

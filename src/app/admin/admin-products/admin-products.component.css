@@ -39,7 +39,7 @@
   padding: 4rem 2rem; text-align: center;
   span { font-size: 3rem; color: #ddd; display: block; margin-bottom: 0.75rem; }
   h3 { font-family: 'Outfit', sans-serif; font-size: 1.1rem; color: #999; margin-bottom: 0.5rem; }
-  p { color: #bbb; font-size: 0.88rem; margin-bottom: 1.5rem; }
+  p { color: #bbb; font-size: 0.88rem; margin-bottom: 0; }
 }
 
 .ap-table { width: 100%; border-collapse: collapse; }

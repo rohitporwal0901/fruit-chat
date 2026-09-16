@@ -4,10 +4,33 @@
   <aside class="fc-sidebar">
     <!-- Brand Logo -->
     <div class="fc-sidebar-logo">
-      <span class="fc-logo-emoji">🍉</span>
+      <div class="fc-logo-badge">
+        <svg class="fc-logo-crest" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="42" height="42" rx="12" fill="url(#crestGrad)" />
+          <rect x="0.75" y="0.75" width="40.5" height="40.5" rx="11.25" stroke="url(#borderGrad)" stroke-width="1.5" />
+          <circle cx="21" cy="21" r="15" stroke="#b58738" stroke-width="1" stroke-dasharray="2.5 2.5" opacity="0.65"/>
+          <!-- Gold Leaf Crown & FC Monogram -->
+          <text x="21" y="26" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-size="14" fill="#ffffff" letter-spacing="0.5">FC</text>
+          <path d="M21 9 C22.5 7, 25.5 7, 26.5 8.5 C26.5 10.5, 24 12, 21 11" stroke="#b58738" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="21" cy="9" r="1.5" fill="#b58738"/>
+          <defs>
+            <linearGradient id="crestGrad" x1="0" y1="0" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1b5e20"/>
+              <stop offset="1" stop-color="#0b2912"/>
+            </linearGradient>
+            <linearGradient id="borderGrad" x1="0" y1="0" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#b58738" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#2e7d32" stop-opacity="0.5"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
       <div class="fc-logo-text">
         <h2>Fruit Chat</h2>
-        <span class="fc-admin-tag">Admin Panel</span>
+        <div class="fc-admin-status">
+          <span class="fc-status-dot"></span>
+          <span>Admin Portal</span>
+        </div>
       </div>
     </div>
 
@@ -72,25 +95,6 @@
 
   <!-- ══════════ MAIN AREA ══════════ -->
   <main class="fc-main">
-    <!-- Topbar -->
-    <header class="fc-topbar">
-      <button class="fc-topbar-toggle" (click)="toggleSidebar()">
-        <span class="material-symbols-outlined">menu</span>
-      </button>
-      <div class="fc-topbar-title">
-        <span class="fc-topbar-brand">🍉 Fruit Chat</span>
-        <span class="fc-topbar-sub">Admin Dashboard</span>
-      </div>
-      <div class="fc-topbar-right">
-        <span class="fc-topbar-date">{{ currentDate | date:'mediumDate' }}</span>
-        <button class="fc-icon-btn" routerLink="/admin/orders">
-          <span class="material-symbols-outlined">notifications</span>
-          <span class="fc-notif-dot" *ngIf="pendingOrdersCount() > 0">{{ pendingOrdersCount() }}</span>
-        </button>
-        <div class="fc-topbar-avatar">🛒</div>
-      </div>
-    </header>
-
     <!-- Page content -->
     <div class="fc-content">
       <router-outlet></router-outlet>

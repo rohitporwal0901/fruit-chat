@@ -4,7 +4,7 @@
 .ac-add-btn { display:flex; align-items:center; gap:0.5rem; background:linear-gradient(135deg,#1B5E20,#2E7D32); color:#fff; border:none; border-radius:12px; padding:0.7rem 1.25rem; font-size:0.9rem; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; span{font-size:1.1rem;} }
 .ac-add-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(46,125,50,0.3); }
 
-.ac-empty { text-align:center; padding:4rem 2rem; background:#fff; border-radius:16px; border:1px dashed #eee; span.material-symbols-outlined{font-size:3.5rem;color:#ddd;display:block;margin-bottom:0.75rem;} h3{color:#999;margin-bottom:0.5rem;} p{color:#bbb;font-size:0.88rem;margin-bottom:1.5rem;} }
+.ac-empty { text-align:center; padding:4rem 2rem; background:#fff; border-radius:16px; border:1px dashed #eee; span.material-symbols-outlined{font-size:3.5rem;color:#ddd;display:block;margin-bottom:0.75rem;} h3{color:#999;margin-bottom:0.5rem;} p{color:#bbb;font-size:0.88rem;margin-bottom:0;} }
 
 .ac-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1rem; }
 
