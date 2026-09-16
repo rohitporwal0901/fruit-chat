@@ -1,0 +1,185 @@
+<div class="as-page">
+  <div class="as-title-row">
+    <h1 class="as-title">Settings</h1>
+    <p class="as-sub">Configure your app's offer card and home banners</p>
+  </div>
+
+  <!-- ══════════ OFFER CARD ══════════ -->
+  <div class="as-section">
+    <div class="as-section-header">
+      <div>
+        <h2>🎟️ Offer Card</h2>
+        <p>This appears on the user home page as a promotional banner</p>
+      </div>
+      <button class="as-edit-btn" (click)="startEditOffer()" *ngIf="!editingOffer()">
+        <span class="material-symbols-outlined">edit</span> Edit
+      </button>
+    </div>
+
+    <!-- Preview -->
+    <div class="offer-preview" *ngIf="!editingOffer()">
+      <div class="offer-preview-card" [class.inactive]="!offerCard().isActive">
+        <div class="op-left">
+          <h3>{{ offerCard().heading }}</h3>
+          <p>{{ offerCard().subtext }}</p>
+        </div>
+        <div class="op-pill">
+          <span class="op-label">CASH</span>
+          <span class="op-amount">₹{{ offerCard().amount }}</span>
+        </div>
+        <div class="op-inactive-badge" *ngIf="!offerCard().isActive">INACTIVE</div>
+      </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="offer-edit-form" *ngIf="editingOffer()">
+      <div class="as-field">
+        <label>Heading</label>
+        <input type="text" [(ngModel)]="offerDraft.heading" placeholder="e.g. Hurry, ₹50 Free Cash">
+      </div>
+      <div class="as-field">
+        <label>Sub Text</label>
+        <input type="text" [(ngModel)]="offerDraft.subtext" placeholder="e.g. Valid on food orders above ₹99">
+      </div>
+      <div class="as-field-row">
+        <div class="as-field">
+          <label>Amount (₹)</label>
+          <input type="number" [(ngModel)]="offerDraft.amount" min="0" placeholder="50">
+        </div>
+        <div class="as-field">
+          <label>Valid Text</label>
+          <input type="text" [(ngModel)]="offerDraft.validText" placeholder="e.g. Valid on orders above ₹99">
+        </div>
+      </div>
+      <div class="as-toggle-row">
+        <label class="fc-toggle-label">
+          <input type="checkbox" [(ngModel)]="offerDraft.isActive">
+          <span class="fc-toggle-switch"></span>
+          <span>Active (show on home page)</span>
+        </label>
+      </div>
+      <div class="as-form-footer">
+        <button class="as-btn-cancel" (click)="cancelEditOffer()">Cancel</button>
+        <button class="as-btn-save" (click)="saveOfferCard()" [disabled]="isSavingOffer()">
+          <span class="material-symbols-outlined" *ngIf="!isSavingOffer()">save</span>
+          <span class="fc-btn-spinner" *ngIf="isSavingOffer()"></span>
+          {{ isSavingOffer() ? 'Saving...' : 'Save Offer Card' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ HOME SLIDES ══════════ -->
+  <div class="as-section">
+    <div class="as-section-header">
+      <div>
+        <h2>🖼️ Home Banners</h2>
+        <p>These appear as the hero slider on the user home page</p>
+      </div>
+      <button class="as-add-btn" (click)="openAddSlide()">
+        <span class="material-symbols-outlined">add</span> Add Banner
+      </button>
+    </div>
+
+    <div class="slides-empty" *ngIf="slides().length === 0">
+      <span class="material-symbols-outlined">image</span>
+      <p>No banners added yet</p>
+    </div>
+
+    <div class="slides-grid" *ngIf="slides().length > 0">
+      <div class="slide-card" *ngFor="let slide of slides()">
+        <div class="slide-img" [style.background]="slide.bg">
+          <img *ngIf="slide.img" [src]="slide.img" [alt]="slide.title">
+          <span class="slide-status-dot" [class.inactive]="slide.status !== 'active'"></span>
+        </div>
+        <div class="slide-body">
+          <div class="slide-tag">{{ slide.tag }}</div>
+          <div class="slide-name">{{ slide.title }}</div>
+          <div class="slide-sub">{{ slide.subtitle }}</div>
+          <div class="slide-order">Order: {{ slide.order }}</div>
+        </div>
+        <div class="slide-actions">
+          <button class="slide-btn edit" (click)="openEditSlide(slide)">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+          <button class="slide-btn delete" (click)="promptDeleteSlide(slide.id)">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide Drawer -->
+<app-side-drawer [isOpen]="isSlideDrawerOpen()" [title]="isEditingSlide() ? 'Edit Banner' : 'Add Banner'" (close)="closeSlideDrawer()">
+  <form #slideForm="ngForm" (ngSubmit)="saveSlide(slideForm)" class="as-form">
+
+    <div class="as-field">
+      <label>Title *</label>
+      <input type="text" [(ngModel)]="currentSlide.title" name="title" required placeholder="e.g. Fresh Fruit Chaat" #titleF="ngModel" [class.invalid]="titleF.invalid && titleF.touched">
+    </div>
+    <div class="as-field">
+      <label>Subtitle</label>
+      <input type="text" [(ngModel)]="currentSlide.subtitle" name="subtitle" placeholder="e.g. Healthy & Delicious">
+    </div>
+    <div class="as-field">
+      <label>Tag / Badge</label>
+      <input type="text" [(ngModel)]="currentSlide.tag" name="tag" placeholder="e.g. BESTSELLER">
+    </div>
+    <div class="as-field-row">
+      <div class="as-field">
+        <label>Background (CSS)</label>
+        <input type="text" [(ngModel)]="currentSlide.bg" name="bg" placeholder="linear-gradient(...)">
+      </div>
+      <div class="as-field">
+        <label>Display Order</label>
+        <input type="number" [(ngModel)]="currentSlide.order" name="order" min="1">
+      </div>
+    </div>
+    <div class="as-field-row">
+      <div class="as-field">
+        <label>Link</label>
+        <input type="text" [(ngModel)]="currentSlide.link" name="link" placeholder="/menu">
+      </div>
+      <div class="as-field">
+        <label>Button Text</label>
+        <input type="text" [(ngModel)]="currentSlide.btnText" name="btnText" placeholder="Order Now">
+      </div>
+    </div>
+    <div class="as-field">
+      <label>Status</label>
+      <div class="as-radio-row">
+        <label class="as-radio"><input type="radio" [(ngModel)]="currentSlide.status" name="status" value="active"> Active</label>
+        <label class="as-radio"><input type="radio" [(ngModel)]="currentSlide.status" name="status" value="inactive"> Inactive</label>
+      </div>
+    </div>
+    <div class="as-field">
+      <label>Banner Image *</label>
+      <div class="as-img-area">
+        <div class="as-img-preview" *ngIf="currentSlide.img">
+          <img [src]="currentSlide.img" alt="Banner">
+          <button type="button" class="as-img-remove" (click)="currentSlide.img = ''">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <label *ngIf="!currentSlide.img" class="as-img-upload" for="slideImg">
+          <span class="material-symbols-outlined">upload_file</span>
+          <span>{{ isUploading() ? 'Uploading ' + uploadProgress() + '%...' : 'Upload Image' }}</span>
+        </label>
+        <input id="slideImg" type="file" accept="image/*" (change)="onSlideImgSelected($event)" style="display:none">
+      </div>
+    </div>
+
+    <div class="as-form-footer">
+      <button type="button" class="as-btn-cancel" (click)="closeSlideDrawer()">Cancel</button>
+      <button type="submit" class="as-btn-save" [disabled]="isSavingSlide() || isUploading()">
+        <span class="material-symbols-outlined" *ngIf="!isSavingSlide()">save</span>
+        <span class="fc-btn-spinner" *ngIf="isSavingSlide()"></span>
+        {{ isSavingSlide() ? 'Saving...' : (isEditingSlide() ? 'Update Banner' : 'Add Banner') }}
+      </button>
+    </div>
+  </form>
+</app-side-drawer>
+
+<app-confirmation-modal [isOpen]="isDeleteModal()" title="Delete Banner" message="This will remove the banner from the home page." confirmText="Delete" (confirm)="confirmDelete()" (cancel)="cancelDelete()"></app-confirmation-modal>

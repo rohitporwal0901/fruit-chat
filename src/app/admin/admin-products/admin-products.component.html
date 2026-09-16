@@ -1,0 +1,268 @@
+<!-- Page Header -->
+<div class="ap-header">
+  <div>
+    <h1 class="ap-title">Products</h1>
+    <p class="ap-sub">Manage your fruit chat menu items</p>
+  </div>
+  <button class="ap-add-btn" (click)="openAddDrawer()">
+    <span class="material-symbols-outlined">add</span>
+    Add Product
+  </button>
+</div>
+
+<!-- Search + Count -->
+<div class="ap-toolbar">
+  <div class="ap-search">
+    <span class="material-symbols-outlined">search</span>
+    <input type="text" placeholder="Search by name or SKU..." (input)="onSearch($any($event.target).value)">
+  </div>
+  <div class="ap-count">{{ filteredProducts().length }} products</div>
+</div>
+
+<!-- Loading skeleton -->
+<div class="ap-skeleton" *ngIf="isLoading()">
+  <div class="skel-row" *ngFor="let i of [1,2,3,4,5]"></div>
+</div>
+
+<!-- Products Table -->
+<div class="ap-table-wrap" *ngIf="!isLoading()">
+  <div class="ap-empty" *ngIf="filteredProducts().length === 0">
+    <span class="material-symbols-outlined">inventory_2</span>
+    <h3>No Products Found</h3>
+    <p>{{ searchQuery() ? 'No results for "' + searchQuery() + '"' : 'Add your first product!' }}</p>
+    <button *ngIf="!searchQuery()" class="ap-add-btn" (click)="openAddDrawer()">
+      <span class="material-symbols-outlined">add</span> Add Product
+    </button>
+  </div>
+
+  <table class="ap-table" *ngIf="filteredProducts().length > 0">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>SKU</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Stock</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let product of paginatedProducts()">
+        <td>
+          <div class="ap-prod-cell">
+            <div class="ap-prod-img">
+              <img *ngIf="product.images?.length" [src]="product.images[0]" [alt]="product.name">
+              <span *ngIf="!product.images?.length" class="material-symbols-outlined">image_not_supported</span>
+            </div>
+            <div class="ap-prod-info">
+              <div class="ap-prod-name">{{ product.name }}</div>
+              <div class="ap-prod-tag">
+                <span class="veg-tag" [class.nonveg]="!product.isVeg">{{ product.isVeg ? '🟢 Veg' : '🔴 Non-Veg' }}</span>
+                <span class="best-tag" *ngIf="product.isBestseller">⭐ Bestseller</span>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td><span class="ap-sku">{{ product.sku }}</span></td>
+        <td><span class="ap-cat">{{ getCategoryName(product.categoryId) }}</span></td>
+        <td>
+          <div class="ap-price-cell">
+            <span class="ap-price">₹{{ product.price }}</span>
+            <del class="ap-orig-price" *ngIf="product.originalPrice">₹{{ product.originalPrice }}</del>
+          </div>
+        </td>
+        <td>
+          <span class="ap-stock" [class.low]="product.stock < 10" [class.out]="product.stock === 0">
+            {{ product.stock === 0 ? 'Out of Stock' : product.stock + ' units' }}
+          </span>
+        </td>
+        <td>
+          <span class="ap-status" [class.active]="product.status === 'active'">
+            {{ product.status }}
+          </span>
+        </td>
+        <td>
+          <div class="ap-actions">
+            <button class="ap-action-btn edit" (click)="openEditDrawer(product)" title="Edit">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+            <button class="ap-action-btn delete" (click)="promptDelete(product.id)" title="Delete">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="ap-pagination" *ngIf="totalPages() > 1">
+    <button (click)="prevPage()" [disabled]="currentPage() === 1">
+      <span class="material-symbols-outlined">chevron_left</span>
+    </button>
+    <span class="ap-page-info">Page {{ currentPage() }} of {{ totalPages() }}</span>
+    <button (click)="nextPage()" [disabled]="currentPage() === totalPages()">
+      <span class="material-symbols-outlined">chevron_right</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════ ADD/EDIT DRAWER ══════════ -->
+<app-side-drawer
+  [isOpen]="isDrawerOpen()"
+  [title]="isEditing() ? 'Edit Product' : 'Add New Product'"
+  width="480px"
+  (close)="closeDrawer()">
+
+  <form #productForm="ngForm" (ngSubmit)="saveProduct(productForm)" class="ap-form">
+
+    <!-- Name -->
+    <div class="ap-field">
+      <label>Product Name *</label>
+      <input type="text" [(ngModel)]="newProduct.name" name="name" required
+             placeholder="e.g. Mix Fruit Chaat" #nameF="ngModel"
+             [class.invalid]="nameF.invalid && nameF.touched">
+      <span class="field-err" *ngIf="nameF.invalid && nameF.touched">Name is required</span>
+    </div>
+
+    <!-- SKU -->
+    <div class="ap-field">
+      <label>SKU / Product Code *</label>
+      <input type="text" [(ngModel)]="newProduct.sku" name="sku" required
+             placeholder="e.g. MFC-001" (blur)="checkDupSku()" #skuF="ngModel"
+             [class.invalid]="(skuF.invalid && skuF.touched) || !!dupSkuError()">
+      <span class="field-err" *ngIf="skuF.invalid && skuF.touched">SKU is required</span>
+      <span class="field-err" *ngIf="dupSkuError()">{{ dupSkuError() }}</span>
+    </div>
+
+    <!-- Category -->
+    <div class="ap-field">
+      <label>Category *</label>
+      <select [(ngModel)]="newProduct.categoryId" name="categoryId" required #catF="ngModel"
+              [class.invalid]="catF.invalid && catF.touched">
+        <option value="">-- Select Category --</option>
+        <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
+      </select>
+      <span class="field-err" *ngIf="catF.invalid && catF.touched">Category is required</span>
+    </div>
+
+    <!-- Description -->
+    <div class="ap-field">
+      <label>Description</label>
+      <textarea [(ngModel)]="newProduct.description" name="description"
+                placeholder="Describe the product..." rows="3"></textarea>
+    </div>
+
+    <!-- Price Row -->
+    <div class="ap-field-row">
+      <div class="ap-field">
+        <label>Price (₹) *</label>
+        <input type="number" [(ngModel)]="newProduct.price" name="price" required min="0"
+               (keydown)="preventInvalid($event)" placeholder="e.g. 80" #priceF="ngModel"
+               [class.invalid]="priceF.invalid && priceF.touched">
+        <span class="field-err" *ngIf="priceF.invalid && priceF.touched">Required</span>
+      </div>
+      <div class="ap-field">
+        <label>Original Price (₹)</label>
+        <input type="number" [(ngModel)]="newProduct.originalPrice" name="originalPrice" min="0"
+               (keydown)="preventInvalid($event)" placeholder="e.g. 100 (optional)">
+      </div>
+    </div>
+
+    <!-- Stock -->
+    <div class="ap-field">
+      <label>Stock *</label>
+      <input type="number" [(ngModel)]="newProduct.stock" name="stock" required min="0"
+             (keydown)="preventInvalid($event)" placeholder="e.g. 50" #stockF="ngModel"
+             [class.invalid]="stockF.invalid && stockF.touched">
+      <span class="field-err" *ngIf="stockF.invalid && stockF.touched">Required</span>
+    </div>
+
+    <!-- Extra Info Row -->
+    <div class="ap-field-row">
+      <div class="ap-field">
+        <label>Prep Time (min)</label>
+        <input type="number" [(ngModel)]="newProduct.preparationTime" name="preparationTime"
+               min="0" (keydown)="preventInvalid($event)" placeholder="10">
+      </div>
+      <div class="ap-field">
+        <label>Calories</label>
+        <input type="number" [(ngModel)]="newProduct.calories" name="calories"
+               min="0" (keydown)="preventInvalid($event)" placeholder="145">
+      </div>
+    </div>
+
+    <!-- Toggles -->
+    <div class="ap-toggle-row">
+      <div class="ap-toggle">
+        <label class="fc-toggle-label">
+          <input type="checkbox" [(ngModel)]="newProduct.isVeg" name="isVeg">
+          <span class="fc-toggle-switch"></span>
+          <span>Vegetarian</span>
+        </label>
+      </div>
+      <div class="ap-toggle">
+        <label class="fc-toggle-label">
+          <input type="checkbox" [(ngModel)]="newProduct.isBestseller" name="isBestseller">
+          <span class="fc-toggle-switch"></span>
+          <span>Bestseller</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="ap-field">
+      <label>Status</label>
+      <div class="ap-radio-row">
+        <label class="ap-radio">
+          <input type="radio" [(ngModel)]="newProduct.status" name="status" value="active"> Active
+        </label>
+        <label class="ap-radio">
+          <input type="radio" [(ngModel)]="newProduct.status" name="status" value="disabled"> Disabled
+        </label>
+      </div>
+    </div>
+
+    <!-- Images -->
+    <div class="ap-field">
+      <label>Product Images *</label>
+      <div class="ap-img-upload">
+        <label class="ap-img-upload-btn" for="imgInput">
+          <span class="material-symbols-outlined">upload</span>
+          <span>{{ isUploading() ? 'Uploading ' + uploadProgress() + '%...' : 'Choose Images' }}</span>
+        </label>
+        <input id="imgInput" type="file" accept="image/*" multiple (change)="onFileSelected($event)" style="display:none">
+      </div>
+      <div class="ap-img-preview" *ngIf="newProduct.images.length > 0">
+        <div class="ap-img-thumb" *ngFor="let img of newProduct.images; let i = index">
+          <img [src]="img" alt="Product image">
+          <button class="ap-img-remove" (click)="removeImage(i)" type="button">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="ap-form-footer">
+      <button type="button" class="ap-btn-cancel" (click)="closeDrawer()">Cancel</button>
+      <button type="submit" class="ap-btn-save" [disabled]="isSaving() || isUploading()">
+        <span class="material-symbols-outlined" *ngIf="!isSaving()">save</span>
+        <span class="fc-btn-spinner" *ngIf="isSaving()"></span>
+        {{ isSaving() ? 'Saving...' : (isEditing() ? 'Update Product' : 'Add Product') }}
+      </button>
+    </div>
+
+  </form>
+</app-side-drawer>
+
+<!-- Delete Modal -->
+<app-confirmation-modal
+  [isOpen]="isDeleteModal()"
+  title="Delete Product"
+  message="Are you sure you want to delete this product? This action cannot be undone."
+  confirmText="Delete"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()">
+</app-confirmation-modal>

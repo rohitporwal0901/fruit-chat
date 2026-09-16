@@ -1,0 +1,112 @@
+<div class="fc-admin-wrap" [class.collapsed]="isSidebarCollapsed()">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <aside class="fc-sidebar">
+    <!-- Brand Logo -->
+    <div class="fc-sidebar-logo">
+      <span class="fc-logo-emoji">🍉</span>
+      <div class="fc-logo-text">
+        <h2>Fruit Chat</h2>
+        <span class="fc-admin-tag">Admin Panel</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fc-nav">
+      <!-- OVERVIEW -->
+      <div class="fc-nav-section">OVERVIEW</div>
+
+      <a routerLink="/admin/dashboard" routerLinkActive="fc-nav-active" class="fc-nav-item">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="fc-nav-label">Dashboard</span>
+      </a>
+
+      <a routerLink="/admin/orders" routerLinkActive="fc-nav-active" class="fc-nav-item">
+        <span class="material-symbols-outlined">shopping_bag</span>
+        <span class="fc-nav-label">Orders</span>
+        <span class="fc-badge" *ngIf="pendingOrdersCount() > 0">{{ pendingOrdersCount() }}</span>
+      </a>
+
+      <a routerLink="/admin/transactions" routerLinkActive="fc-nav-active" class="fc-nav-item">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span class="fc-nav-label">Transactions</span>
+      </a>
+
+      <!-- CATALOG -->
+      <div class="fc-nav-section">CATALOG</div>
+
+      <a routerLink="/admin/categories" routerLinkActive="fc-nav-active" class="fc-nav-item">
+        <span class="material-symbols-outlined">category</span>
+        <span class="fc-nav-label">Categories</span>
+      </a>
+
+      <a routerLink="/admin/products" routerLinkActive="fc-nav-active" class="fc-nav-item">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span class="fc-nav-label">Products</span>
+      </a>
+
+      <!-- CONFIG -->
+      <div class="fc-nav-section">CONFIG</div>
+
+      <a routerLink="/admin/settings" routerLinkActive="fc-nav-active" class="fc-nav-item">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="fc-nav-label">Settings</span>
+      </a>
+    </nav>
+
+    <!-- Footer: Logout -->
+    <div class="fc-sidebar-footer">
+      <div class="fc-sidebar-user">
+        <div class="fc-user-avatar">🛒</div>
+        <div class="fc-user-info">
+          <strong>Admin</strong>
+          <span>Fruit Chat Admin</span>
+        </div>
+      </div>
+      <button class="fc-logout-btn" (click)="promptLogout()">
+        <span class="material-symbols-outlined">logout</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN AREA ══════════ -->
+  <main class="fc-main">
+    <!-- Topbar -->
+    <header class="fc-topbar">
+      <button class="fc-topbar-toggle" (click)="toggleSidebar()">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="fc-topbar-title">
+        <span class="fc-topbar-brand">🍉 Fruit Chat</span>
+        <span class="fc-topbar-sub">Admin Dashboard</span>
+      </div>
+      <div class="fc-topbar-right">
+        <span class="fc-topbar-date">{{ currentDate | date:'mediumDate' }}</span>
+        <button class="fc-icon-btn" routerLink="/admin/orders">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="fc-notif-dot" *ngIf="pendingOrdersCount() > 0">{{ pendingOrdersCount() }}</span>
+        </button>
+        <div class="fc-topbar-avatar">🛒</div>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <div class="fc-content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
+
+<!-- Logout modal -->
+<app-confirmation-modal
+  [isOpen]="isLogoutModalOpen"
+  title="Confirm Logout"
+  message="Are you sure you want to log out of the admin panel?"
+  confirmText="Logout"
+  cancelText="Stay"
+  (confirm)="confirmLogout()"
+  (cancel)="cancelLogout()">
+</app-confirmation-modal>
+
+<app-snackbar></app-snackbar>

@@ -1,0 +1,85 @@
+<div class="fc-login-wrapper">
+  <!-- Left decorative side -->
+  <div class="fc-login-left">
+    <div class="fc-login-brand">
+      <div class="fc-brand-icon">🍉</div>
+      <h1>Fruit Chat</h1>
+      <p>Fresh & Healthy Food Hub</p>
+    </div>
+    <div class="fc-login-features">
+      <div class="fc-feature-item">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Manage your store</span>
+      </div>
+      <div class="fc-feature-item">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span>Track products & inventory</span>
+      </div>
+      <div class="fc-feature-item">
+        <span class="material-symbols-outlined">shopping_cart</span>
+        <span>Monitor orders in real-time</span>
+      </div>
+      <div class="fc-feature-item">
+        <span class="material-symbols-outlined">payments</span>
+        <span>View transactions & revenue</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form side -->
+  <div class="fc-login-right">
+    <div class="fc-login-card">
+      <div class="fc-login-header">
+        <span class="fc-admin-emoji">🛒</span>
+        <h2>Admin Login</h2>
+        <p>Sign in to manage Fruit Chat</p>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <!-- Email -->
+        <div class="fc-form-group">
+          <label class="fc-form-label">Email Address</label>
+          <div class="fc-input-wrap">
+            <span class="material-symbols-outlined fc-input-icon">mail</span>
+            <input type="email" class="fc-form-input"
+                   [(ngModel)]="email" name="email"
+                   placeholder="admin@fruitchat.com" required email
+                   #emailField="ngModel"
+                   [class.invalid]="emailField.invalid && emailField.touched">
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="fc-form-group">
+          <label class="fc-form-label">Password</label>
+          <div class="fc-input-wrap">
+            <span class="material-symbols-outlined fc-input-icon">lock</span>
+            <input [type]="showPassword() ? 'text' : 'password'" class="fc-form-input"
+                   [(ngModel)]="password" name="password"
+                   placeholder="••••••••" required>
+            <button type="button" class="fc-eye-btn" (click)="togglePassword()">
+              <span class="material-symbols-outlined">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div class="fc-error-msg" *ngIf="errorMsg()">
+          <span class="material-symbols-outlined">error</span>
+          {{ errorMsg() }}
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="fc-login-btn" [disabled]="isLoading()">
+          <span *ngIf="!isLoading()">
+            <span class="material-symbols-outlined">login</span>
+            Login to Dashboard
+          </span>
+          <span *ngIf="isLoading()" class="fc-spinner"></span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<app-snackbar></app-snackbar>

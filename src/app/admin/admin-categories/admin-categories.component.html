@@ -1,0 +1,98 @@
+<div class="ac-header">
+  <div>
+    <h1 class="ac-title">Categories</h1>
+    <p class="ac-sub">Manage your product categories</p>
+  </div>
+  <button class="ac-add-btn" (click)="openAdd()">
+    <span class="material-symbols-outlined">add</span> Add Category
+  </button>
+</div>
+
+<!-- Grid -->
+<div class="ac-empty" *ngIf="categories().length === 0">
+  <span class="material-symbols-outlined">category</span>
+  <h3>No Categories Yet</h3>
+  <p>Add your first category to organize products</p>
+  <button class="ac-add-btn" (click)="openAdd()"><span class="material-symbols-outlined">add</span> Add Category</button>
+</div>
+
+<div class="ac-grid" *ngIf="categories().length > 0">
+  <div class="ac-card" *ngFor="let cat of categories()">
+    <div class="ac-card-img">
+      <img *ngIf="cat.image" [src]="cat.image" [alt]="cat.name">
+      <span *ngIf="!cat.image" class="material-symbols-outlined">image_not_supported</span>
+    </div>
+    <div class="ac-card-body">
+      <div class="ac-card-top">
+        <h3>{{ cat.name }}</h3>
+        <span class="ac-status" [class.active]="cat.status === 'active'">{{ cat.status }}</span>
+      </div>
+      <p class="ac-desc" *ngIf="cat.description">{{ cat.description }}</p>
+      <div class="ac-prod-count">
+        <span class="material-symbols-outlined">inventory_2</span>
+        {{ productCountFor(cat.id) }} products
+      </div>
+    </div>
+    <div class="ac-card-actions">
+      <button class="ac-btn edit" (click)="openEdit(cat)">
+        <span class="material-symbols-outlined">edit</span> Edit
+      </button>
+      <button class="ac-btn delete" (click)="promptDelete(cat.id)">
+        <span class="material-symbols-outlined">delete</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Drawer -->
+<app-side-drawer [isOpen]="isDrawerOpen()" [title]="isEditing() ? 'Edit Category' : 'Add Category'" (close)="close()">
+  <form #catForm="ngForm" (ngSubmit)="save(catForm)" class="ac-form">
+
+    <div class="ac-field">
+      <label>Category Name *</label>
+      <input type="text" [(ngModel)]="currentCat.name" name="name" required placeholder="e.g. Fruit Chaat" #nameF="ngModel" [class.invalid]="nameF.invalid && nameF.touched">
+      <span class="field-err" *ngIf="nameF.invalid && nameF.touched">Name is required</span>
+    </div>
+
+    <div class="ac-field">
+      <label>Description</label>
+      <textarea [(ngModel)]="currentCat.description" name="description" placeholder="Brief description..." rows="3"></textarea>
+    </div>
+
+    <div class="ac-field">
+      <label>Status</label>
+      <div class="ac-radio-row">
+        <label class="ac-radio"><input type="radio" [(ngModel)]="currentCat.status" name="status" value="active"> Active</label>
+        <label class="ac-radio"><input type="radio" [(ngModel)]="currentCat.status" name="status" value="disabled"> Disabled</label>
+      </div>
+    </div>
+
+    <div class="ac-field">
+      <label>Category Image *</label>
+      <div class="ac-img-area">
+        <div class="ac-img-preview" *ngIf="currentCat.image">
+          <img [src]="currentCat.image" alt="Category">
+          <button type="button" class="ac-img-remove" (click)="currentCat.image = ''">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <label *ngIf="!currentCat.image" class="ac-img-upload" for="catImg">
+          <span class="material-symbols-outlined">upload_file</span>
+          <span>{{ isUploading() ? 'Uploading ' + uploadProgress() + '%...' : 'Upload Image' }}</span>
+        </label>
+        <input id="catImg" type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none">
+      </div>
+    </div>
+
+    <div class="ac-form-footer">
+      <button type="button" class="ac-btn-cancel" (click)="close()">Cancel</button>
+      <button type="submit" class="ac-btn-save" [disabled]="isSaving() || isUploading()">
+        <span class="material-symbols-outlined" *ngIf="!isSaving()">save</span>
+        <span class="fc-btn-spinner" *ngIf="isSaving()"></span>
+        {{ isSaving() ? 'Saving...' : (isEditing() ? 'Update' : 'Add Category') }}
+      </button>
+    </div>
+  </form>
+</app-side-drawer>
+
+<app-confirmation-modal [isOpen]="isDeleteModal()" title="Delete Category" message="This will delete the category. Products will still exist but will be uncategorized." confirmText="Delete" (confirm)="confirmDelete()" (cancel)="cancelDelete()"></app-confirmation-modal>

@@ -1,0 +1,141 @@
+<div class="ao-header">
+  <div>
+    <h1 class="ao-title">Orders</h1>
+    <p class="ao-sub">Manage and track all customer orders</p>
+  </div>
+</div>
+
+<!-- Status Filter Tabs -->
+<div class="ao-tabs">
+  <button [class.active]="statusFilter() === 'all'" (click)="setFilter('all')">
+    All <span class="ao-tab-count">{{ statusCounts().all }}</span>
+  </button>
+  <button [class.active]="statusFilter() === 'pending'" (click)="setFilter('pending')">
+    Pending <span class="ao-tab-count pending">{{ statusCounts().pending }}</span>
+  </button>
+  <button [class.active]="statusFilter() === 'confirmed'" (click)="setFilter('confirmed')">
+    Confirmed <span class="ao-tab-count">{{ statusCounts().confirmed }}</span>
+  </button>
+  <button [class.active]="statusFilter() === 'preparing'" (click)="setFilter('preparing')">
+    Preparing <span class="ao-tab-count">{{ statusCounts().preparing }}</span>
+  </button>
+  <button [class.active]="statusFilter() === 'out-for-delivery'" (click)="setFilter('out-for-delivery')">
+    Out for Delivery <span class="ao-tab-count">{{ statusCounts()['out-for-delivery'] }}</span>
+  </button>
+  <button [class.active]="statusFilter() === 'delivered'" (click)="setFilter('delivered')">
+    Delivered <span class="ao-tab-count">{{ statusCounts().delivered }}</span>
+  </button>
+  <button [class.active]="statusFilter() === 'cancelled'" (click)="setFilter('cancelled')">
+    Cancelled <span class="ao-tab-count">{{ statusCounts().cancelled }}</span>
+  </button>
+</div>
+
+<div class="ao-layout">
+  <!-- Orders List -->
+  <div class="ao-list-wrap">
+    <div class="ao-empty" *ngIf="filteredOrders().length === 0">
+      <span class="material-symbols-outlined">shopping_bag</span>
+      <p>No orders in this category</p>
+    </div>
+
+    <div class="ao-order-card" *ngFor="let order of filteredOrders()"
+         [class.selected]="selectedOrder()?.id === order.id"
+         (click)="viewOrder(order)">
+      <div class="ao-order-top">
+        <div class="ao-order-id">#{{ order.id.slice(-6).toUpperCase() }}</div>
+        <span class="ao-status" [class]="getStatusClass(order.status)">{{ order.status }}</span>
+      </div>
+      <div class="ao-order-name">{{ order.customerName }}</div>
+      <div class="ao-order-meta">
+        <span>📱 {{ order.customerPhone }}</span>
+        <span>{{ order.placedAt | date:'dd MMM, h:mm a' }}</span>
+      </div>
+      <div class="ao-order-footer">
+        <span class="ao-items-count">{{ order.items.length }} item(s)</span>
+        <span class="ao-amount">₹{{ order.grandTotal }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Detail Panel -->
+  <div class="ao-detail" *ngIf="selectedOrder()">
+    <div class="ao-detail-header">
+      <h3>Order #{{ selectedOrder()!.id.slice(-6).toUpperCase() }}</h3>
+      <button class="ao-close-btn" (click)="closeDetail()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="ao-detail-body">
+      <!-- Customer Info -->
+      <div class="ao-detail-section">
+        <div class="ao-section-label">Customer</div>
+        <div class="ao-customer-info">
+          <div class="ao-cust-name">{{ selectedOrder()!.customerName }}</div>
+          <div class="ao-cust-meta">{{ selectedOrder()!.customerPhone }}</div>
+          <div class="ao-cust-meta" *ngIf="selectedOrder()!.customerEmail">{{ selectedOrder()!.customerEmail }}</div>
+        </div>
+      </div>
+
+      <!-- Delivery Address -->
+      <div class="ao-detail-section">
+        <div class="ao-section-label">Delivery Address</div>
+        <div class="ao-address">
+          {{ selectedOrder()!.deliveryAddress.addressLine1 }},
+          {{ selectedOrder()!.deliveryAddress.city }} - {{ selectedOrder()!.deliveryAddress.pincode }}
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="ao-detail-section">
+        <div class="ao-section-label">Items Ordered</div>
+        <div class="ao-items-list">
+          <div class="ao-item-row" *ngFor="let item of selectedOrder()!.items">
+            <div class="ao-item-img" *ngIf="item.productImage">
+              <img [src]="item.productImage" [alt]="item.productName">
+            </div>
+            <div class="ao-item-info">
+              <div class="ao-item-name">{{ item.productName }}</div>
+              <div class="ao-item-qty">x{{ item.quantity }} × ₹{{ item.price }}</div>
+            </div>
+            <div class="ao-item-total">₹{{ item.total }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bill Summary -->
+      <div class="ao-detail-section">
+        <div class="ao-bill-row"><span>Item Total</span><span>₹{{ selectedOrder()!.itemTotal }}</span></div>
+        <div class="ao-bill-row"><span>Delivery</span><span>₹{{ selectedOrder()!.deliveryCharge }}</span></div>
+        <div class="ao-bill-row discount" *ngIf="selectedOrder()!.discount > 0"><span>Discount</span><span>-₹{{ selectedOrder()!.discount }}</span></div>
+        <div class="ao-bill-row total"><span>Grand Total</span><span>₹{{ selectedOrder()!.grandTotal }}</span></div>
+      </div>
+
+      <!-- Update Status -->
+      <div class="ao-detail-section">
+        <div class="ao-section-label">Update Status</div>
+        <div class="ao-status-btns">
+          <button *ngFor="let s of orderStatuses"
+                  class="ao-status-btn" [class]="getStatusClass(s)"
+                  [class.current]="selectedOrder()!.status === s"
+                  [disabled]="isUpdating() === selectedOrder()!.id"
+                  (click)="updateStatus(selectedOrder()!.id, s)">
+            {{ s }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="ao-detail-section" *ngIf="selectedOrder()!.notes">
+        <div class="ao-section-label">Customer Notes</div>
+        <div class="ao-notes">{{ selectedOrder()!.notes }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty detail state -->
+  <div class="ao-detail ao-detail-empty" *ngIf="!selectedOrder()">
+    <span class="material-symbols-outlined">touch_app</span>
+    <p>Select an order to view details</p>
+  </div>
+</div>

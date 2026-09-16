@@ -1,0 +1,170 @@
+<!-- Loading Skeleton -->
+<div class="dash-loading" *ngIf="isLoading()">
+  <div class="skel-row">
+    <div class="skel-card" *ngFor="let i of [1,2,3,4]"></div>
+  </div>
+  <div class="skel-row">
+    <div class="skel-block"></div>
+    <div class="skel-block"></div>
+  </div>
+</div>
+
+<div class="dash-wrap" *ngIf="!isLoading()">
+  <!-- Page Title -->
+  <div class="dash-header">
+    <div>
+      <h1 class="dash-title">Dashboard</h1>
+      <p class="dash-sub">Welcome back! Here's what's happening today.</p>
+    </div>
+  </div>
+
+  <!-- ── STAT CARDS ── -->
+  <div class="stat-grid">
+    <!-- Total Products -->
+    <div class="stat-card stat-green">
+      <div class="stat-icon"><span class="material-symbols-outlined">inventory_2</span></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ totalProducts() }}</div>
+        <div class="stat-label">Total Products</div>
+        <div class="stat-sub">{{ activeProducts() }} active</div>
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="stat-card stat-teal">
+      <div class="stat-icon"><span class="material-symbols-outlined">category</span></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ totalCategories() }}</div>
+        <div class="stat-label">Categories</div>
+      </div>
+    </div>
+
+    <!-- Pending Orders -->
+    <div class="stat-card stat-orange">
+      <div class="stat-icon"><span class="material-symbols-outlined">pending_actions</span></div>
+      <div class="stat-info">
+        <div class="stat-value">{{ pendingOrders() }}</div>
+        <div class="stat-label">Pending Orders</div>
+        <div class="stat-sub">Needs attention</div>
+      </div>
+    </div>
+
+    <!-- Revenue (PIN locked) -->
+    <div class="stat-card stat-purple" [class.locked]="!revenueUnlocked()">
+      <div class="stat-icon"><span class="material-symbols-outlined">payments</span></div>
+      <div class="stat-info">
+        <div class="stat-value" *ngIf="revenueUnlocked()">
+          ₹{{ totalRevenue() | number:'1.0-0' }}
+        </div>
+        <div class="stat-value locked-val" *ngIf="!revenueUnlocked()">₹ ●●●●</div>
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-sub" *ngIf="revenueUnlocked()">Delivered orders</div>
+      </div>
+      <button class="stat-lock-btn" (click)="revenueUnlocked() ? lockRevenue() : openPinModal()" type="button">
+        <span class="material-symbols-outlined">{{ revenueUnlocked() ? 'lock_open' : 'lock' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Revenue Filter (when unlocked) -->
+  <div class="rev-filter-bar" *ngIf="revenueUnlocked()">
+    <button [class.active]="revenueDateFilter() === 'all'"       (click)="setFilter('all')">All Time</button>
+    <button [class.active]="revenueDateFilter() === 'today'"     (click)="setFilter('today')">Today</button>
+    <button [class.active]="revenueDateFilter() === 'yesterday'" (click)="setFilter('yesterday')">Yesterday</button>
+    <button [class.active]="revenueDateFilter() === 'this_week'" (click)="setFilter('this_week')">This Week</button>
+    <button [class.active]="revenueDateFilter() === 'this_month'"(click)="setFilter('this_month')">This Month</button>
+    <button [class.active]="revenueDateFilter() === 'custom'"    (click)="setFilter('custom')">Custom</button>
+    <div class="rev-custom-dates" *ngIf="revenueDateFilter() === 'custom'">
+      <input type="date" [(ngModel)]="revenueFromDate" (change)="revenueFromDate.set($any($event.target).value)">
+      <span>to</span>
+      <input type="date" [(ngModel)]="revenueToDate" (change)="revenueToDate.set($any($event.target).value)">
+    </div>
+  </div>
+
+  <!-- ── BOTTOM GRID ── -->
+  <div class="dash-bottom-grid">
+
+    <!-- Recent Orders -->
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h3>Recent Orders</h3>
+        <a routerLink="/admin/orders" class="dash-view-all">View all →</a>
+      </div>
+      <div class="dash-empty" *ngIf="recentOrders().length === 0">
+        <span class="material-symbols-outlined">shopping_bag</span>
+        <p>No orders yet</p>
+      </div>
+      <div class="orders-list" *ngIf="recentOrders().length > 0">
+        <div class="order-row" *ngFor="let order of recentOrders()">
+          <div class="order-info">
+            <div class="order-name">{{ order.customerName }}</div>
+            <div class="order-meta">{{ order.items.length }} item(s) · {{ order.placedAt | date:'shortDate' }}</div>
+          </div>
+          <div class="order-right">
+            <div class="order-amount">₹{{ order.grandTotal }}</div>
+            <span class="order-status" [class]="getStatusClass(order.status)">{{ order.status }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Selling + Low Stock -->
+    <div class="dash-right-col">
+
+      <!-- Top Selling -->
+      <div class="dash-card">
+        <div class="dash-card-head">
+          <h3>Top Selling</h3>
+          <a routerLink="/admin/products" class="dash-view-all">Products →</a>
+        </div>
+        <div class="dash-empty" *ngIf="topSellingItems().length === 0">
+          <span class="material-symbols-outlined">bar_chart</span>
+          <p>No sales data yet</p>
+        </div>
+        <div class="top-list" *ngFor="let item of topSellingItems(); let i = index">
+          <div class="top-rank">{{ i+1 }}</div>
+          <div class="top-img" *ngIf="item.img">
+            <img [src]="item.img" [alt]="item.name">
+          </div>
+          <div class="top-name">{{ item.name }}</div>
+          <div class="top-sold">{{ item.sold }} sold</div>
+        </div>
+      </div>
+
+      <!-- Low Stock -->
+      <div class="dash-card" *ngIf="lowStockItems().length > 0">
+        <div class="dash-card-head">
+          <h3>⚠️ Low Stock</h3>
+          <a routerLink="/admin/products" class="dash-view-all">Manage →</a>
+        </div>
+        <div class="low-stock-list">
+          <div class="low-stock-row" *ngFor="let p of lowStockItems()">
+            <div class="ls-name">{{ p.name }}</div>
+            <div class="ls-stock" [class.critical]="p.stock < 5">{{ p.stock }} left</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PIN Modal -->
+<div class="pin-overlay" *ngIf="showPinModal()" (click)="closePinModal()">
+  <div class="pin-modal" (click)="$event.stopPropagation()">
+    <div class="pin-title">Enter PIN to unlock Revenue</div>
+    <div class="pin-dots">
+      <div class="pin-dot" *ngFor="let i of [0,1,2,3]"
+           [class.filled]="pinDigits().length > i"
+           [class.error]="pinError()"></div>
+    </div>
+    <div class="pin-error-msg" *ngIf="pinError()">Wrong PIN. Try again.</div>
+    <div class="pin-grid">
+      <button *ngFor="let d of ['1','2','3','4','5','6','7','8','9']" (click)="pressPin(d)">{{ d }}</button>
+      <button class="pin-empty" disabled></button>
+      <button (click)="pressPin('0')">0</button>
+      <button class="pin-back" (click)="backspacePin()">⌫</button>
+    </div>
+    <button class="pin-cancel-btn" (click)="closePinModal()">Cancel</button>
+  </div>
+</div>
