@@ -85,35 +85,6 @@ interface MenuItem {
         </div>
 
         <div class="container profile-content">
-          <!-- SAVED ADDRESSES SECTION -->
-          <div class="profile-section">
-            <div class="section-top">
-              <h3 class="section-label">My Saved Addresses</h3>
-              <button class="add-addr-link" (click)="authService.openMapPicker()">+ Add on Map</button>
-            </div>
-            
-            <div class="menu-card">
-              @for (addr of authService.currentUser()?.addresses; track addr.id || addr.fullAddress) {
-                <div 
-                  class="address-row" 
-                  [class.active]="authService.activeAddress().fullAddress === addr.fullAddress"
-                  (click)="authService.setActiveAddress(addr)"
-                >
-                  <span class="ar-icon">{{ addr.icon || '📍' }}</span>
-                  <div class="ar-info">
-                    <div class="ar-title">
-                      <strong>{{ addr.label }}</strong>
-                      @if (authService.activeAddress().fullAddress === addr.fullAddress) {
-                        <span class="ar-badge">Active</span>
-                      }
-                    </div>
-                    <span class="ar-text">{{ addr.fullAddress }}</span>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-
           <!-- ACTIVITY ITEMS -->
           <div class="profile-section">
             <h3 class="section-label">My Activity</h3>
@@ -160,7 +131,7 @@ interface MenuItem {
           <div class="guest-card">
             <div class="guest-icon">🥑</div>
             <h2 class="guest-title">Account & Preferences</h2>
-            <p class="guest-sub">Log in to view your orders, saved addresses, exclusive fruit club offers, and healthy streaks.</p>
+            <p class="guest-sub">Log in to view your orders, exclusive fruit club offers, and healthy streaks.</p>
             
             <button class="guest-login-btn" (click)="goToLogin()">
               Login / Sign Up
@@ -362,16 +333,6 @@ interface MenuItem {
     .section-top .section-label {
       margin: 0;
     }
-    .add-addr-link {
-      background: none;
-      border: none;
-      color: #2E7D32;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 0;
-      &:hover { text-decoration: underline; }
-    }
 
     /* MENU CARD */
     .menu-card {
@@ -412,51 +373,6 @@ interface MenuItem {
       line-height: 1;
     }
 
-    /* ADDRESS ROW */
-    .address-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 12px 16px;
-      border-bottom: 1px solid #F3F4F6;
-      cursor: pointer;
-      transition: background 0.15s;
-      &:last-child { border-bottom: none; }
-      &:hover { background: #F9FAFB; }
-      &.active {
-        background: #F1F8E9;
-      }
-    }
-    .ar-icon {
-      font-size: 20px;
-      margin-top: 2px;
-    }
-    .ar-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .ar-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13.5px;
-      color: #111827;
-    }
-    .ar-badge {
-      background: #2E7D32;
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 4px;
-    }
-    .ar-text {
-      font-size: 12px;
-      color: #6B7280;
-      line-height: 1.35;
-    }
 
     /* TOGGLE */
     .toggle {

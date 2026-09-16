@@ -3,16 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { LocationService } from '../../core/services/location.service';
-import { AddressOption } from '../../core/models/user.model';
-import { MapPickerComponent } from '../../shared/map-picker/map-picker.component';
 
 type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
 
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [CommonModule, FormsModule, MapPickerComponent],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="auth-root">
 
@@ -41,11 +38,6 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
             <p class="splash-sub">FRESH &bull; HEALTHY &bull; IN MINS</p>
           </div>
 
-          <!-- Delivery pill at bottom -->
-          <div class="splash-pill">
-            <span class="pill-glow"></span>
-            <span class="pill-text">Delivering to your doorstep in 10–15 mins</span>
-          </div>
 
         </div>
       }
@@ -106,40 +98,9 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
 
           <!-- ── Bottom white card — slides up like Swiggy ── -->
           <div class="lcard" [class.lcard-up]="landingCardUp()">
-
             <button type="button" class="login-btn" id="login-btn" (click)="openActionSheet()">
               Login
             </button>
-
-            <p class="lcard-terms">
-              By tapping, I accept the
-              <a href="javascript:void(0)" class="lcard-link">Privacy Policy</a>,
-              <a href="javascript:void(0)" class="lcard-link">FruitChat Terms of Use</a>
-            </p>
-
-            <div class="lcard-menu">
-              <div class="lcard-row" (click)="openActionSheet()" id="offers-row">
-                <div class="lcard-row-left">
-                  <div class="lcard-icon lcard-icon--offers">%</div>
-                  <span class="lcard-row-label">Offers &amp; Discounts</span>
-                </div>
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="#9CA3AF" stroke-width="2.5" fill="none">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-              <div class="lcard-sep"></div>
-              <div class="lcard-row" (click)="openActionSheet()" id="feedback-row">
-                <div class="lcard-row-left">
-                  <div class="lcard-icon lcard-icon--support">💬</div>
-                  <span class="lcard-row-label">Customer Feedback &amp; Help</span>
-                </div>
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="#9CA3AF" stroke-width="2.5" fill="none">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
-
-            <p class="lcard-version">App version 8.5.1 (FruitChat)</p>
           </div>
         </div>
       }
@@ -342,7 +303,7 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
 
                 <div class="step-hd">
                   <h3 class="step-title">Create Your Account</h3>
-                  <p class="step-sub">Set up your profile &amp; delivery location</p>
+                  <p class="step-sub">Set up your profile &amp; security PIN</p>
                 </div>
 
                 <div class="reg-fields">
@@ -393,31 +354,6 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
                       }
                     </div>
                   </div>
-
-                  <!-- Delivery location -->
-                  <div class="rfield">
-                    <div class="loc-card">
-                      <div class="loc-top">
-                        <div class="loc-title-row">
-                          <span>📍</span>
-                          <span class="loc-title-text">Delivery Address</span>
-                        </div>
-                        <div class="loc-btns">
-                          <button type="button" class="loc-btn" id="gps-btn" (click)="useGPSLocation()" [disabled]="gpsLoading()">
-                            @if (gpsLoading()) { <div class="mini-spin"></div> }
-                            @else { <span>📡 GPS</span> }
-                          </button>
-                          <button type="button" class="loc-btn" id="map-btn" (click)="openMapForRegister()">🗺️ Map</button>
-                        </div>
-                      </div>
-                      <div class="loc-preview">
-                        <span class="loc-lbl">{{ selectedAddress.label }}:</span>
-                        <span class="loc-det">{{ selectedAddress.detail }}</span>
-                        <p class="loc-full">{{ selectedAddress.fullAddress }}</p>
-                      </div>
-                      <input type="text" class="rinput flat-inp" id="flat-no" placeholder="Flat / House / Floor No. (Optional)" [(ngModel)]="flatNumber"/>
-                    </div>
-                  </div>
                 </div>
 
                 <button
@@ -435,14 +371,6 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
 
           </div>
         </div>
-      }
-
-      <!-- MAP PICKER -->
-      @if (showMapModal()) {
-        <app-map-picker
-          (onSelect)="onAddressFromMap($event)"
-          (onClose)="showMapModal.set(false)"
-        ></app-map-picker>
       }
 
     </div>
@@ -527,40 +455,6 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       letter-spacing: 3.5px;
       text-transform: uppercase;
       margin: 0;
-    }
-
-    /* Delivery pill */
-    .splash-pill {
-      background: rgba(255,255,255,0.13);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 50px;
-      padding: 10px 22px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .pill-glow {
-      width: 8px;
-      height: 8px;
-      background: #69F0AE;
-      border-radius: 50%;
-      box-shadow: 0 0 12px #69F0AE;
-      flex-shrink: 0;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.5; transform: scale(0.8); }
-    }
-
-    .pill-text {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: #FFFFFF;
     }
 
     /* Pop in for splash logo */
@@ -713,7 +607,7 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       background: #FFFFFF;
       border-top-left-radius: 26px;
       border-top-right-radius: 26px;
-      padding: 22px 20px 30px;
+      padding: 20px 20px 24px;
       box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
       display: flex;
       flex-direction: column;
@@ -730,6 +624,8 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
     }
 
     .login-btn {
+      position: relative;
+      overflow: hidden;
       width: 100%;
       height: 52px;
       background: #2E7D32;
@@ -742,79 +638,38 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       cursor: pointer;
       box-shadow: 0 6px 18px rgba(46,125,50,0.38);
       transition: transform 0.14s ease, background 0.2s;
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: -60%;
+        left: -80%;
+        width: 50%;
+        height: 220%;
+        background: linear-gradient(
+          60deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.4) 50%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        transform: rotate(25deg);
+        animation: btnShimmer 2.8s infinite ease-in-out;
+        pointer-events: none;
+      }
+
       &:active { transform: scale(0.98); background: #1B5E20; }
     }
 
-    .lcard-terms {
-      font-size: 11.5px;
-      color: #6B7280;
-      text-align: center;
-      margin: 12px 0 16px;
-      line-height: 1.5;
-      max-width: 300px;
-    }
-
-    .lcard-link {
-      color: #111827;
-      font-weight: 700;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
-    .lcard-menu {
-      width: 100%;
-      background: #F9FAFB;
-      border-radius: 14px;
-      border: 1px solid #F0F0F0;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-
-    .lcard-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 13px 14px;
-      cursor: pointer;
-      transition: background 0.15s;
-      &:active { background: #F3F4F6; }
-    }
-
-    .lcard-row-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .lcard-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      &.lcard-icon--offers { background: #E8F5E9; color: #2E7D32; font-size: 13px; }
-      &.lcard-icon--support { background: #E0F2FE; font-size: 16px; }
-    }
-
-    .lcard-row-label {
-      font-size: 14px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    .lcard-sep {
-      height: 1px;
-      background: #E5E7EB;
-      margin: 0 14px;
-    }
-
-    .lcard-version {
-      font-size: 12px;
-      font-weight: 600;
-      color: #9CA3AF;
-      margin: 0;
+    @keyframes btnShimmer {
+      0% {
+        left: -80%;
+      }
+      35% {
+        left: 140%;
+      }
+      100% {
+        left: 140%;
+      }
     }
 
     /* ═══════════════════════════════════════════════
@@ -1102,71 +957,11 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       &:focus { border-color: #2E7D32; background: #FFFFFF; box-shadow: 0 0 0 3px rgba(46,125,50,0.12); }
     }
 
-    .flat-inp { height: 42px; font-size: 13px; background: #FFFFFF; }
-
-    /* Location card */
-    .loc-card {
-      background: #F9FAFB;
-      border: 1.5px solid #E5E7EB;
-      border-radius: 14px;
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .loc-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .loc-title-row { display: flex; align-items: center; gap: 6px; }
-    .loc-title-text { font-size: 12.5px; font-weight: 800; color: #1F2937; }
-    .loc-btns { display: flex; gap: 6px; }
-
-    .loc-btn {
-      background: #E8F5E9;
-      color: #1B5E20;
-      border: 1px solid #C8E6C9;
-      border-radius: 8px;
-      padding: 5px 9px;
-      font-size: 11px;
-      font-weight: 800;
-      cursor: pointer;
-      font-family: inherit;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      transition: all 0.15s;
-      &:active { background: #C8E6C9; transform: scale(0.96); }
-      &[disabled] { opacity: 0.55; cursor: not-allowed; }
-    }
-
-    .loc-preview {
-      background: #FFFFFF;
-      border-radius: 10px;
-      border: 1px solid #E5E7EB;
-      padding: 8px 12px;
-    }
-
-    .loc-lbl  { font-size: 11.5px; font-weight: 800; color: #2E7D32; margin-right: 4px; }
-    .loc-det  { font-size: 12.5px; font-weight: 700; color: #111827; }
-    .loc-full { font-size: 11px; color: #6B7280; margin: 3px 0 0; line-height: 1.4; }
-
     /* Spinners */
     .spinner {
       width: 20px; height: 20px;
       border: 2.5px solid rgba(255,255,255,0.4);
       border-top-color: #FFFFFF;
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-    }
-
-    .mini-spin {
-      width: 14px; height: 14px;
-      border: 2px solid rgba(27,94,32,0.3);
-      border-top-color: #1B5E20;
       border-radius: 50%;
       animation: spin 0.75s linear infinite;
     }
@@ -1201,7 +996,6 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
 })
 export class AuthComponent implements OnInit, OnDestroy {
   private authService  = inject(AuthService);
-  private locationService = inject(LocationService);
   private router       = inject(Router);
   private route        = inject(ActivatedRoute);
 
@@ -1235,11 +1029,9 @@ export class AuthComponent implements OnInit, OnDestroy {
   readonly showActionSheet = signal<boolean>(false);
   readonly step            = signal<AuthStep>('phone');
   readonly isLoading       = signal<boolean>(false);
-  readonly gpsLoading      = signal<boolean>(false);
   readonly errorMessage    = signal<string>('');
   readonly successMessage  = signal<string>('');
   readonly existingUserName = signal<string>('');
-  readonly showMapModal    = signal<boolean>(false);
 
   /* ── Form values ──────────────────────────────── */
   phoneNumber          = '';
@@ -1249,8 +1041,6 @@ export class AuthComponent implements OnInit, OnDestroy {
   registerPinDigits:   string[] = ['', '', '', ''];
   regConfirmPinDigits: string[] = ['', '', '', ''];
   registerName   = '';
-  flatNumber     = '';
-  selectedAddress: AddressOption = { ...this.authService.activeAddress() };
 
   /* ── Timers ───────────────────────────────────── */
   private splashTimer!:   ReturnType<typeof setTimeout>;
@@ -1348,7 +1138,6 @@ export class AuthComponent implements OnInit, OnDestroy {
         setTimeout(() => this.focusPin(0, 'login'), 160);
       } else {
         this.step.set('register');
-        this.autoDetectLocation();
       }
     } catch (e: any) {
       this.errorMessage.set(e.message || 'Network error. Please try again.');
@@ -1454,48 +1243,6 @@ export class AuthComponent implements OnInit, OnDestroy {
     }
   }
 
-  /* ── GPS Location ─────────────────────────────── */
-  async useGPSLocation(): Promise<void> {
-    this.gpsLoading.set(true);
-    try {
-      const coords = await this.locationService.getCurrentPosition();
-      const res    = await this.locationService.reverseGeocode(coords.lat, coords.lng);
-      this.selectedAddress = {
-        id: 'addr_' + Date.now(),
-        label: 'Home', icon: '🏠',
-        detail: res.detail,
-        fullAddress: res.fullAddress,
-        lat: coords.lat, lng: coords.lng,
-        isDefault: true
-      };
-    } catch (e) {
-      console.warn('GPS failed:', e);
-    } finally {
-      this.gpsLoading.set(false);
-    }
-  }
-
-  private async autoDetectLocation(): Promise<void> {
-    try {
-      const coords = await this.locationService.getCurrentPosition();
-      const res    = await this.locationService.reverseGeocode(coords.lat, coords.lng);
-      this.selectedAddress = {
-        id: 'addr_auto',
-        label: 'Home', icon: '🏠',
-        detail: res.detail,
-        fullAddress: res.fullAddress,
-        lat: coords.lat, lng: coords.lng,
-        isDefault: true
-      };
-    } catch (e) { /* silent */ }
-  }
-
-  openMapForRegister(): void  { this.showMapModal.set(true); }
-  onAddressFromMap(addr: AddressOption): void {
-    this.selectedAddress = addr;
-    this.showMapModal.set(false);
-  }
-
   /* ── Register ─────────────────────────────────── */
   canRegister(): boolean {
     const pin  = this.getPinStr('reg');
@@ -1513,13 +1260,7 @@ export class AuthComponent implements OnInit, OnDestroy {
     this.errorMessage.set('');
     this.isLoading.set(true);
     try {
-      const addr: AddressOption = {
-        ...this.selectedAddress,
-        fullAddress: this.flatNumber.trim()
-          ? `${this.flatNumber.trim()}, ${this.selectedAddress.fullAddress}`
-          : this.selectedAddress.fullAddress
-      };
-      await this.authService.registerUser({ phone: this.phoneNumber, name: this.registerName, pin, address: addr });
+      await this.authService.registerUser({ phone: this.phoneNumber, name: this.registerName, pin });
       this.successMessage.set('Account created successfully!');
       setTimeout(() => this.navigateAfterLogin(), 600);
     } catch (e: any) {

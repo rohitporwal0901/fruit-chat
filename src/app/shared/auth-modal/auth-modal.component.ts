@@ -2,16 +2,14 @@ import { Component, inject, signal, ViewChildren, QueryList, ElementRef } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
-import { AddressOption, User } from '../../core/models/user.model';
-import { MapPickerComponent } from '../map-picker/map-picker.component';
-import { LocationService } from '../../core/services/location.service';
+import { User } from '../../core/models/user.model';
 
 type AuthStep = 'phone' | 'pin' | 'register';
 
 @Component({
   selector: 'app-auth-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, MapPickerComponent],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="auth-backdrop" (click)="close()">
       <div class="auth-sheet" (click)="$event.stopPropagation()">
@@ -171,31 +169,6 @@ type AuthStep = 'phone' | 'pin' | 'register';
                 />
               </div>
 
-              <!-- DELIVERY LOCATION / MAP PICKER -->
-              <div class="location-picker-box">
-                <div class="loc-box-header">
-                  <div class="loc-label-box">
-                    <span class="loc-icon">📍</span>
-                    <span class="loc-title">Delivery Address</span>
-                  </div>
-                  <button type="button" class="map-change-btn" (click)="openMapForRegister()">
-                    🗺️ Pick on Map / GPS
-                  </button>
-                </div>
-
-                <div class="current-selected-addr">
-                  <strong class="addr-tag">{{ selectedAddress.label }}:</strong>
-                  <span class="addr-text">{{ selectedAddress.detail }}</span>
-                  <p class="addr-sub">{{ selectedAddress.fullAddress }}</p>
-                </div>
-
-                <input 
-                  type="text" 
-                  class="text-input flat-input" 
-                  placeholder="Flat / House / Floor No. (Optional)" 
-                  [(ngModel)]="flatNumber"
-                />
-              </div>
             </div>
 
             <button 
@@ -215,14 +188,6 @@ type AuthStep = 'phone' | 'pin' | 'register';
 
       </div>
     </div>
-
-    <!-- MAP PICKER SUB-MODAL FOR ADDRESS -->
-    @if (showMapPickerSub()) {
-      <app-map-picker 
-        (onSelect)="onAddressFromMap($event)"
-        (onClose)="showMapPickerSub.set(false)"
-      ></app-map-picker>
-    }
   `,
   styles: [`
     .auth-backdrop {
@@ -562,80 +527,6 @@ type AuthStep = 'phone' | 'pin' | 'register';
       font-weight: 700;
     }
 
-    /* LOCATION PICKER IN REGISTER */
-    .location-picker-box {
-      background: #F9FAFB;
-      border: 1.5px dashed #D1D5DB;
-      border-radius: 14px;
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .loc-box-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .loc-label-box {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .loc-title {
-      font-size: 12px;
-      font-weight: 800;
-      color: #111827;
-    }
-
-    .map-change-btn {
-      background: #E8F5E9;
-      border: 1px solid #C8E6C9;
-      color: #1B5E20;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      cursor: pointer;
-      &:active { background: #DCEDC8; }
-    }
-
-    .current-selected-addr {
-      background: #ffffff;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid #E5E7EB;
-    }
-
-    .addr-tag {
-      font-size: 12px;
-      color: #2E7D32;
-      font-weight: 800;
-      margin-right: 4px;
-    }
-
-    .addr-text {
-      font-size: 12px;
-      color: #111827;
-      font-weight: 700;
-    }
-
-    .addr-sub {
-      font-size: 11px;
-      color: #6B7280;
-      margin: 2px 0 0;
-      line-height: 1.3;
-    }
-
-    .flat-input {
-      height: 40px;
-      background: #ffffff;
-      font-size: 12.5px;
-    }
-
     /* ALERTS */
     .error-banner {
       background: #FEE2E2;
@@ -678,7 +569,6 @@ type AuthStep = 'phone' | 'pin' | 'register';
 })
 export class AuthModalComponent {
   private authService = inject(AuthService);
-  private locationService = inject(LocationService);
 
   @ViewChildren('pinInput') pinInputRefs!: QueryList<ElementRef<HTMLInputElement>>;
 
@@ -697,9 +587,6 @@ export class AuthModalComponent {
   // Step 3
   name = '';
   newPin = '';
-  flatNumber = '';
-  selectedAddress: AddressOption = { ...this.authService.activeAddress() };
-  readonly showMapPickerSub = signal<boolean>(false);
 
   async checkPhone(): Promise<void> {
     const cleanPhone = this.phone.trim();
@@ -720,9 +607,8 @@ export class AuthModalComponent {
         this.step.set('pin');
         setTimeout(() => this.focusPinIndex(0), 150);
       } else {
-        // New user -> Register with Name, PIN and Location
+        // New user -> Register with Name and PIN
         this.step.set('register');
-        this.detectInitialAddress();
       }
     } catch (e: any) {
       this.errorMessage.set(e.message || 'Network error. Please try again.');
@@ -787,36 +673,6 @@ export class AuthModalComponent {
   resetToRegister(): void {
     this.errorMessage.set('');
     this.step.set('register');
-    this.detectInitialAddress();
-  }
-
-  // --- REGISTER FLOW ---
-  async detectInitialAddress(): Promise<void> {
-    try {
-      const coords = await this.locationService.getCurrentPosition();
-      const res = await this.locationService.reverseGeocode(coords.lat, coords.lng);
-      this.selectedAddress = {
-        id: 'addr_' + Date.now(),
-        label: 'Home',
-        icon: '🏠',
-        detail: res.detail,
-        fullAddress: res.fullAddress,
-        lat: coords.lat,
-        lng: coords.lng,
-        isDefault: true
-      };
-    } catch (e) {
-      console.warn('Initial address detection skipped:', e);
-    }
-  }
-
-  openMapForRegister(): void {
-    this.showMapPickerSub.set(true);
-  }
-
-  onAddressFromMap(addr: AddressOption): void {
-    this.selectedAddress = addr;
-    this.showMapPickerSub.set(false);
   }
 
   async submitRegister(): Promise<void> {
@@ -833,18 +689,10 @@ export class AuthModalComponent {
     this.isLoading.set(true);
 
     try {
-      const finalAddress: AddressOption = {
-        ...this.selectedAddress,
-        fullAddress: this.flatNumber.trim() 
-          ? `${this.flatNumber.trim()}, ${this.selectedAddress.fullAddress}`
-          : this.selectedAddress.fullAddress
-      };
-
       await this.authService.registerUser({
         phone: this.phone,
         name: this.name,
-        pin: this.newPin,
-        address: finalAddress
+        pin: this.newPin
       });
 
       this.successMessage.set('Account created successfully!');

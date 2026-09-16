@@ -203,7 +203,7 @@ export class AuthService {
     phone: string;
     name: string;
     pin: string;
-    address: AddressOption;
+    address?: AddressOption;
   }): Promise<User> {
     const cleanPhone = data.phone.trim();
     const email = this.phoneToEmail(cleanPhone);
@@ -219,8 +219,8 @@ export class AuthService {
       name: data.name.trim(),
       pin: data.pin.trim(),
       email,
-      addresses: [data.address],
-      activeAddress: data.address,
+      addresses: data.address ? [data.address] : [],
+      activeAddress: data.address || undefined,
       createdAt: new Date().toISOString(),
       role: 'user'
     };
@@ -230,7 +230,9 @@ export class AuthService {
     await setDoc(userDocRef, newUser);
 
     this._currentUser.set(newUser);
-    this._activeAddress.set(data.address);
+    if (data.address) {
+      this._activeAddress.set(data.address);
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
 
     return newUser;
