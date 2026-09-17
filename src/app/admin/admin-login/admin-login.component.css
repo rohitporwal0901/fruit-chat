@@ -329,60 +329,6 @@
   font-weight: 400;
 }
 
-/* Demo Autofill Banner */
-.fc-demo-badge {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.6rem 0.85rem;
-  margin-bottom: 1.4rem;
-  background: #f0fdf4;
-  border: 1px dashed #86efac;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'Poppins', sans-serif;
-  text-align: left;
-}
-
-.fc-demo-badge:hover {
-  background: #dcfce7;
-  border-color: #22c55e;
-  transform: translateY(-1px);
-}
-
-.fc-demo-sparkle {
-  font-size: 0.95rem;
-}
-
-.fc-demo-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #166534;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.fc-demo-val {
-  font-size: 0.82rem;
-  color: #15803d;
-  font-weight: 600;
-  background: rgba(22, 101, 52, 0.08);
-  padding: 0.15rem 0.45rem;
-  border-radius: 6px;
-}
-
-.fc-demo-action {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #166534;
-  background: #ffffff;
-  padding: 0.2rem 0.5rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
 /* Form Styles */
 .fc-login-form {
   display: flex;
@@ -656,87 +602,169 @@
 @media (max-width: 860px) {
   :host {
     height: auto;
-    overflow: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    background: #f7f6f2;
   }
 
   .fc-login-page {
     flex-direction: column;
     height: auto;
     min-height: 100vh;
-    overflow-y: auto;
+    min-height: 100dvh;
+    overflow-y: visible;
+    background: #f7f6f2;
   }
 
   .fc-hero-panel {
-    min-height: 360px;
-    height: 360px;
-    padding: 1.75rem 1.5rem;
+    min-height: 190px;
+    height: 190px;
+    padding: 1.5rem 1.5rem 2.5rem;
     flex: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .fc-hero-top {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 2;
   }
 
   .fc-hero-bottom {
-    max-width: 100%;
-  }
-
-  .fc-glass-card {
-    padding: 1.15rem 1.25rem;
-  }
-
-  .fc-glass-desc {
     display: none;
-  }
-
-  .fc-glass-features {
-    gap: 0.85rem;
   }
 
   .fc-form-panel {
     height: auto;
     min-height: auto;
-    padding: 2.25rem 1.5rem 3.5rem;
+    padding: 0 1.25rem 2.5rem;
     flex: none;
     width: 100%;
+    margin-top: -28px;
+    position: relative;
+    z-index: 10;
+    background: transparent;
   }
 
   .fc-form-wrapper {
     max-width: 440px;
+    width: 100%;
+  }
+
+  .fc-login-card {
+    border-radius: 22px;
+    box-shadow: 0 10px 30px rgba(13, 40, 24, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    background: #ffffff;
+  }
+
+  .fc-card-body {
+    padding: 1.75rem 1.5rem 1.5rem;
   }
 }
 
 @media (max-width: 480px) {
   .fc-hero-panel {
-    min-height: 300px;
-    height: 300px;
-    padding: 1.25rem 1rem;
+    min-height: 155px;
+    height: 155px;
+    padding: 1.25rem 1rem 2rem;
   }
 
-  .fc-glass-card {
-    padding: 1rem;
-    border-radius: 16px;
+  .fc-hero-badge {
+    padding: 0.4rem 0.9rem;
   }
 
-  .fc-glass-brand {
-    font-size: 1.35rem;
+  .fc-badge-text {
+    font-size: 0.72rem;
+    letter-spacing: 0.3px;
   }
 
-  .fc-glass-tagline {
-    font-size: 0.88rem;
+  .fc-form-panel {
+    padding: 0 0.85rem 2rem;
+    margin-top: -24px;
   }
 
-  .fc-glass-features {
-    display: none;
+  .fc-login-card {
+    border-radius: 20px;
   }
 
   .fc-card-body {
-    padding: 2rem 1.5rem 1.75rem;
+    padding: 1.35rem 1.15rem 1.25rem;
+  }
+
+  .fc-card-header {
+    margin-bottom: 1.15rem;
+  }
+
+  .fc-admin-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    margin: 0 auto 0.65rem;
+  }
+
+  .fc-admin-avatar svg {
+    width: 22px;
+    height: 22px;
   }
 
   .fc-card-title {
-    font-size: 1.5rem;
+    font-size: 1.32rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .fc-card-subtitle {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .fc-field-group {
+    margin-bottom: 0.85rem;
+  }
+
+  .fc-field-label {
+    font-size: 0.78rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .fc-text-input {
+    height: 46px;
+    font-size: 0.88rem;
+    padding: 0 1rem 0 2.6rem;
+  }
+
+  .fc-field-icon {
+    left: 0.85rem;
+  }
+
+  .fc-field-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .fc-submit-btn {
+    height: 48px;
+    font-size: 0.92rem;
+    margin-top: 0.35rem;
   }
 
   .fc-card-footer {
-    flex-direction: column;
-    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
+  }
+
+  .fc-back-link {
+    font-size: 0.76rem;
+  }
+
+  .fc-security-tag {
+    font-size: 0.7rem;
   }
 }
