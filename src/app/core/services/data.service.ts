@@ -2,7 +2,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   addDoc,
   doc,
   updateDoc,
@@ -14,7 +13,8 @@ import {
   where,
   getDocs,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  onSnapshot
 } from '@angular/fire/firestore';
 import { AdminProduct, Category, AdminOrder, Transaction, HomeSlide, OfferCard, ComboCard } from '../models/admin.model';
 
@@ -52,58 +52,84 @@ export class DataService {
   private listenProducts() {
     const ref = collection(this.firestore, 'fc_products');
     const q = query(ref, orderBy('createdAt', 'desc'));
-    (collectionData(q, { idField: 'id' }) as any).subscribe((data: AdminProduct[]) => {
+    onSnapshot(q, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminProduct));
       this.products.set(data);
+    }, (err) => {
+      console.warn('Error listening products:', err);
     });
   }
 
   private listenCategories() {
     const ref = collection(this.firestore, 'fc_categories');
-    (collectionData(ref, { idField: 'id' }) as any).subscribe((data: Category[]) => {
+    onSnapshot(ref, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Category));
       this.categories.set(data);
+    }, (err) => {
+      console.warn('Error listening categories:', err);
     });
   }
 
   private listenOrders() {
     const ref = collection(this.firestore, 'fc_orders');
-    const q = query(ref, orderBy('placedAt', 'desc'));
-    (collectionData(q, { idField: 'id' }) as any).subscribe((data: AdminOrder[]) => {
+    onSnapshot(ref, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminOrder));
+      data.sort((a, b) => {
+        const timeA = new Date(a.placedAt || (a as any).createdAt || 0).getTime();
+        const timeB = new Date(b.placedAt || (b as any).createdAt || 0).getTime();
+        return timeB - timeA;
+      });
       this.orders.set(data);
+    }, (err) => {
+      console.warn('Error listening orders:', err);
     });
   }
 
   private listenTransactions() {
     const ref = collection(this.firestore, 'fc_transactions');
-    const q = query(ref, orderBy('date', 'desc'));
-    (collectionData(q, { idField: 'id' }) as any).subscribe((data: Transaction[]) => {
+    onSnapshot(ref, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+      data.sort((a, b) => {
+        const timeA = new Date(a.date || (a as any).createdAt || 0).getTime();
+        const timeB = new Date(b.date || (b as any).createdAt || 0).getTime();
+        return timeB - timeA;
+      });
       this.transactions.set(data);
+    }, (err) => {
+      console.warn('Error listening transactions:', err);
     });
   }
 
   private listenHomeSlides() {
     const ref = collection(this.firestore, 'fc_home_slides');
     const q = query(ref, orderBy('order', 'asc'));
-    (collectionData(q, { idField: 'id' }) as any).subscribe((data: HomeSlide[]) => {
+    onSnapshot(q, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as HomeSlide));
       this.homeSlides.set(data);
+    }, (err) => {
+      console.warn('Error listening home slides:', err);
     });
   }
 
   private listenComboCards() {
     const ref = collection(this.firestore, 'fc_combo_cards');
     const q = query(ref, orderBy('order', 'asc'));
-    (collectionData(q, { idField: 'id' }) as any).subscribe((data: ComboCard[]) => {
+    onSnapshot(q, (snap) => {
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as ComboCard));
       this.comboCards.set(data);
+    }, (err) => {
+      console.warn('Error listening combo cards:', err);
     });
   }
 
-  private async listenOfferCard() {
+  private listenOfferCard() {
     const ref = doc(this.firestore, 'fc_settings', 'offerCard');
-    // Use snapshot listener
-    const { onSnapshot } = await import('@angular/fire/firestore');
     onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         this.offerCard.set(snap.data() as OfferCard);
       }
+    }, (err) => {
+      console.warn('Error listening offer card:', err);
     });
   }
 
