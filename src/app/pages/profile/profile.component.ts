@@ -580,17 +580,19 @@ export class ProfileComponent {
 
     const cleanPhone = (p?: string) => (p || '').replace(/\D/g, '').slice(-10);
     const uPhone = cleanPhone(user.phone);
+    const uEmail = (user.email || '').trim().toLowerCase();
 
     const myOrders = list.filter(o => {
-      if (o.userId && o.userId === user.uid) return true;
+      // 1. Match by authenticated user UID
+      if (o.userId && user.uid && o.userId === user.uid) return true;
+      // 2. Match by 10-digit phone number
       if (uPhone && o.customerPhone && cleanPhone(o.customerPhone) === uPhone) return true;
-      if (o.customerName && user.name && o.customerName.trim().toLowerCase() === user.name.trim().toLowerCase()) return true;
+      // 3. Match by email if available
+      if (uEmail && o.customerEmail && o.customerEmail.trim().toLowerCase() === uEmail) return true;
       return false;
     });
 
-    // Return all user orders if found; otherwise return all orders from store
-    const result = myOrders.length > 0 ? myOrders : list;
-    return [...result].sort((a, b) => new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime());
+    return [...myOrders].sort((a, b) => new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime());
   });
 
   displayedOrders = computed(() => {
