@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { CartService } from '../../core/services/cart.service';
+import { DataService } from '../../core/services/data.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-cart',
@@ -60,15 +62,60 @@ import { CartService } from '../../core/services/cart.service';
             }
           </div>
 
-          <!-- COUPON -->
+          <!-- COUPON SECTION -->
           <div class="coupon-section">
-            <div class="coupon-input-wrap">
-              <span class="coupon-icon">🎟️</span>
-              <input type="text" class="coupon-input" placeholder="Apply Coupon Code" [(ngModel)]="couponCode">
-              <button class="apply-btn" (click)="applyCoupon()">Apply</button>
-            </div>
-            @if (couponApplied()) {
-              <p class="coupon-success">✅ Coupon FRESH10 applied! You save ₹10</p>
+            @if (cartService.appliedCoupon(); as applied) {
+              <!-- Applied Coupon Banner -->
+              <div class="coupon-applied-box">
+                <div class="coupon-applied-left">
+                  <div class="badge-row">
+                    <span class="coupon-badge">🎉 COUPON APPLIED</span>
+                    <span class="coupon-code-pill">{{ applied.code }}</span>
+                  </div>
+                  <div class="coupon-applied-details">
+                    @if (cartService.discount() > 0) {
+                      <span class="coupon-saving-text">You save ₹{{ cartService.discount() }} on this order!</span>
+                    } @else {
+                      <span class="coupon-pending-text">Add ₹{{ (applied.minOrderAmount || 0) - cartService.itemTotal() }} more to activate ₹{{ applied.discount }} OFF (Min order ₹{{ applied.minOrderAmount }})</span>
+                    }
+                  </div>
+                </div>
+                <button class="remove-coupon-btn" (click)="removeCoupon()" title="Remove coupon">✕ Remove</button>
+              </div>
+            } @else {
+              <!-- Coupon Input Form -->
+              <div class="coupon-input-wrap">
+                <span class="coupon-icon">🎟️</span>
+                <input type="text" class="coupon-input" [placeholder]="'Enter code (e.g. ' + ((dataService.offerCard().code || 'FRUIT50') | uppercase) + ')'" [(ngModel)]="couponCode" (keyup.enter)="applyCoupon()">
+                <button class="apply-btn" (click)="applyCoupon()">Apply</button>
+              </div>
+
+              @if (dataService.offerCard().isActive !== false) {
+                <!-- Quick hint/tap to apply active offer -->
+                <div class="quick-coupon-hint" (click)="quickApplyActiveOffer()">
+                  <div class="hint-pill">
+                    <span class="spark">⚡</span>
+                    <span class="code">{{ (dataService.offerCard().code || 'FRUIT50').toUpperCase() }}</span>
+                  </div>
+                  <span class="hint-text">
+                    Get <strong>₹{{ dataService.offerCard().amount || 50 }} OFF</strong> on orders above <strong>₹{{ dataService.offerCard().minOrderAmount || 99 }}</strong>
+                  </span>
+                  <span class="tap-apply">Apply →</span>
+                </div>
+              }
+            }
+
+            @if (couponError()) {
+              <div class="coupon-alert error">
+                <span class="alert-icon">⚠️</span>
+                <span>{{ couponError() }}</span>
+              </div>
+            }
+            @if (couponSuccess()) {
+              <div class="coupon-alert success">
+                <span class="alert-icon">✅</span>
+                <span>{{ couponSuccess() }}</span>
+              </div>
             }
           </div>
 
@@ -80,10 +127,10 @@ import { CartService } from '../../core/services/cart.service';
                 <span>Item Total</span>
                 <span>₹{{ cartService.itemTotal() }}</span>
               </div>
-              @if (couponApplied()) {
+              @if (cartService.discount() > 0) {
                 <div class="bill-row discount">
-                  <span>Discount (FRESH10)</span>
-                  <span class="discount-val">- ₹10</span>
+                  <span>Discount ({{ cartService.appliedCoupon()?.code }})</span>
+                  <span class="discount-val">- ₹{{ cartService.discount() }}</span>
                 </div>
               }
               <div class="bill-row">
@@ -93,7 +140,7 @@ import { CartService } from '../../core/services/cart.service';
               <div class="divider"></div>
               <div class="bill-row total">
                 <span>Grand Total</span>
-                <span>₹{{ finalTotal() }}</span>
+                <span>₹{{ cartService.grandTotal() }}</span>
               </div>
             </div>
           </div>
@@ -279,9 +326,79 @@ import { CartService } from '../../core/services/cart.service';
       margin-top: 16px;
       background: #fff;
       border-radius: 14px;
-      padding: 10px 14px;
+      padding: 12px 14px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       border: 1px dashed #C8E6C9;
+    }
+
+    .coupon-applied-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #F1F8E9;
+      border: 1.5px solid #A5D6A7;
+      padding: 10px 14px;
+      border-radius: 10px;
+    }
+
+    .coupon-applied-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .coupon-badge {
+      font-size: 10px;
+      font-weight: 800;
+      color: #1B5E20;
+      letter-spacing: 0.5px;
+    }
+
+    .coupon-code-pill {
+      background: #2E7D32;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .coupon-applied-details {
+      font-size: 12px;
+    }
+
+    .coupon-saving-text {
+      color: #2E7D32;
+      font-weight: 700;
+    }
+
+    .coupon-pending-text {
+      color: #E65100;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .remove-coupon-btn {
+      background: #FFEBEE;
+      border: 1px solid #FFCDD2;
+      color: #C62828;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-family: inherit;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      &:hover { background: #FFCDD2; }
     }
 
     .coupon-input-wrap {
@@ -341,11 +458,66 @@ import { CartService } from '../../core/services/cart.service';
       }
     }
 
-    .coupon-success {
-      font-size: 12px;
-      color: #2E7D32;
+    .quick-coupon-hint {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed #E0E0E0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 11px;
+      color: #555;
+      transition: all 0.2s;
+
+      &:hover {
+        opacity: 0.85;
+      }
+
+      .hint-pill {
+        background: #FFF9C4;
+        border: 1px solid #FFF176;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 800;
+        color: #F57F17;
+        font-size: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .hint-text {
+        flex: 1;
+        line-height: 1.3;
+      }
+
+      .tap-apply {
+        color: #2E7D32;
+        font-weight: 800;
+        flex-shrink: 0;
+      }
+    }
+
+    .coupon-alert {
       margin-top: 8px;
-      font-weight: 500;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+
+      &.error {
+        background: #FFEBEE;
+        color: #C62828;
+      }
+
+      &.success {
+        background: #E8F5E9;
+        color: #2E7D32;
+      }
     }
 
     /* BILL */
@@ -368,8 +540,8 @@ import { CartService } from '../../core/services/cart.service';
       color: #555;
 
       &.total { font-size: 16px; font-weight: 800; color: #1A1A1A; }
-      &.discount { color: #2E7D32; }
-      .discount-val { color: #2E7D32; font-weight: 600; }
+      &.discount { color: #2E7D32; font-weight: 600; }
+      .discount-val { color: #2E7D32; font-weight: 700; }
       .delivery-charge { color: #999; }
     }
 
@@ -428,14 +600,13 @@ import { CartService } from '../../core/services/cart.service';
 })
 export class CartComponent {
   cartService = inject(CartService);
+  dataService = inject(DataService);
+  authService = inject(AuthService);
   router = inject(Router);
-  couponCode = '';
-  couponApplied = signal(false);
 
-  finalTotal = () => {
-    const base = this.cartService.grandTotal();
-    return this.couponApplied() ? base - 10 : base;
-  };
+  couponCode = '';
+  couponError = signal('');
+  couponSuccess = signal('');
 
   increase(id: string, qty: number): void { this.cartService.updateQty(id, qty + 1); }
   decrease(id: string, qty: number): void { this.cartService.updateQty(id, qty - 1); }
@@ -443,8 +614,60 @@ export class CartComponent {
   clearCart(): void { this.cartService.clearCart(); }
 
   applyCoupon(): void {
-    if (this.couponCode.trim().toUpperCase() === 'FRESH10') {
-      this.couponApplied.set(true);
+    this.couponError.set('');
+    this.couponSuccess.set('');
+    const code = this.couponCode.trim().toUpperCase();
+    if (!code) {
+      this.couponError.set('Please enter a coupon code.');
+      return;
     }
+
+    const offer = this.dataService.offerCard();
+    const activeCode = (offer.code || 'FRUIT50').trim().toUpperCase();
+
+    if (code !== activeCode) {
+      this.couponError.set('Invalid coupon code.');
+      return;
+    }
+
+    // Check if user has already used this coupon once
+    const user = this.authService.currentUser();
+    const isUsed = this.dataService.isCouponUsed(user?.uid, user?.phone, user, code);
+    if (isUsed) {
+      this.couponError.set('You have already used this coupon once. Limit: 1 use per customer.');
+      return;
+    }
+
+    const minAmount = offer.minOrderAmount || 0;
+    const discountAmt = offer.amount || 50;
+    const itemTotal = this.cartService.itemTotal();
+
+    if (itemTotal < minAmount) {
+      const diff = minAmount - itemTotal;
+      this.couponError.set(`Add items worth ₹${diff} more to activate this offer (Min order ₹${minAmount}).`);
+      return;
+    }
+
+    // Apply
+    this.cartService.applyCoupon({
+      code,
+      discount: discountAmt,
+      minOrderAmount: minAmount
+    });
+    this.couponSuccess.set(`Coupon ${code} applied successfully! You save ₹${discountAmt}.`);
+    this.couponCode = '';
+  }
+
+  quickApplyActiveOffer(): void {
+    const offer = this.dataService.offerCard();
+    const activeCode = (offer.code || 'FRUIT50').trim().toUpperCase();
+    this.couponCode = activeCode;
+    this.applyCoupon();
+  }
+
+  removeCoupon(): void {
+    this.cartService.removeCoupon();
+    this.couponSuccess.set('');
+    this.couponError.set('');
   }
 }

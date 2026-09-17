@@ -1,16 +1,45 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { CartItem, Product } from '../models/product.model';
 
+export interface AppliedCoupon {
+  code: string;
+  discount: number;
+  minOrderAmount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private _items = signal<CartItem[]>([]);
+  appliedCoupon = signal<AppliedCoupon | null>(null);
 
   items = this._items.asReadonly();
 
   totalItems = computed(() => this._items().reduce((sum, i) => sum + i.quantity, 0));
   itemTotal = computed(() => this._items().reduce((sum, i) => sum + i.totalPrice, 0));
   deliveryCharge = computed(() => this._items().length > 0 ? 20 : 0);
-  grandTotal = computed(() => this.itemTotal() + this.deliveryCharge());
+
+  // Discount applies only when itemTotal meets the minOrderAmount
+  discount = computed(() => {
+    const coupon = this.appliedCoupon();
+    if (!coupon) return 0;
+    const total = this.itemTotal();
+    if (total < (coupon.minOrderAmount || 0)) {
+      return 0;
+    }
+    return Math.min(total, coupon.discount);
+  });
+
+  grandTotal = computed(() =>
+    Math.max(0, this.itemTotal() + this.deliveryCharge() - this.discount())
+  );
+
+  applyCoupon(coupon: AppliedCoupon): void {
+    this.appliedCoupon.set(coupon);
+  }
+
+  removeCoupon(): void {
+    this.appliedCoupon.set(null);
+  }
 
   addToCart(product: Product, quantity: number = 1, customizations: string[] = []): void {
     const current = this._items();
@@ -46,6 +75,9 @@ export class CartService {
 
   removeFromCart(productId: string): void {
     this._items.set(this._items().filter(i => i.product.id !== productId));
+    if (this._items().length === 0) {
+      this.appliedCoupon.set(null);
+    }
   }
 
   getQty(productId: string): number {
@@ -54,5 +86,6 @@ export class CartService {
 
   clearCart(): void {
     this._items.set([]);
+    this.appliedCoupon.set(null);
   }
 }

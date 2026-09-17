@@ -33,9 +33,12 @@ export class DataService {
     heading: 'Hurry, ₹50 Free Cash',
     subtext: 'Valid on food orders above ₹99',
     amount: 50,
+    minOrderAmount: 99,
+    code: 'FRUIT50',
     validText: 'Valid on orders above ₹99',
     isActive: true
   });
+  isOfferCardLoading = signal<boolean>(true);
 
   constructor() {
     this.listenProducts();
@@ -126,10 +129,21 @@ export class DataService {
     const ref = doc(this.firestore, 'fc_settings', 'offerCard');
     onSnapshot(ref, (snap) => {
       if (snap.exists()) {
-        this.offerCard.set(snap.data() as OfferCard);
+        const d = snap.data() as any;
+        this.offerCard.set({
+          heading: d.heading || 'Hurry, ₹50 Free Cash',
+          subtext: d.subtext || 'Valid on food orders above ₹99',
+          amount: d.amount ?? 50,
+          minOrderAmount: d.minOrderAmount ?? 99,
+          code: (d.code || 'FRUIT50').toUpperCase(),
+          validText: d.validText || `Valid on orders above ₹${d.minOrderAmount ?? 99}`,
+          isActive: d.isActive !== false
+        });
       }
+      this.isOfferCardLoading.set(false);
     }, (err) => {
       console.warn('Error listening offer card:', err);
+      this.isOfferCardLoading.set(false);
     });
   }
 
@@ -165,6 +179,11 @@ export class DataService {
   async deleteCategory(id: string): Promise<void> {
     const ref = doc(this.firestore, 'fc_categories', id);
     await deleteDoc(ref);
+  }
+
+  getCategoryName(id: string): string {
+    const cat = this.categories().find(c => c.id === id);
+    return cat ? cat.name : (id || '—');
   }
 
   // ── Orders ─────────────────────────────────────────────────
@@ -230,13 +249,55 @@ export class DataService {
     await deleteDoc(ref);
   }
 
-  // ── Helpers ────────────────────────────────────────────────
+  // ── Coupon Usage Tracking ─────────────────────────────────
 
-  getCategoryName(id: string): string {
-    return this.categories().find(c => c.id === id)?.name ?? 'Unknown';
+  async markCouponUsed(userId: string | undefined, code: string): Promise<void> {
+    const cleanCode = code?.trim().toUpperCase();
+    if (!cleanCode || !userId) return;
+
+    try {
+      const userRef = doc(this.firestore, 'fc_users', userId);
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        const currentCoupons: string[] = snap.data()['usedCoupons'] || [];
+        if (!currentCoupons.includes(cleanCode)) {
+          await updateDoc(userRef, {
+            usedCoupons: [...currentCoupons, cleanCode]
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Could not update usedCoupons in user doc:', err);
+    }
   }
 
-  getActiveProducts(): AdminProduct[] {
-    return this.products().filter(p => p.status === 'active');
+  isCouponUsed(userId: string | undefined, phone: string | undefined, userDoc: any, code: string): boolean {
+    const cleanCode = code?.trim().toUpperCase();
+    if (!cleanCode) return false;
+
+    // 1. Check user profile usedCoupons array
+    if (userDoc?.usedCoupons && Array.isArray(userDoc.usedCoupons)) {
+      if (userDoc.usedCoupons.map((c: string) => c.toUpperCase()).includes(cleanCode)) {
+        return true;
+      }
+    }
+
+    // 2. Cross-verify against existing orders placed by this user/phone
+    const orders = this.orders();
+    const cleanP = (p?: string) => (p || '').replace(/\D/g, '').slice(-10);
+    const targetPhone = cleanP(phone);
+
+    const matchOrder = orders.find(o => {
+      const orderUserMatch = userId && o.userId === userId;
+      const orderPhoneMatch = targetPhone && cleanP(o.customerPhone) === targetPhone;
+      if (!orderUserMatch && !orderPhoneMatch) return false;
+
+      // If order has this couponCode saved or has discount with this coupon
+      const activeCode = (this.offerCard().code || 'FRUIT50').toUpperCase();
+      return (o.couponCode && o.couponCode.toUpperCase() === cleanCode) ||
+             (o.discount > 0 && cleanCode === activeCode);
+    });
+
+    return !!matchOrder;
   }
 }

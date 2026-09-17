@@ -60,9 +60,19 @@ import { environment } from '../../../environments/environment';
                 <p class="addr-city">{{ address.city }}</p>
               </div>
               <div class="addr-actions">
-                <button class="map-chip-btn" (click)="authService.openMapPicker()" type="button">🗺️ Map</button>
-                <button class="edit-btn" (click)="editingAddress.set(!editingAddress())">
-                  {{ editingAddress() ? 'Done' : 'Edit' }}
+                <button class="edit-btn" (click)="editingAddress.set(!editingAddress())" type="button" aria-label="Edit address">
+                  @if (editingAddress()) {
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Done</span>
+                  } @else {
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span>Edit</span>
+                  }
                 </button>
               </div>
             </div>
@@ -146,6 +156,12 @@ import { environment } from '../../../environments/environment';
               }
               <div class="summary-totals">
                 <div class="total-row"><span>Item Total</span><span>₹{{ cartService.itemTotal() }}</span></div>
+                @if (cartService.discount() > 0) {
+                  <div class="total-row discount-row">
+                    <span>Discount ({{ cartService.appliedCoupon()?.code }})</span>
+                    <span class="discount-val">- ₹{{ cartService.discount() }}</span>
+                  </div>
+                }
                 <div class="total-row"><span>Delivery</span><span>₹{{ cartService.deliveryCharge() }}</span></div>
                 <div class="divider"></div>
                 <div class="total-row grand"><span>Grand Total</span><span>₹{{ cartService.grandTotal() }}</span></div>
@@ -171,6 +187,12 @@ import { environment } from '../../../environments/environment';
                 <span class="confirm-label">🛒 Items</span>
                 <span class="confirm-val">{{ cartService.totalItems() }} items</span>
               </div>
+              @if (cartService.discount() > 0) {
+                <div class="confirm-row discount-row">
+                  <span class="confirm-label">🎟️ Coupon ({{ cartService.appliedCoupon()?.code }})</span>
+                  <span class="confirm-val discount-val">- ₹{{ cartService.discount() }}</span>
+                </div>
+              }
               <div class="confirm-row grand-row">
                 <span class="confirm-label">💰 Total</span>
                 <span class="confirm-total">₹{{ cartService.grandTotal() }}</span>
@@ -260,11 +282,26 @@ import { environment } from '../../../environments/environment';
 
     /* ADDRESS */
     .saved-address { background: #fff; border-radius: 14px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
-    .addr-icon { font-size: 24px; }
-    .addr-info { flex: 1; .addr-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; } .addr-text { font-size: 13px; color: #555; } .addr-city { font-size: 12px; color: #999; } }
-    .addr-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-    .map-chip-btn { background: #E8F5E9; border: 1px solid #C8E6C9; color: #1B5E20; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; &:active { background: #DCEDC8; } }
-    .edit-btn { background: none; border: none; color: #2E7D32; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; }
+    .addr-icon { font-size: 24px; flex-shrink: 0; }
+    .addr-info { flex: 1; min-width: 0; .addr-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; } .addr-text { font-size: 13px; color: #555; word-break: break-word; } .addr-city { font-size: 12px; color: #999; } }
+    .addr-actions { display: flex; align-items: flex-start; justify-content: flex-end; flex-shrink: 0; }
+    .edit-btn {
+      background: #E8F5E9;
+      border: 1px solid #C8E6C9;
+      color: #2E7D32;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      transition: all 0.2s;
+      &:hover { background: #DCEDC8; color: #1B5E20; }
+      &:active { transform: scale(0.95); }
+    }
 
     .address-form { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
     .form-group { margin-bottom: 14px; label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; } input { width: 100%; border: 1.5px solid #EEE; border-radius: 10px; padding: 10px 14px; font-family: 'Poppins', sans-serif; font-size: 14px; color: #1A1A1A; outline: none; transition: border-color 0.2s; &:focus { border-color: #4CAF50; } &::placeholder { color: #bbb; } } }
@@ -295,14 +332,39 @@ import { environment } from '../../../environments/environment';
     .summary-price { font-size: 14px; font-weight: 700; }
     .summary-totals { margin-top: 12px; }
     .total-row { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 8px; &.grand { font-size: 16px; font-weight: 800; color: #1A1A1A; } }
+    .discount-row { color: #2E7D32; font-weight: 600; }
+    .discount-val { color: #2E7D32; font-weight: 700; }
     .divider { height: 1px; background: #EEE; margin: 8px 0; }
 
     /* CONFIRM */
     .confirm-section { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .confirm-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F5F5F5; &:last-child { border-bottom: none; } }
-    .confirm-label { font-size: 13px; color: #999; }
-    .confirm-val { font-size: 14px; font-weight: 600; color: #1A1A1A; }
-    .grand-row { }
+    .confirm-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid #F5F5F5;
+      gap: 16px;
+      &:last-child { border-bottom: none; align-items: center; }
+    }
+    .confirm-label {
+      font-size: 13px;
+      color: #71717A;
+      white-space: nowrap;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .confirm-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1A1A1A;
+      text-align: right;
+      word-break: break-word;
+      flex: 1;
+    }
+    .grand-row { align-items: center; }
     .confirm-total { font-size: 20px; font-weight: 800; color: #2E7D32; }
 
     /* CTA */
@@ -377,15 +439,35 @@ export class CheckoutComponent {
 
     this.loading.set(true);
 
+    const appliedCoupon = this.cartService.appliedCoupon();
+    const user = this.authService.currentUser();
+    const customerPhone = this.address.phone || user?.phone || '9999999999';
+
+    // Strict 1-time-use validation check before proceeding with payment
+    if (appliedCoupon) {
+      const isUsed = this.dataService.isCouponUsed(
+        user?.uid,
+        customerPhone,
+        user,
+        appliedCoupon.code
+      );
+      if (isUsed) {
+        this.cartService.removeCoupon();
+        alert(`Coupon "${appliedCoupon.code}" has already been used once with your account or phone number. Removing coupon.`);
+        this.loading.set(false);
+        return;
+      }
+    }
+
     const grandTotal = this.cartService.grandTotal();
     const orderPayload: Omit<AdminOrder, 'id'> = {
-      userId: this.authService.currentUser()?.uid || 'guest',
+      userId: user?.uid || 'guest',
       customerName: this.address.name || 'Customer',
-      customerPhone: this.address.phone || '9999999999',
-      customerEmail: this.authService.currentUser()?.email || undefined,
+      customerPhone: customerPhone,
+      customerEmail: user?.email || undefined,
       deliveryAddress: {
         name: this.address.name || 'Customer',
-        phone: this.address.phone || '9999999999',
+        phone: customerPhone,
         addressLine1: this.address.addressLine1 || 'Green Park, Indore',
         addressLine2: this.address.addressLine2 || '',
         city: this.address.city || 'Indore',
@@ -403,7 +485,8 @@ export class CheckoutComponent {
       status: 'confirmed',
       itemTotal: this.cartService.itemTotal(),
       deliveryCharge: this.cartService.deliveryCharge(),
-      discount: 0,
+      discount: this.cartService.discount(),
+      couponCode: appliedCoupon?.code || undefined,
       grandTotal: grandTotal,
       placedAt: new Date().toISOString()
     };
@@ -420,6 +503,16 @@ export class CheckoutComponent {
           status: 'success',
           date: new Date().toISOString()
         });
+
+        // Mark coupon as used in the user document if user is logged in
+        if (appliedCoupon && user?.uid) {
+          try {
+            await this.dataService.markCouponUsed(user.uid, appliedCoupon.code);
+          } catch (couponErr) {
+            console.warn('Failed to mark coupon used in user doc:', couponErr);
+          }
+        }
+
         this.cartService.clearCart();
         this.loading.set(false);
         this.router.navigate(['/order-success'], { queryParams: { orderId } });

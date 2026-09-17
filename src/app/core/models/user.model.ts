@@ -20,4 +20,5 @@ export interface User {
   activeAddress?: AddressOption;
   createdAt: string;
   role?: 'user' | 'admin';
+  usedCoupons?: string[];
 }

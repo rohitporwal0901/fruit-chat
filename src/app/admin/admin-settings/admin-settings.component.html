@@ -22,9 +22,14 @@
         <div class="op-left">
           <h3>{{ offerCard().heading }}</h3>
           <p>{{ offerCard().subtext }}</p>
+          <div class="op-details" style="margin-top: 8px; font-size: 11.5px; opacity: 0.9;">
+            <span>Coupon: <strong>{{ offerCard().code || 'FRUIT50' }}</strong></span>
+            <span style="margin: 0 6px;">•</span>
+            <span>Min Shopping: <strong>₹{{ offerCard().minOrderAmount || 99 }}</strong></span>
+          </div>
         </div>
         <div class="op-pill">
-          <span class="op-label">CASH</span>
+          <span class="op-label">OFF</span>
           <span class="op-amount">₹{{ offerCard().amount }}</span>
         </div>
         <div class="op-inactive-badge" *ngIf="!offerCard().isActive">INACTIVE</div>
@@ -43,13 +48,26 @@
       </div>
       <div class="as-field-row">
         <div class="as-field">
-          <label>Amount (₹)</label>
+          <label>Coupon Code</label>
+          <input type="text" [(ngModel)]="offerDraft.code" placeholder="e.g. FRUIT50" style="text-transform: uppercase;">
+        </div>
+        <div class="as-field">
+          <label>Discount Amount (₹)</label>
           <input type="number" [(ngModel)]="offerDraft.amount" min="0" placeholder="50">
+        </div>
+      </div>
+      <div class="as-field-row">
+        <div class="as-field">
+          <label>Minimum Shopping Amount (₹)</label>
+          <input type="number" [(ngModel)]="offerDraft.minOrderAmount" min="0" placeholder="99">
         </div>
         <div class="as-field">
           <label>Valid Text</label>
           <input type="text" [(ngModel)]="offerDraft.validText" placeholder="e.g. Valid on orders above ₹99">
         </div>
+      </div>
+      <div class="as-info-box" style="background:#E8F5E9; padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #2E7D32;">
+        💡 Customers will get <strong>₹{{ offerDraft.amount || 0 }} OFF</strong> when shopping for <strong>₹{{ offerDraft.minOrderAmount || 0 }}+</strong> using code <strong>{{ (offerDraft.code || 'FRUIT50').toUpperCase() }}</strong>. (1-time use per customer).
       </div>
       <div class="as-toggle-row">
         <label class="fc-toggle-label">

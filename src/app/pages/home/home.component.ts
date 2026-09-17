@@ -46,24 +46,56 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
-      <!-- OFFER CARD — Dynamic from Firestore fc_settings/offerCard -->
-      @if (dataService.offerCard().isActive !== false) {
+      <!-- OFFER CARD — Dynamic from Firestore fc_settings/offerCard (with Skeleton Loading) -->
+      @if (dataService.isOfferCardLoading()) {
+        <section class="offer-section">
+          <div class="offer-skel-body">
+            <div class="offer-row">
+              <div class="offer-text-col">
+                <div class="offer-skel-badge-strip">
+                  <div class="skel-pill-code"></div>
+                </div>
+                <div class="skel-offer-heading"></div>
+                <div class="skel-offer-sub"></div>
+              </div>
+              <div class="offer-pill-col">
+                <div class="skel-offer-cta"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      } @else if (dataService.offerCard().isActive !== false) {
         <section class="offer-section">
           <div class="offer-body" (click)="copyOfferCode($event)">
             <div class="offer-row">
               <div class="offer-text-col">
+                <div class="offer-badge-strip">
+                  <span class="offer-code-tag">CODE: {{ (dataService.offerCard().code || 'FRUIT50').toUpperCase() }}</span>
+                  @if (isOfferRedeemed()) {
+                    <span class="redeemed-tag">ALREADY REDEEMED</span>
+                  }
+                </div>
                 <h3 class="offer-heading">{{ dataService.offerCard().heading || 'Hurry, ₹50 Free Cash expiring soon!' }}</h3>
-                <p class="offer-sub">{{ dataService.offerCard().subtext || 'Valid on food orders above ₹99' }}</p>
+                <p class="offer-sub">
+                  @if (isOfferRedeemed()) {
+                    Offer already used once per account. Enjoy healthy meals!
+                  } @else {
+                    Get <strong>₹{{ dataService.offerCard().amount || 50 }} OFF</strong> on orders above <strong>₹{{ dataService.offerCard().minOrderAmount || 99 }}</strong>
+                  }
+                </p>
               </div>
               <div class="offer-pill-col">
-                <div class="offer-pill" [class.claimed]="offerCopied()">
+                <div class="offer-pill" [class.claimed]="offerCopied()" [class.redeemed]="isOfferRedeemed()">
                   <div class="pill-glare"></div>
-                  @if (offerCopied()) {
+                  @if (isOfferRedeemed()) {
+                    <span class="pill-label">COUPON</span>
+                    <span class="pill-amount">USED</span>
+                  } @else if (offerCopied()) {
                     <span class="pill-label">COPIED!</span>
                     <span class="pill-amount">✓</span>
                   } @else {
-                    <span class="pill-label">CASH AVAILABLE</span>
-                    <span class="pill-amount">₹{{ dataService.offerCard().amount || 50 }}</span>
+                    <span class="pill-label">TAP TO APPLY</span>
+                    <span class="pill-amount">₹{{ dataService.offerCard().amount || 50 }} OFF</span>
                   }
                 </div>
               </div>
@@ -449,6 +481,31 @@ import { Product } from '../../core/models/product.model';
     .offer-text-col { flex: 1; min-width: 0; }
     .offer-pill-col  { flex-shrink: 0; }
 
+    .offer-badge-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+    .offer-code-tag {
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      border: 1px dashed rgba(255,255,255,0.5);
+    }
+    .redeemed-tag {
+      background: #FFEBEE;
+      color: #D32F2F;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
     /* Left text */
     .offer-heading {
       font-family: 'Outfit', sans-serif;
@@ -485,6 +542,11 @@ import { Product } from '../../core/models/product.model';
       background: linear-gradient(145deg, #00E676 0%, #00B04A 100%);
       box-shadow: 0 5px 16px rgba(0,176,74,0.45);
     }
+    .offer-pill.redeemed {
+      background: linear-gradient(145deg, #9E9E9E 0%, #616161 100%);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      border-color: rgba(255,255,255,0.2);
+    }
     .pill-glare {
       position: absolute;
       top: 0; left: 0; right: 0;
@@ -514,6 +576,89 @@ import { Product } from '../../core/models/product.model';
       text-shadow: 0 2px 4px rgba(0,0,0,0.2);
       position: relative;
       z-index: 1;
+    }
+
+    /* Offer Skeleton Shimmer Styles */
+    .offer-skel-body {
+      background: linear-gradient(105deg, #184e27 0%, #1e5f32 40%, #25753e 72%, #2c8c4a 100%);
+      padding: 20px 16px;
+      min-height: 94px;
+      box-sizing: border-box;
+      box-shadow: 0 3px 14px rgba(10, 74, 28, 0.15);
+      clip-path: polygon(
+        0% 12px,   2.5% 0,    5% 12px,
+        7.5% 0,    10% 12px,  12.5% 0,   15% 12px,
+        17.5% 0,   20% 12px,  22.5% 0,   25% 12px,
+        27.5% 0,   30% 12px,  32.5% 0,   35% 12px,
+        37.5% 0,   40% 12px,  42.5% 0,   45% 12px,
+        47.5% 0,   50% 12px,  52.5% 0,   55% 12px,
+        57.5% 0,   60% 12px,  62.5% 0,   65% 12px,
+        67.5% 0,   70% 12px,  72.5% 0,   75% 12px,
+        77.5% 0,   80% 12px,  82.5% 0,   85% 12px,
+        87.5% 0,   90% 12px,  92.5% 0,   95% 12px,
+        97.5% 0,   100% 12px,
+        100% calc(100% - 12px),
+        97.5% 100%,  95% calc(100% - 12px),
+        92.5% 100%,  90% calc(100% - 12px),
+        87.5% 100%,  85% calc(100% - 12px),
+        82.5% 100%,  80% calc(100% - 12px),
+        77.5% 100%,  75% calc(100% - 12px),
+        72.5% 100%,  70% calc(100% - 12px),
+        67.5% 100%,  65% calc(100% - 12px),
+        62.5% 100%,  60% calc(100% - 12px),
+        57.5% 100%,  55% calc(100% - 12px),
+        52.5% 100%,  50% calc(100% - 12px),
+        47.5% 100%,  45% calc(100% - 12px),
+        42.5% 100%,  40% calc(100% - 12px),
+        37.5% 100%,  35% calc(100% - 12px),
+        32.5% 100%,  30% calc(100% - 12px),
+        27.5% 100%,  25% calc(100% - 12px),
+        22.5% 100%,  20% calc(100% - 12px),
+        17.5% 100%,  15% calc(100% - 12px),
+        12.5% 100%,  10% calc(100% - 12px),
+        7.5% 100%,    5% calc(100% - 12px),
+        2.5% 100%,    0% calc(100% - 12px)
+      );
+    }
+    .offer-skel-badge-strip {
+      display: flex;
+      margin-bottom: 7px;
+    }
+    .skel-pill-code {
+      width: 78px;
+      height: 18px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.15) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.15) 75%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.4s infinite;
+    }
+    .skel-offer-heading {
+      width: 75%;
+      max-width: 210px;
+      height: 16px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.18) 25%, rgba(255,255,255,0.36) 50%, rgba(255,255,255,0.18) 75%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.4s infinite;
+      margin-bottom: 7px;
+    }
+    .skel-offer-sub {
+      width: 90%;
+      max-width: 240px;
+      height: 12px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 75%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.4s infinite;
+    }
+    .skel-offer-cta {
+      width: 82px;
+      height: 54px;
+      border-radius: 13px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.18) 25%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.18) 75%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.4s infinite;
+      border: 1.5px solid rgba(255,255,255,0.18);
     }
 
     /* ===== SEARCH ===== */
@@ -1210,11 +1355,31 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     this.isOfferExpanded.update(v => !v);
   }
 
+  isOfferRedeemed = computed(() => {
+    const user = this.authService.currentUser();
+    const card = this.dataService.offerCard();
+    const code = (card.code || 'FRUIT50').toUpperCase();
+    return this.dataService.isCouponUsed(user?.uid, user?.phone, user, code);
+  });
+
   copyOfferCode(e: Event): void {
     e.stopPropagation();
+    if (this.isOfferRedeemed()) {
+      return;
+    }
+    const card = this.dataService.offerCard();
+    const code = (card.code || 'FRUIT50').toUpperCase();
     try {
-      navigator.clipboard?.writeText('HEALTH50');
+      navigator.clipboard?.writeText(code);
     } catch (_) {}
+
+    // Pre-apply to cart so user has it ready
+    this.cartService.applyCoupon({
+      code,
+      discount: card.amount || 50,
+      minOrderAmount: card.minOrderAmount || 99
+    });
+
     this.offerCopied.set(true);
     setTimeout(() => this.offerCopied.set(false), 2500);
   }

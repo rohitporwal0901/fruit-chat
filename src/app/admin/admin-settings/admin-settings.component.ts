@@ -37,7 +37,14 @@ export class AdminSettingsComponent {
   async saveOfferCard() {
     this.isSavingOffer.set(true);
     try {
-      await this.dataService.updateOfferCard(this.offerDraft);
+      const payload: OfferCard = {
+        ...this.offerDraft,
+        code: (this.offerDraft.code || 'FRUIT50').trim().toUpperCase(),
+        amount: Number(this.offerDraft.amount) || 0,
+        minOrderAmount: Number(this.offerDraft.minOrderAmount) || 0,
+        validText: this.offerDraft.validText || `Valid on orders above ₹${this.offerDraft.minOrderAmount || 0}`
+      };
+      await this.dataService.updateOfferCard(payload);
       this.snackbar.show('Offer card updated!', 'success');
       this.editingOffer.set(false);
     } catch { this.snackbar.show('Failed to save', 'error'); }

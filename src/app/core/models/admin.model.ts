@@ -53,6 +53,7 @@ export interface AdminOrder {
   grandTotal: number;
   placedAt: string;  // ISO string
   estimatedDelivery?: string;
+  couponCode?: string;
   notes?: string;
 }
 
@@ -101,8 +102,10 @@ export interface HomeSlide {
 export interface OfferCard {
   heading: string;
   subtext: string;
-  amount: number;      // e.g. 50
-  validText: string;   // e.g. "Valid on orders above ₹99"
+  amount: number;          // e.g. 50 (Discount amount)
+  minOrderAmount?: number; // e.g. 99 (Minimum shopping amount required)
+  code?: string;           // e.g. "FRUIT50"
+  validText: string;       // e.g. "Valid on orders above ₹99"
   isActive: boolean;
 }
 
