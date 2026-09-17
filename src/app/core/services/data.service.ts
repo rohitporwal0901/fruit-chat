@@ -186,11 +186,29 @@ export class DataService {
     return cat ? cat.name : (id || '—');
   }
 
+  // Helper to remove undefined fields recursively so Firestore doesn't reject writes
+  private removeUndefined<T>(obj: T): T {
+    if (obj === null || obj === undefined || typeof obj !== 'object') {
+      return obj;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.removeUndefined(item)) as unknown as T;
+    }
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        result[key] = this.removeUndefined(value);
+      }
+    }
+    return result;
+  }
+
   // ── Orders ─────────────────────────────────────────────────
 
   async addOrder(order: Omit<AdminOrder, 'id'>): Promise<string> {
     const ref = collection(this.firestore, 'fc_orders');
-    const docRef = await addDoc(ref, order);
+    const cleaned = this.removeUndefined(order);
+    const docRef = await addDoc(ref, cleaned);
     return docRef.id;
   }
 
@@ -205,7 +223,8 @@ export class DataService {
 
   async addTransaction(txn: Omit<Transaction, 'id'>): Promise<void> {
     const ref = collection(this.firestore, 'fc_transactions');
-    await addDoc(ref, txn);
+    const cleaned = this.removeUndefined(txn);
+    await addDoc(ref, cleaned);
   }
 
   // ── Home Slides ────────────────────────────────────
@@ -271,33 +290,8 @@ export class DataService {
     }
   }
 
-  isCouponUsed(userId: string | undefined, phone: string | undefined, userDoc: any, code: string): boolean {
-    const cleanCode = code?.trim().toUpperCase();
-    if (!cleanCode) return false;
-
-    // 1. Check user profile usedCoupons array
-    if (userDoc?.usedCoupons && Array.isArray(userDoc.usedCoupons)) {
-      if (userDoc.usedCoupons.map((c: string) => c.toUpperCase()).includes(cleanCode)) {
-        return true;
-      }
-    }
-
-    // 2. Cross-verify against existing orders placed by this user/phone
-    const orders = this.orders();
-    const cleanP = (p?: string) => (p || '').replace(/\D/g, '').slice(-10);
-    const targetPhone = cleanP(phone);
-
-    const matchOrder = orders.find(o => {
-      const orderUserMatch = userId && o.userId === userId;
-      const orderPhoneMatch = targetPhone && cleanP(o.customerPhone) === targetPhone;
-      if (!orderUserMatch && !orderPhoneMatch) return false;
-
-      // If order has this couponCode saved or has discount with this coupon
-      const activeCode = (this.offerCard().code || 'FRUIT50').toUpperCase();
-      return (o.couponCode && o.couponCode.toUpperCase() === cleanCode) ||
-             (o.discount > 0 && cleanCode === activeCode);
-    });
-
-    return !!matchOrder;
+  // Coupon usage: User can use a coupon once per order (enforced per order via cart)
+  isCouponUsed(_userId: string | undefined, _phone: string | undefined, _userDoc: any, _code: string): boolean {
+    return false;
   }
 }

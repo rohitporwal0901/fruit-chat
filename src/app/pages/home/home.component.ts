@@ -7,6 +7,8 @@ import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DataService } from '../../core/services/data.service';
+import { ConfettiService } from '../../core/services/confetti.service';
+import { SnackbarService } from '../../core/services/snackbar.service';
 import { Product } from '../../core/models/product.model';
 
 @Component({
@@ -67,32 +69,35 @@ import { Product } from '../../core/models/product.model';
       } @else if (dataService.offerCard().isActive !== false) {
         <section class="offer-section">
           <div class="offer-body" (click)="copyOfferCode($event)">
+            <div class="offer-decor-glow"></div>
             <div class="offer-row">
               <div class="offer-text-col">
                 <div class="offer-badge-strip">
-                  <span class="offer-code-tag">CODE: {{ (dataService.offerCard().code || 'FRUIT50').toUpperCase() }}</span>
-                  @if (isOfferRedeemed()) {
-                    <span class="redeemed-tag">ALREADY REDEEMED</span>
+                  <span class="offer-code-tag">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    CODE: {{ (dataService.offerCard().code || 'FRUIT50').toUpperCase() }}
+                  </span>
+                  @if (isCouponApplied()) {
+                    <span class="applied-tag">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      APPLIED IN CART
+                    </span>
                   }
                 </div>
                 <h3 class="offer-heading">{{ dataService.offerCard().heading || 'Hurry, ₹50 Free Cash expiring soon!' }}</h3>
                 <p class="offer-sub">
-                  @if (isOfferRedeemed()) {
-                    Offer already used once per account. Enjoy healthy meals!
-                  } @else {
-                    Get <strong>₹{{ dataService.offerCard().amount || 50 }} OFF</strong> on orders above <strong>₹{{ dataService.offerCard().minOrderAmount || 99 }}</strong>
-                  }
+                  Get <strong>₹{{ dataService.offerCard().amount || 50 }} OFF</strong> on orders above <strong>₹{{ dataService.offerCard().minOrderAmount || 99 }}</strong>
                 </p>
               </div>
               <div class="offer-pill-col">
-                <div class="offer-pill" [class.claimed]="offerCopied()" [class.redeemed]="isOfferRedeemed()">
+                <div class="offer-pill" [class.claimed]="offerCopied() || isCouponApplied()">
                   <div class="pill-glare"></div>
-                  @if (isOfferRedeemed()) {
+                  @if (offerCopied()) {
+                    <span class="pill-label">COPIED</span>
+                    <span class="pill-amount">🎉 SAVED</span>
+                  } @else if (isCouponApplied()) {
                     <span class="pill-label">COUPON</span>
-                    <span class="pill-amount">USED</span>
-                  } @else if (offerCopied()) {
-                    <span class="pill-label">COPIED!</span>
-                    <span class="pill-amount">✓</span>
+                    <span class="pill-amount">APPLIED ✓</span>
                   } @else {
                     <span class="pill-label">TAP TO APPLY</span>
                     <span class="pill-amount">₹{{ dataService.offerCard().amount || 50 }} OFF</span>
@@ -410,65 +415,40 @@ import { Product } from '../../core/models/product.model';
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
 
-    /* ===== OFFER CARD — clip-path zig-zag, transparent cutouts ===== */
+    /* ===== OFFER CARD — Modern Premium Voucher Design ===== */
     .offer-section {
-      margin: 8px 16px 6px;
-      animation: offerSlide 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+      margin: 10px 16px 8px;
+      animation: offerSlide 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
     @keyframes offerSlide {
-      from { opacity: 0; transform: translateY(-12px); }
+      from { opacity: 0; transform: translateY(-8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Green body with clip-path zig-zag on top + bottom */
-    /* Percentage x-values = works at any screen width */
-    /* 12px tooth height = visible and clean */
     .offer-body {
-      background: linear-gradient(105deg, #0b4d1e 0%, #16652a 40%, #1c8034 72%, #229e3e 100%);
+      position: relative;
+      background: linear-gradient(135deg, #0b4e20 0%, #157335 55%, #1da149 100%);
+      border-radius: 16px;
+      padding: 14px 16px;
       cursor: pointer;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      padding: 20px 16px;
-      transition: filter 0.15s ease;
-      &:active { filter: brightness(0.88); }
-      box-shadow: 0 3px 14px rgba(10, 74, 28, 0.22);
-      clip-path: polygon(
-        /* ─ TOP zig-zag: peaks at y=0, valleys at y=12px ─ */
-        0% 12px,   2.5% 0,    5% 12px,
-        7.5% 0,    10% 12px,  12.5% 0,   15% 12px,
-        17.5% 0,   20% 12px,  22.5% 0,   25% 12px,
-        27.5% 0,   30% 12px,  32.5% 0,   35% 12px,
-        37.5% 0,   40% 12px,  42.5% 0,   45% 12px,
-        47.5% 0,   50% 12px,  52.5% 0,   55% 12px,
-        57.5% 0,   60% 12px,  62.5% 0,   65% 12px,
-        67.5% 0,   70% 12px,  72.5% 0,   75% 12px,
-        77.5% 0,   80% 12px,  82.5% 0,   85% 12px,
-        87.5% 0,   90% 12px,  92.5% 0,   95% 12px,
-        97.5% 0,   100% 12px,
-        /* ─ RIGHT side straight ─ */
-        100% calc(100% - 12px),
-        /* ─ BOTTOM zig-zag: valleys at 100%, peaks at calc(100% - 12px) ─ */
-        97.5% 100%,  95% calc(100% - 12px),
-        92.5% 100%,  90% calc(100% - 12px),
-        87.5% 100%,  85% calc(100% - 12px),
-        82.5% 100%,  80% calc(100% - 12px),
-        77.5% 100%,  75% calc(100% - 12px),
-        72.5% 100%,  70% calc(100% - 12px),
-        67.5% 100%,  65% calc(100% - 12px),
-        62.5% 100%,  60% calc(100% - 12px),
-        57.5% 100%,  55% calc(100% - 12px),
-        52.5% 100%,  50% calc(100% - 12px),
-        47.5% 100%,  45% calc(100% - 12px),
-        42.5% 100%,  40% calc(100% - 12px),
-        37.5% 100%,  35% calc(100% - 12px),
-        32.5% 100%,  30% calc(100% - 12px),
-        27.5% 100%,  25% calc(100% - 12px),
-        22.5% 100%,  20% calc(100% - 12px),
-        17.5% 100%,  15% calc(100% - 12px),
-        12.5% 100%,  10% calc(100% - 12px),
-        7.5% 100%,    5% calc(100% - 12px),
-        2.5% 100%,    0% calc(100% - 12px)
-      );
+      box-shadow: 0 6px 20px -2px rgba(11, 78, 32, 0.32), 0 2px 6px rgba(0, 0, 0, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      &:active { transform: scale(0.985); }
+    }
+
+    .offer-decor-glow {
+      position: absolute;
+      top: -24px;
+      right: -24px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
     }
 
     /* Content row */
@@ -476,104 +456,129 @@ import { Product } from '../../core/models/product.model';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
     }
-    .offer-text-col { flex: 1; min-width: 0; }
-    .offer-pill-col  { flex-shrink: 0; }
+    .offer-text-col {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .offer-pill-col {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
 
     .offer-badge-strip {
       display: flex;
       align-items: center;
       gap: 6px;
       margin-bottom: 5px;
+      flex-wrap: wrap;
     }
     .offer-code-tag {
-      background: rgba(255,255,255,0.22);
+      background: rgba(0, 0, 0, 0.22);
       color: #fff;
       font-size: 10px;
       font-weight: 800;
-      letter-spacing: 0.5px;
-      padding: 2px 7px;
+      letter-spacing: 0.6px;
+      padding: 3px 8px;
       border-radius: 6px;
-      border: 1px dashed rgba(255,255,255,0.5);
+      border: 1px dashed rgba(255, 255, 255, 0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
-    .redeemed-tag {
-      background: #FFEBEE;
-      color: #D32F2F;
-      font-size: 9px;
+    .applied-tag {
+      background: #E8F5E9;
+      color: #1B5E20;
+      font-size: 9.5px;
       font-weight: 800;
-      padding: 2px 6px;
+      padding: 3px 8px;
       border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
     }
 
     /* Left text */
     .offer-heading {
       font-family: 'Outfit', sans-serif;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 800;
       color: #fff;
-      line-height: 1.22;
-      margin: 0 0 4px;
+      line-height: 1.25;
+      margin: 0 0 3px;
       letter-spacing: -0.2px;
+      white-space: normal;
+      word-break: break-word;
     }
     .offer-sub {
       font-size: 11px;
-      color: rgba(255,255,255,0.8);
+      color: rgba(255, 255, 255, 0.86);
       font-weight: 400;
+      line-height: 1.3;
       margin: 0;
     }
 
-    /* Right pink pill */
+    /* Right pink/green pill */
     .offer-pill {
       position: relative;
-      background: linear-gradient(145deg, #FF7AB7 0%, #FF2080 52%, #D4006A 100%);
-      border-radius: 13px;
-      padding: 7px 13px;
-      min-width: 82px;
+      background: linear-gradient(135deg, #FF6B9D 0%, #FF136F 100%);
+      border-radius: 12px;
+      padding: 7px 11px;
+      min-width: 76px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 5px 16px rgba(212,0,106,0.48), inset 0 1px 0 rgba(255,255,255,0.5);
-      border: 1.5px solid rgba(255,255,255,0.32);
+      box-shadow: 0 4px 14px rgba(255, 19, 111, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .offer-pill.claimed {
-      background: linear-gradient(145deg, #00E676 0%, #00B04A 100%);
-      box-shadow: 0 5px 16px rgba(0,176,74,0.45);
+      background: linear-gradient(135deg, #00E676 0%, #00B04A 100%);
+      box-shadow: 0 4px 14px rgba(0, 176, 74, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      animation: popPill 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .offer-pill.redeemed {
-      background: linear-gradient(145deg, #9E9E9E 0%, #616161 100%);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-      border-color: rgba(255,255,255,0.2);
+    @keyframes popPill {
+      0% { transform: scale(0.92); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
     }
     .pill-glare {
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 50%;
-      border-radius: 13px 13px 0 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.42) 0%, transparent 100%);
+      border-radius: 12px 12px 0 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.38) 0%, transparent 100%);
       pointer-events: none;
     }
     .pill-label {
       font-family: 'Outfit', sans-serif;
-      font-size: 7.5px;
+      font-size: 8px;
       font-weight: 800;
-      color: rgba(255,255,255,0.95);
-      letter-spacing: 0.6px;
+      color: rgba(255, 255, 255, 0.95);
+      letter-spacing: 0.5px;
       text-transform: uppercase;
       line-height: 1;
+      margin-bottom: 2px;
       position: relative;
       z-index: 1;
     }
     .pill-amount {
       font-family: 'Outfit', sans-serif;
-      font-size: 22px;
-      font-weight: 900;
+      font-size: 13px;
+      font-weight: 800;
       color: #fff;
-      line-height: 1.05;
-      letter-spacing: -0.5px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      line-height: 1.15;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
       position: relative;
       z-index: 1;
     }
@@ -581,44 +586,12 @@ import { Product } from '../../core/models/product.model';
     /* Offer Skeleton Shimmer Styles */
     .offer-skel-body {
       background: linear-gradient(105deg, #184e27 0%, #1e5f32 40%, #25753e 72%, #2c8c4a 100%);
-      padding: 20px 16px;
-      min-height: 94px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      min-height: 86px;
       box-sizing: border-box;
-      box-shadow: 0 3px 14px rgba(10, 74, 28, 0.15);
-      clip-path: polygon(
-        0% 12px,   2.5% 0,    5% 12px,
-        7.5% 0,    10% 12px,  12.5% 0,   15% 12px,
-        17.5% 0,   20% 12px,  22.5% 0,   25% 12px,
-        27.5% 0,   30% 12px,  32.5% 0,   35% 12px,
-        37.5% 0,   40% 12px,  42.5% 0,   45% 12px,
-        47.5% 0,   50% 12px,  52.5% 0,   55% 12px,
-        57.5% 0,   60% 12px,  62.5% 0,   65% 12px,
-        67.5% 0,   70% 12px,  72.5% 0,   75% 12px,
-        77.5% 0,   80% 12px,  82.5% 0,   85% 12px,
-        87.5% 0,   90% 12px,  92.5% 0,   95% 12px,
-        97.5% 0,   100% 12px,
-        100% calc(100% - 12px),
-        97.5% 100%,  95% calc(100% - 12px),
-        92.5% 100%,  90% calc(100% - 12px),
-        87.5% 100%,  85% calc(100% - 12px),
-        82.5% 100%,  80% calc(100% - 12px),
-        77.5% 100%,  75% calc(100% - 12px),
-        72.5% 100%,  70% calc(100% - 12px),
-        67.5% 100%,  65% calc(100% - 12px),
-        62.5% 100%,  60% calc(100% - 12px),
-        57.5% 100%,  55% calc(100% - 12px),
-        52.5% 100%,  50% calc(100% - 12px),
-        47.5% 100%,  45% calc(100% - 12px),
-        42.5% 100%,  40% calc(100% - 12px),
-        37.5% 100%,  35% calc(100% - 12px),
-        32.5% 100%,  30% calc(100% - 12px),
-        27.5% 100%,  25% calc(100% - 12px),
-        22.5% 100%,  20% calc(100% - 12px),
-        17.5% 100%,  15% calc(100% - 12px),
-        12.5% 100%,  10% calc(100% - 12px),
-        7.5% 100%,    5% calc(100% - 12px),
-        2.5% 100%,    0% calc(100% - 12px)
-      );
+      box-shadow: 0 4px 14px rgba(10, 74, 28, 0.15);
+      overflow: hidden;
     }
     .offer-skel-badge-strip {
       display: flex;
@@ -652,13 +625,13 @@ import { Product } from '../../core/models/product.model';
       animation: skelShimmer 1.4s infinite;
     }
     .skel-offer-cta {
-      width: 82px;
-      height: 54px;
-      border-radius: 13px;
+      width: 76px;
+      height: 48px;
+      border-radius: 12px;
       background: linear-gradient(90deg, rgba(255,255,255,0.18) 25%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.18) 75%);
       background-size: 200% 100%;
       animation: skelShimmer 1.4s infinite;
-      border: 1.5px solid rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.18);
     }
 
     /* ===== SEARCH ===== */
@@ -1125,6 +1098,8 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   cartService = inject(CartService);
   authService = inject(AuthService);
   dataService = inject(DataService);
+  private confettiService = inject(ConfettiService);
+  private snackbarService = inject(SnackbarService);
   isLoading = signal(true);
   searchQuery = '';
 
@@ -1355,32 +1330,47 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     this.isOfferExpanded.update(v => !v);
   }
 
-  isOfferRedeemed = computed(() => {
-    const user = this.authService.currentUser();
+  isCouponApplied = computed(() => {
     const card = this.dataService.offerCard();
-    const code = (card.code || 'FRUIT50').toUpperCase();
-    return this.dataService.isCouponUsed(user?.uid, user?.phone, user, code);
+    const activeCode = (card.code || 'FRUIT50').trim().toUpperCase();
+    const applied = this.cartService.appliedCoupon();
+    return applied?.code?.toUpperCase() === activeCode;
   });
 
-  copyOfferCode(e: Event): void {
+  copyOfferCode(e: MouseEvent | TouchEvent | Event): void {
     e.stopPropagation();
-    if (this.isOfferRedeemed()) {
-      return;
-    }
     const card = this.dataService.offerCard();
     const code = (card.code || 'FRUIT50').toUpperCase();
+
     try {
       navigator.clipboard?.writeText(code);
     } catch (_) {}
 
-    // Pre-apply to cart so user has it ready
+    // Pre-apply to cart so user has it ready for this order
     this.cartService.applyCoupon({
       code,
       discount: card.amount || 50,
       minOrderAmount: card.minOrderAmount || 99
     });
 
+    // Launch celebratory confetti burst!
+    let clientX = typeof window !== 'undefined' ? window.innerWidth / 2 : 200;
+    let clientY = typeof window !== 'undefined' ? window.innerHeight * 0.35 : 200;
+    if ('clientX' in e && typeof e.clientX === 'number' && e.clientX > 0) {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    if (typeof window !== 'undefined') {
+      this.confettiService.launch({
+        x: clientX / window.innerWidth,
+        y: clientY / window.innerHeight
+      });
+    }
+
     this.offerCopied.set(true);
+    this.snackbarService.show(`🎉 Coupon "${code}" copied & applied! ₹${card.amount || 50} OFF in cart`, 'success', 3500);
+
     setTimeout(() => this.offerCopied.set(false), 2500);
   }
 

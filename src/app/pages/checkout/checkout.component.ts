@@ -443,28 +443,12 @@ export class CheckoutComponent {
     const user = this.authService.currentUser();
     const customerPhone = this.address.phone || user?.phone || '9999999999';
 
-    // Strict 1-time-use validation check before proceeding with payment
-    if (appliedCoupon) {
-      const isUsed = this.dataService.isCouponUsed(
-        user?.uid,
-        customerPhone,
-        user,
-        appliedCoupon.code
-      );
-      if (isUsed) {
-        this.cartService.removeCoupon();
-        alert(`Coupon "${appliedCoupon.code}" has already been used once with your account or phone number. Removing coupon.`);
-        this.loading.set(false);
-        return;
-      }
-    }
-
     const grandTotal = this.cartService.grandTotal();
     const orderPayload: Omit<AdminOrder, 'id'> = {
       userId: user?.uid || 'guest',
       customerName: this.address.name || 'Customer',
       customerPhone: customerPhone,
-      customerEmail: user?.email || undefined,
+      ...(user?.email ? { customerEmail: user.email } : {}),
       deliveryAddress: {
         name: this.address.name || 'Customer',
         phone: customerPhone,
@@ -486,7 +470,7 @@ export class CheckoutComponent {
       itemTotal: this.cartService.itemTotal(),
       deliveryCharge: this.cartService.deliveryCharge(),
       discount: this.cartService.discount(),
-      couponCode: appliedCoupon?.code || undefined,
+      ...(appliedCoupon?.code ? { couponCode: appliedCoupon.code } : {}),
       grandTotal: grandTotal,
       placedAt: new Date().toISOString()
     };
@@ -503,15 +487,6 @@ export class CheckoutComponent {
           status: 'success',
           date: new Date().toISOString()
         });
-
-        // Mark coupon as used in the user document if user is logged in
-        if (appliedCoupon && user?.uid) {
-          try {
-            await this.dataService.markCouponUsed(user.uid, appliedCoupon.code);
-          } catch (couponErr) {
-            console.warn('Failed to mark coupon used in user doc:', couponErr);
-          }
-        }
 
         this.cartService.clearCart();
         this.loading.set(false);

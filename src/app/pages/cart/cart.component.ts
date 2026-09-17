@@ -5,6 +5,7 @@ import { RouterLink, Router } from '@angular/router';
 import { CartService } from '../../core/services/cart.service';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfettiService } from '../../core/services/confetti.service';
 
 @Component({
   selector: 'app-cart',
@@ -602,6 +603,7 @@ export class CartComponent {
   cartService = inject(CartService);
   dataService = inject(DataService);
   authService = inject(AuthService);
+  confettiService = inject(ConfettiService);
   router = inject(Router);
 
   couponCode = '';
@@ -630,11 +632,10 @@ export class CartComponent {
       return;
     }
 
-    // Check if user has already used this coupon once
-    const user = this.authService.currentUser();
-    const isUsed = this.dataService.isCouponUsed(user?.uid, user?.phone, user, code);
-    if (isUsed) {
-      this.couponError.set('You have already used this coupon once. Limit: 1 use per customer.');
+    // Check if already applied to this order
+    const alreadyApplied = this.cartService.appliedCoupon();
+    if (alreadyApplied?.code === code) {
+      this.couponError.set(`Coupon "${code}" is already applied to this order.`);
       return;
     }
 
@@ -648,12 +649,13 @@ export class CartComponent {
       return;
     }
 
-    // Apply
+    // Apply coupon to this order
     this.cartService.applyCoupon({
       code,
       discount: discountAmt,
       minOrderAmount: minAmount
     });
+    this.confettiService.launch();
     this.couponSuccess.set(`Coupon ${code} applied successfully! You save ₹${discountAmt}.`);
     this.couponCode = '';
   }
