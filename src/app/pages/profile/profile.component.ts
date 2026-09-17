@@ -89,87 +89,21 @@ interface MenuItem {
 
         <div class="container profile-content">
 
-          <!-- SWIGGY / ZOMATO STYLE RECENT ORDERS -->
-          <div class="profile-section">
-            <div class="orders-header-row">
-              <h3 class="section-label">My Orders</h3>
-              <span class="orders-count-badge">{{ userOrders().length }} orders</span>
+          <!-- ACTIVE ORDER STRIP (IF ANY ACTIVE ORDER IN PROGRESS) -->
+          @if (activeOrdersCount() > 0) {
+            <div class="profile-section">
+              <a routerLink="/my-orders" class="active-order-strip">
+                <div class="aos-left">
+                  <span class="aos-pulse"></span>
+                  <div class="aos-info">
+                    <span class="aos-title">🛵 Order In Progress</span>
+                    <span class="aos-sub">You have {{ activeOrdersCount() }} live order{{ activeOrdersCount() > 1 ? 's' : '' }}</span>
+                  </div>
+                </div>
+                <span class="aos-link">Track Order →</span>
+              </a>
             </div>
-
-            @if (isLoadingOrders()) {
-              <div class="order-skel-list">
-                @for (i of [1,2]; track i) {
-                  <div class="order-skel-card">
-                    <div class="os-head">
-                      <div class="os-line w-40"></div>
-                      <div class="os-line w-20"></div>
-                    </div>
-                    <div class="os-line w-80"></div>
-                    <div class="os-foot">
-                      <div class="os-line w-30"></div>
-                      <div class="os-btn"></div>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else if (userOrders().length === 0) {
-              <div class="orders-empty-state">
-                <span class="empty-emoji">🥗</span>
-                <h4>No Orders Placed Yet</h4>
-                <p>Explore our fresh fruit chaats and healthy sprouts!</p>
-                <a routerLink="/" class="browse-menu-btn">Order Fresh Now →</a>
-              </div>
-            } @else {
-              <div class="orders-list">
-                @for (order of userOrders(); track order.id) {
-                  <div class="swiggy-order-card" [class.active-card]="isActiveOrder(order.status)">
-                    
-                    <!-- Card Top: Status & Date -->
-                    <div class="soc-top">
-                      <div class="soc-restaurant">
-                        <span class="soc-brand">🍉 FruitChat Kitchen</span>
-                        <span class="soc-date">{{ formatOrderDate(order.placedAt) }}</span>
-                      </div>
-                      <span class="soc-badge" [ngClass]="getStatusBadgeClass(order.status)">
-                        {{ getStatusLabel(order.status) }}
-                      </span>
-                    </div>
-
-                    <!-- Order items summary -->
-                    <div class="soc-items-row">
-                      <div class="soc-items-list">
-                        @for (item of order.items; track item.productId) {
-                          <span class="soc-item-name">
-                            {{ item.productName }} <span class="soc-qty">× {{ item.quantity }}</span>
-                          </span>
-                        }
-                      </div>
-                      <span class="soc-total">₹{{ order.grandTotal }}</span>
-                    </div>
-
-                    <div class="soc-divider"></div>
-
-                    <!-- Card Actions -->
-                    <div class="soc-bottom">
-                      <span class="soc-order-num">#{{ order.id.slice(-6).toUpperCase() }}</span>
-                      <div class="soc-btns">
-                        @if (isActiveOrder(order.status)) {
-                          <a [routerLink]="['/track-order', order.id]" class="soc-track-btn">
-                            🛵 Track Live →
-                          </a>
-                        } @else {
-                          <button class="soc-reorder-btn" (click)="reorder(order)">
-                            🔄 Reorder
-                          </button>
-                        }
-                      </div>
-                    </div>
-
-                  </div>
-                }
-              </div>
-            }
-          </div>
+          }
 
           <!-- ACTIVITY ITEMS -->
           <div class="profile-section">
@@ -179,6 +113,9 @@ interface MenuItem {
                 <a [routerLink]="item.route || '/'" class="menu-item">
                   <span class="mi-icon">{{ item.icon }}</span>
                   <span class="mi-label">{{ item.label }}</span>
+                  @if (item.label === 'My Orders' && userOrders().length > 0) {
+                    <span class="orders-chip">{{ userOrders().length }} orders</span>
+                  }
                   <span class="mi-arrow">›</span>
                 </a>
               }
@@ -420,191 +357,81 @@ interface MenuItem {
       margin: 0;
     }
 
-    /* SWIGGY / ZOMATO STYLE MY ORDERS */
+    /* MY ORDERS SECTION & PREMIUM CARDS */
     .orders-header-row {
       display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 0 2px;
+    }
+    /* ACTIVE ORDER STRIP */
+    .active-order-strip {
+      background: linear-gradient(135deg, #1B5E20, #2E7D32);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      padding: 0 4px;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(46,125,50,0.25);
+      transition: transform 0.2s, box-shadow 0.2s;
+      &:active { transform: scale(0.98); }
+      &:hover { box-shadow: 0 6px 18px rgba(46,125,50,0.35); }
     }
-    .orders-count-badge {
-      font-size: 11px;
-      font-weight: 700;
-      color: #2E7D32;
-      background: #E8F5E9;
-      padding: 3px 10px;
-      border-radius: 999px;
-    }
-    .orders-list {
+    .aos-left {
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 12px;
     }
-    .swiggy-order-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      border: 1px solid #ECEFF1;
-      transition: all 0.2s ease;
-      &.active-card {
-        border-color: #81C784;
-        background: linear-gradient(180deg, #FAFCFA 0%, #FFFFFF 100%);
-      }
+    .aos-pulse {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #76FF03;
+      box-shadow: 0 0 0 0 rgba(118, 255, 3, 0.7);
+      animation: liveGlow 1.5s infinite;
     }
-    .soc-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
+    @keyframes liveGlow {
+      0% { box-shadow: 0 0 0 0 rgba(118, 255, 3, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(118, 255, 3, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(118, 255, 3, 0); }
     }
-    .soc-restaurant {
+    .aos-info {
       display: flex;
       flex-direction: column;
-      gap: 2px;
     }
-    .soc-brand {
+    .aos-title {
       font-size: 13.5px;
       font-weight: 800;
-      color: #1A1A1A;
+      color: #fff;
     }
-    .soc-date {
+    .aos-sub {
       font-size: 11px;
-      color: #78909C;
+      color: #C8E6C9;
       font-weight: 500;
     }
-    .soc-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 999px;
-      letter-spacing: 0.1px;
-      &.badge-delivered { background: #E8F5E9; color: #2E7D32; }
-      &.badge-preparing { background: #FFF8E1; color: #F57F17; }
-      &.badge-out { background: #EDE7F6; color: #673AB7; }
-      &.badge-confirmed { background: #E3F2FD; color: #1565C0; }
-      &.badge-cancelled { background: #FFEBEE; color: #C62828; }
-    }
-    .soc-items-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .soc-items-list {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .soc-item-name {
-      font-size: 13px;
-      color: #37474F;
-      font-weight: 600;
-    }
-    .soc-qty {
+    .aos-link {
       font-size: 12px;
-      color: #78909C;
-      font-weight: 500;
-    }
-    .soc-total {
-      font-size: 15px;
-      font-weight: 800;
-      color: #1A1A1A;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(255,255,255,0.2);
+      padding: 6px 12px;
+      border-radius: 8px;
       white-space: nowrap;
     }
-    .soc-divider {
-      height: 1px;
-      background: #F1F3F4;
-      margin-bottom: 12px;
-    }
-    .soc-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .soc-order-num {
-      font-size: 11px;
-      color: #90A4AE;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-    .soc-btns {
-      display: flex;
-      gap: 8px;
-    }
-    .soc-track-btn {
-      background: #2E7D32;
-      color: #fff;
-      font-size: 11.5px;
-      font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 8px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      box-shadow: 0 3px 8px rgba(46,125,50,0.25);
-      transition: all 0.2s;
-      &:hover { background: #1B5E20; transform: translateY(-1px); }
-    }
-    .soc-reorder-btn {
-      background: #F1F8E9;
+
+    .orders-chip {
+      background: #E8F5E9;
       color: #2E7D32;
-      border: 1px solid #C8E6C9;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      transition: all 0.2s;
-      &:hover { background: #E8F5E9; border-color: #A5D6A7; }
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: auto;
+      margin-right: 6px;
     }
-    .orders-empty-state {
-      background: #fff;
-      border-radius: 16px;
-      padding: 32px 20px;
-      text-align: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      border: 1px dashed #DDD;
-      .empty-emoji { font-size: 36px; display: block; margin-bottom: 8px; }
-      h4 { font-size: 15px; font-weight: 800; color: #1A1A1A; margin-bottom: 4px; }
-      p { font-size: 12px; color: #777; margin-bottom: 14px; }
-      .browse-menu-btn {
-        display: inline-block;
-        background: #2E7D32;
-        color: #fff;
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        text-decoration: none;
-        &:hover { background: #1B5E20; }
-      }
-    }
-    .order-skel-list { display: flex; flex-direction: column; gap: 12px; }
-    .order-skel-card {
-      background: #fff; border-radius: 16px; padding: 16px;
-      display: flex; flex-direction: column; gap: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .os-head, .os-foot { display: flex; justify-content: space-between; align-items: center; }
-    .os-line {
-      height: 12px; border-radius: 4px;
-      background: linear-gradient(90deg, #EAEAEA 25%, #F8F8F8 50%, #EAEAEA 75%);
-      background-size: 200% 100%; animation: skelShimmer 1.4s infinite;
-      &.w-20 { width: 20%; }
-      &.w-30 { width: 30%; }
-      &.w-40 { width: 40%; }
-      &.w-80 { width: 80%; }
-    }
-    .os-btn {
-      width: 70px; height: 26px; border-radius: 8px;
-      background: linear-gradient(90deg, #EAEAEA 25%, #F8F8F8 50%, #EAEAEA 75%);
-      background-size: 200% 100%; animation: skelShimmer 1.4s infinite;
-    }
+
 
     /* MENU CARD */
     .menu-card {
@@ -744,17 +571,54 @@ export class ProfileComponent {
     setTimeout(() => this.isLoadingOrders.set(false), 600);
   }
 
+  orderFilter = signal<'all' | 'active' | 'delivered'>('all');
+
   userOrders = computed<AdminOrder[]>(() => {
     const user = this.authService.currentUser();
     const list = this.dataService.orders();
     if (!user) return [];
-    const myOrders = list.filter(o =>
-      (o.userId && o.userId === user.uid) ||
-      (user.phone && o.customerPhone && o.customerPhone.includes(user.phone))
-    );
-    // If user has orders specific to account, show them. Otherwise show latest session orders if present
-    return myOrders.length > 0 ? myOrders : list.slice(0, 5);
+
+    const cleanPhone = (p?: string) => (p || '').replace(/\D/g, '').slice(-10);
+    const uPhone = cleanPhone(user.phone);
+
+    const myOrders = list.filter(o => {
+      if (o.userId && o.userId === user.uid) return true;
+      if (uPhone && o.customerPhone && cleanPhone(o.customerPhone) === uPhone) return true;
+      if (o.customerName && user.name && o.customerName.trim().toLowerCase() === user.name.trim().toLowerCase()) return true;
+      return false;
+    });
+
+    // Return all user orders if found; otherwise return all orders from store
+    const result = myOrders.length > 0 ? myOrders : list;
+    return [...result].sort((a, b) => new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime());
   });
+
+  displayedOrders = computed(() => {
+    const orders = this.userOrders();
+    const f = this.orderFilter();
+    if (f === 'active') {
+      return orders.filter(o => this.isActiveOrder(o.status));
+    }
+    if (f === 'delivered') {
+      return orders.filter(o => o.status === 'delivered');
+    }
+    return orders;
+  });
+
+  activeOrdersCount = computed(() =>
+    this.userOrders().filter(o => this.isActiveOrder(o.status)).length
+  );
+
+  deliveredOrdersCount = computed(() =>
+    this.userOrders().filter(o => o.status === 'delivered').length
+  );
+
+  scrollToOrders(): void {
+    const el = document.getElementById('myOrdersSection');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   totalSpent = computed(() =>
     this.userOrders().reduce((acc, o) => acc + (o.grandTotal || 0), 0)
@@ -777,12 +641,12 @@ export class ProfileComponent {
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'delivered': return '🟢 Delivered';
-      case 'preparing': return '👨‍🍳 Preparing';
-      case 'out-for-delivery': return '🛵 On the way';
-      case 'confirmed': return '📋 Confirmed';
-      case 'cancelled': return '❌ Cancelled';
-      default: return '📋 Placed';
+      case 'delivered': return 'Delivered';
+      case 'preparing': return 'Preparing';
+      case 'out-for-delivery': return 'On the way';
+      case 'confirmed': return 'Confirmed';
+      case 'cancelled': return 'Cancelled';
+      default: return 'Order Placed';
     }
   }
 
@@ -790,8 +654,12 @@ export class ProfileComponent {
     if (!dateStr) return '';
     try {
       const d = new Date(dateStr);
-      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ', ' +
-             d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      const isToday = new Date().toDateString() === d.toDateString();
+      const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      if (isToday) {
+        return `Today, ${timeStr}`;
+      }
+      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ', ' + timeStr;
     } catch {
       return dateStr;
     }
@@ -892,7 +760,7 @@ export class ProfileComponent {
   }
 
   activityItems: MenuItem[] = [
-    { icon: '📦', label: 'My Orders', route: '/track-order/FC12345' },
+    { icon: '📦', label: 'My Orders', route: '/my-orders' },
     { icon: '❤️', label: 'Favourites', route: '/menu' },
     { icon: '🎟️', label: 'Coupons & Offers', route: '/' },
   ];
