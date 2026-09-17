@@ -21,6 +21,7 @@ export class AdminLayoutComponent {
   currentDate = new Date();
   isLogoutModalOpen = false;
   isSidebarCollapsed = signal(false);
+  isMobileDrawerOpen = signal(false);
 
   pendingOrdersCount = computed(() =>
     this.dataService.orders().filter(o => o.status === 'pending').length
@@ -28,7 +29,13 @@ export class AdminLayoutComponent {
 
   toggleSidebar() { this.isSidebarCollapsed.update(v => !v); }
 
-  promptLogout() { this.isLogoutModalOpen = true; }
+  toggleMobileDrawer() { this.isMobileDrawerOpen.update(v => !v); }
+  closeMobileDrawer() { this.isMobileDrawerOpen.set(false); }
+
+  promptLogout() {
+    this.closeMobileDrawer();
+    this.isLogoutModalOpen = true;
+  }
   cancelLogout() { this.isLogoutModalOpen = false; }
 
   async confirmLogout() {

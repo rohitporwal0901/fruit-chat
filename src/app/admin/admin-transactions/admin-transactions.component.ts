@@ -72,8 +72,8 @@ export interface DisplayTransaction {
       </div>
     </div>
 
-    <!-- Transactions Table -->
-    <div class="at-table-wrap">
+    <!-- Transactions Container (Table on Desktop, Cards on Mobile) -->
+    <div class="at-content-area">
       @if (isLoading()) {
         <div class="at-loading-state">
           <div class="spinner-ring"></div>
@@ -84,30 +84,57 @@ export interface DisplayTransaction {
           <span class="material-symbols-outlined">receipt_long</span>
           <p>No transactions found for this period</p>
         </div>
-        <table class="at-table" *ngIf="filteredTransactions().length > 0">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Phone</th>
-              <th>Payment</th>
-              <th>Amount</th>
-              <th>Date & Time</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let txn of filteredTransactions()">
-              <td><span class="at-order-id">#{{ txn.displayOrderId }}</span></td>
-              <td><span class="at-name">{{ txn.customerName }}</span></td>
-              <td><span class="at-phone">{{ txn.customerPhone }}</span></td>
-              <td><span class="at-payment">{{ txn.paymentMethod }}</span></td>
-              <td><span class="at-amount">₹{{ txn.amount }}</span></td>
-              <td><span class="at-date">{{ txn.date | date:'dd MMM yyyy, hh:mm a' }}</span></td>
-              <td><span class="at-status" [ngClass]="txn.statusClass">{{ txn.status }}</span></td>
-            </tr>
-          </tbody>
-        </table>
+
+        <!-- 🖥️ DESKTOP TABLE VIEW -->
+        <div class="at-desktop-view at-table-wrap" *ngIf="filteredTransactions().length > 0">
+          <table class="at-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Payment</th>
+                <th>Amount</th>
+                <th>Date & Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let txn of filteredTransactions()">
+                <td><span class="at-order-id">#{{ txn.displayOrderId }}</span></td>
+                <td><span class="at-name">{{ txn.customerName }}</span></td>
+                <td><span class="at-phone">{{ txn.customerPhone }}</span></td>
+                <td><span class="at-payment">{{ txn.paymentMethod }}</span></td>
+                <td><span class="at-amount">₹{{ txn.amount }}</span></td>
+                <td><span class="at-date">{{ txn.date | date:'dd MMM yyyy, hh:mm a' }}</span></td>
+                <td><span class="at-status" [ngClass]="txn.statusClass">{{ txn.status }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 📱 MOBILE CARDS VIEW -->
+        <div class="at-mobile-view" *ngIf="filteredTransactions().length > 0">
+          <div class="at-m-card" *ngFor="let txn of filteredTransactions()">
+            <div class="at-m-header">
+              <div class="at-m-id-date">
+                <span class="at-order-id">#{{ txn.displayOrderId }}</span>
+                <span class="at-m-date">{{ txn.date | date:'dd MMM, h:mm a' }}</span>
+              </div>
+              <span class="at-status" [ngClass]="txn.statusClass">{{ txn.status }}</span>
+            </div>
+            <div class="at-m-middle">
+              <div class="at-m-customer">{{ txn.customerName }}</div>
+              <div class="at-m-phone" *ngIf="txn.customerPhone && txn.customerPhone !== '-'">
+                <span>📱</span> {{ txn.customerPhone }}
+              </div>
+            </div>
+            <div class="at-m-footer">
+              <span class="at-payment">{{ txn.paymentMethod }}</span>
+              <span class="at-m-amount">₹{{ txn.amount }}</span>
+            </div>
+          </div>
+        </div>
       }
     </div>
   `,
@@ -129,24 +156,54 @@ export interface DisplayTransaction {
     @keyframes pulseDots { from { opacity: 0.3; } to { opacity: 1; } }
 
     .at-filter-row { margin-bottom:1rem; }
-    .at-filter-tabs { display:flex; gap:0.4rem; flex-wrap:wrap; }
-    .at-filter-tabs button { padding:0.45rem 1rem; border-radius:8px; border:1px solid #e0e0e0; background:#f5f5f5; color:#555; font-size:0.82rem; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+    .at-filter-tabs {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .at-filter-tabs::-webkit-scrollbar { display: none; }
+    .at-filter-tabs button {
+      padding: 0.45rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      background: #f5f5f5;
+      color: #555;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
     .at-filter-tabs button:hover { background: #EEE; }
     .at-filter-tabs button.active { background:#2E7D32; color:#fff; border-color:#2E7D32; box-shadow: 0 2px 6px rgba(46,125,50,0.3); }
 
-    .at-table-wrap { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.06); border:1px solid #f0f0f0; overflow:hidden; min-height: 220px; }
-    .at-empty { text-align:center; padding:3rem; span{font-size:2.5rem;color:#ddd;display:block;margin-bottom:0.5rem;} p{color:#bbb;font-size:0.88rem;} }
-    .at-table { width:100%; border-collapse:collapse; }
+    .at-table-wrap {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border: 1px solid #f0f0f0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      min-height: 220px;
+    }
+    .at-empty { text-align:center; padding:3rem; background:#fff; border-radius:16px; border:1px dashed #eee; span{font-size:2.5rem;color:#ddd;display:block;margin-bottom:0.5rem;} p{color:#bbb;font-size:0.88rem;} }
+    .at-table { width:100%; min-width: 680px; border-collapse:collapse; }
     .at-table thead { background:#F8F9FA; }
-    .at-table th { padding:0.85rem 1rem; text-align:left; font-size:0.72rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #eee; }
-    .at-table td { padding:0.85rem 1rem; border-bottom:1px solid #F5F5F5; vertical-align:middle; }
+    .at-table th { padding:0.85rem 1rem; text-align:left; font-size:0.72rem; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #eee; white-space: nowrap; }
+    .at-table td { padding:0.85rem 1rem; border-bottom:1px solid #F5F5F5; vertical-align:middle; white-space: nowrap; }
     .at-table tbody tr:last-child td { border-bottom:none; }
     .at-table tbody tr:hover { background:#FAFAFA; }
 
-    .at-order-id { font-size:0.78rem; font-weight:700; color:#999; font-family:monospace; background:#f5f5f5; padding:2px 6px; border-radius:4px; }
+    .at-order-id { font-size:0.78rem; font-weight:700; color:#666; font-family:monospace; background:#f0f0f0; padding:3px 7px; border-radius:6px; letter-spacing:0.5px; }
     .at-name { font-size:0.88rem; font-weight:600; color:#1a1a1a; }
     .at-phone { font-size:0.82rem; color:#666; }
-    .at-payment { font-size:0.8rem; color:#555; background:#f5f5f5; padding:2px 8px; border-radius:6px; font-weight:500; }
+    .at-payment { font-size:0.78rem; color:#555; background:#f0f0f0; padding:2px 8px; border-radius:6px; font-weight:600; }
     .at-amount { font-size:0.9rem; font-weight:800; color:#1a1a1a; }
     .at-date { font-size:0.8rem; color:#888; }
     .at-status { font-size:0.72rem; font-weight:700; text-transform:capitalize; padding:3px 10px; border-radius:20px; }
@@ -154,6 +211,63 @@ export interface DisplayTransaction {
     .at-status.success   { background:#E8F5E9; color:#2E7D32; }
     .at-status.pending   { background:#FFF8E1; color:#F57F17; }
     .at-status.failed    { background:#FFEBEE; color:#C62828; }
+
+    /* 📱 Mobile Card Styles */
+    .at-mobile-view {
+      display: none;
+    }
+    .at-m-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1rem;
+      border: 1px solid #f0f0f0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .at-m-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .at-m-id-date {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .at-m-date {
+      font-size: 0.75rem;
+      color: #888;
+    }
+    .at-m-middle {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .at-m-customer {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      line-height: 1.25;
+    }
+    .at-m-phone {
+      font-size: 0.8rem;
+      color: #777;
+    }
+    .at-m-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.5rem;
+      border-top: 1px solid #f5f5f5;
+    }
+    .at-m-amount {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #1B5E20;
+    }
 
     /* LOADING 2 SECONDS SPINNER */
     .at-loading-state {
@@ -163,6 +277,9 @@ export interface DisplayTransaction {
       justify-content: center;
       padding: 4.5rem 2rem;
       gap: 14px;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #f0f0f0;
     }
     .spinner-ring {
       width: 40px;
@@ -183,7 +300,48 @@ export interface DisplayTransaction {
       font-family: 'Outfit', sans-serif;
     }
 
-    @media(max-width:768px) { .at-summary { grid-template-columns:1fr; } }
+    /* ══════════ Responsive Breakpoint ══════════ */
+    @media (max-width: 768px) {
+      .at-header {
+        margin-bottom: 1rem;
+      }
+      .at-summary {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .at-summary-card {
+        padding: 0.75rem 0.6rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+        border-radius: 14px;
+      }
+      .at-s-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+      }
+      .at-s-icon span {
+        font-size: 1.15rem !important;
+      }
+      .at-s-value {
+        font-size: 1.1rem;
+        min-height: 24px;
+      }
+      .at-s-label {
+        font-size: 0.68rem;
+      }
+
+      .at-desktop-view {
+        display: none !important;
+      }
+      .at-mobile-view {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+    }
     .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; vertical-align:middle; }
   `]
 })

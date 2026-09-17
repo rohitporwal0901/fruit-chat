@@ -1,7 +1,41 @@
 <div class="fc-admin-wrap" [class.collapsed]="isSidebarCollapsed()">
 
-  <!-- ══════════ SIDEBAR ══════════ -->
-  <aside class="fc-sidebar">
+  <!-- ══════════ MOBILE HEADER BAR ══════════ -->
+  <header class="fc-mobile-header">
+    <button class="fc-mobile-menu-btn" (click)="toggleMobileDrawer()" type="button" aria-label="Open Navigation">
+      <span class="material-symbols-outlined">{{ isMobileDrawerOpen() ? 'close' : 'menu' }}</span>
+    </button>
+    <div class="fc-mobile-brand" routerLink="/admin/dashboard">
+      <div class="fc-logo-badge fc-logo-badge-sm">
+        <svg class="fc-logo-crest" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="42" height="42" rx="12" fill="url(#crestGradMob)" />
+          <text x="21" y="26" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-weight="700" font-size="14" fill="#ffffff">FC</text>
+          <defs>
+            <linearGradient id="crestGradMob" x1="0" y1="0" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1b5e20"/>
+              <stop offset="1" stop-color="#0b2912"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="fc-mobile-title">
+        <span class="fc-mob-name">Fruit Chat</span>
+        <span class="fc-mob-sub">Admin</span>
+      </div>
+    </div>
+    <div class="fc-mobile-actions">
+      <a routerLink="/admin/orders" class="fc-mob-order-btn" title="Orders">
+        <span class="material-symbols-outlined">shopping_bag</span>
+        <span class="fc-badge fc-badge-mob" *ngIf="pendingOrdersCount() > 0">{{ pendingOrdersCount() }}</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ══════════ MOBILE SIDEBAR BACKDROP ══════════ -->
+  <div class="fc-sidebar-backdrop" [class.active]="isMobileDrawerOpen()" (click)="closeMobileDrawer()"></div>
+
+  <!-- ══════════ SIDEBAR (DESKTOP & MOBILE DRAWER) ══════════ -->
+  <aside class="fc-sidebar" [class.mobile-open]="isMobileDrawerOpen()">
     <!-- Brand Logo -->
     <div class="fc-sidebar-logo">
       <div class="fc-logo-badge">
@@ -32,6 +66,9 @@
           <span>Admin Portal</span>
         </div>
       </div>
+      <button class="fc-sidebar-close-mob" (click)="closeMobileDrawer()" type="button" aria-label="Close menu">
+        <span class="material-symbols-outlined">close</span>
+      </button>
     </div>
 
     <!-- Navigation -->
@@ -39,18 +76,18 @@
       <!-- OVERVIEW -->
       <div class="fc-nav-section">OVERVIEW</div>
 
-      <a routerLink="/admin/dashboard" routerLinkActive="fc-nav-active" class="fc-nav-item">
+      <a routerLink="/admin/dashboard" routerLinkActive="fc-nav-active" class="fc-nav-item" (click)="closeMobileDrawer()">
         <span class="material-symbols-outlined">dashboard</span>
         <span class="fc-nav-label">Dashboard</span>
       </a>
 
-      <a routerLink="/admin/orders" routerLinkActive="fc-nav-active" class="fc-nav-item">
+      <a routerLink="/admin/orders" routerLinkActive="fc-nav-active" class="fc-nav-item" (click)="closeMobileDrawer()">
         <span class="material-symbols-outlined">shopping_bag</span>
         <span class="fc-nav-label">Orders</span>
         <span class="fc-badge" *ngIf="pendingOrdersCount() > 0">{{ pendingOrdersCount() }}</span>
       </a>
 
-      <a routerLink="/admin/transactions" routerLinkActive="fc-nav-active" class="fc-nav-item">
+      <a routerLink="/admin/transactions" routerLinkActive="fc-nav-active" class="fc-nav-item" (click)="closeMobileDrawer()">
         <span class="material-symbols-outlined">receipt_long</span>
         <span class="fc-nav-label">Transactions</span>
       </a>
@@ -58,17 +95,17 @@
       <!-- CATALOG -->
       <div class="fc-nav-section">CATALOG</div>
 
-      <a routerLink="/admin/categories" routerLinkActive="fc-nav-active" class="fc-nav-item">
+      <a routerLink="/admin/categories" routerLinkActive="fc-nav-active" class="fc-nav-item" (click)="closeMobileDrawer()">
         <span class="material-symbols-outlined">category</span>
         <span class="fc-nav-label">Categories</span>
       </a>
 
-      <a routerLink="/admin/products" routerLinkActive="fc-nav-active" class="fc-nav-item">
+      <a routerLink="/admin/products" routerLinkActive="fc-nav-active" class="fc-nav-item" (click)="closeMobileDrawer()">
         <span class="material-symbols-outlined">inventory_2</span>
         <span class="fc-nav-label">Products</span>
       </a>
 
-      <a routerLink="/admin/combo-cards" routerLinkActive="fc-nav-active" class="fc-nav-item">
+      <a routerLink="/admin/combo-cards" routerLinkActive="fc-nav-active" class="fc-nav-item" (click)="closeMobileDrawer()">
         <span class="material-symbols-outlined">auto_awesome</span>
         <span class="fc-nav-label">Combo Cards</span>
       </a>
@@ -76,7 +113,7 @@
       <!-- CONFIG -->
       <div class="fc-nav-section">CONFIG</div>
 
-      <a routerLink="/admin/settings" routerLinkActive="fc-nav-active" class="fc-nav-item">
+      <a routerLink="/admin/settings" routerLinkActive="fc-nav-active" class="fc-nav-item" (click)="closeMobileDrawer()">
         <span class="material-symbols-outlined">settings</span>
         <span class="fc-nav-label">Settings</span>
       </a>

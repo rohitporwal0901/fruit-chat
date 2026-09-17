@@ -82,6 +82,21 @@ import { CommonModule } from '@angular/common';
       flex: 1;
       overflow-y: auto;
       padding: 1.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 600px) {
+      .fc-drawer {
+        width: 100% !important;
+        max-width: 100vw !important;
+        height: 100dvh;
+      }
+      .fc-drawer-header {
+        padding: 1rem 1.25rem;
+      }
+      .fc-drawer-body {
+        padding: 1.25rem 1rem;
+      }
     }
   `]
 })

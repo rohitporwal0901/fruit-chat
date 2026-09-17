@@ -1,203 +1,215 @@
 <div class="as-page">
-  <div class="as-title-row">
-    <h1 class="as-title">Settings</h1>
-    <p class="as-sub">Configure your app's offer card and home banners</p>
-  </div>
-
-  <!-- ══════════ OFFER CARD ══════════ -->
-  <div class="as-section">
-    <div class="as-section-header">
-      <div>
-        <h2>🎟️ Offer Card</h2>
-        <p>This appears on the user home page as a promotional banner</p>
-      </div>
-      <button class="as-edit-btn" (click)="startEditOffer()" *ngIf="!editingOffer()">
-        <span class="material-symbols-outlined">edit</span> Edit
+  <!-- Header -->
+  <div class="as-header">
+    <div>
+      <h1 class="as-title">Settings</h1>
+      <p class="as-sub">Manage promotional offer card and discount coupons</p>
+    </div>
+    <div class="as-header-actions">
+      <button class="as-toggle-status-btn" [class.active]="offerCard().isActive" (click)="quickToggleActive()" type="button">
+        <span class="status-indicator-dot"></span>
+        <span>{{ offerCard().isActive ? 'Offer Active' : 'Offer Inactive' }}</span>
+      </button>
+      <button class="as-edit-btn" (click)="editingOffer() ? cancelEditOffer() : startEditOffer()" type="button">
+        <span class="material-symbols-outlined">{{ editingOffer() ? 'close' : 'edit' }}</span>
+        <span>{{ editingOffer() ? 'Cancel' : 'Edit Offer' }}</span>
       </button>
     </div>
+  </div>
 
-    <!-- Preview -->
-    <div class="offer-preview" *ngIf="!editingOffer()">
-      <div class="offer-preview-card" [class.inactive]="!offerCard().isActive">
-        <div class="op-left">
-          <h3>{{ offerCard().heading }}</h3>
-          <p>{{ offerCard().subtext }}</p>
-          <div class="op-details" style="margin-top: 8px; font-size: 11.5px; opacity: 0.9;">
-            <span>Coupon: <strong>{{ offerCard().code || 'FRUIT50' }}</strong></span>
-            <span style="margin: 0 6px;">•</span>
-            <span>Min Shopping: <strong>₹{{ offerCard().minOrderAmount || 99 }}</strong></span>
+  <!-- Contained Center Container -->
+  <div class="as-card-container">
+
+    <!-- ══════════ TICKET VOUCHER CARD ══════════ -->
+    <div class="as-card-section">
+      <div class="as-section-top">
+        <div class="as-section-title">
+          <span class="material-symbols-outlined as-sec-icon">confirmation_number</span>
+          <div>
+            <h3>Customer Voucher Preview</h3>
+            <p>{{ editingOffer() ? 'Live Preview — updates instantly as you edit below' : 'Currently displayed to customers on home & cart pages' }}</p>
           </div>
         </div>
-        <div class="op-pill">
-          <span class="op-label">OFF</span>
-          <span class="op-amount">₹{{ offerCard().amount }}</span>
+        <span class="live-pill" *ngIf="editingOffer()">
+          <span class="live-pulse"></span> LIVE PREVIEW
+        </span>
+      </div>
+
+      <!-- Luxury Ticket Voucher -->
+      <div class="as-voucher-wrapper">
+        <div class="as-voucher-ticket" [class.inactive]="!(editingOffer() ? offerDraft.isActive : offerCard().isActive)">
+          <!-- Top Notch & Bottom Notch for ticket cutout -->
+          <div class="ticket-notch notch-left"></div>
+          <div class="ticket-notch notch-right"></div>
+
+          <!-- Ticket Main Content (Left) -->
+          <div class="vt-main">
+            <div class="vt-badge-row">
+              <span class="vt-badge">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                SPECIAL VOUCHER
+              </span>
+              <span class="vt-status-badge" [class.is-active]="(editingOffer() ? offerDraft.isActive : offerCard().isActive)">
+                {{ (editingOffer() ? offerDraft.isActive : offerCard().isActive) ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+
+            <h2 class="vt-heading">{{ (editingOffer() ? offerDraft.heading : offerCard().heading) || 'Hurry, ₹50 Free Cash expiring soon!' }}</h2>
+            <p class="vt-sub">{{ (editingOffer() ? offerDraft.subtext : offerCard().subtext) || 'Valid on orders above minimum amount' }}</p>
+
+            <div class="vt-footer-row">
+              <!-- Coupon Code Box -->
+              <div class="vt-coupon-box" (click)="copyCouponCode(editingOffer() ? (offerDraft.code || 'FRUIT50') : (offerCard().code || 'FRUIT50'))" title="Click to copy code">
+                <span class="vt-coupon-lbl">CODE:</span>
+                <span class="vt-coupon-code">{{ ((editingOffer() ? offerDraft.code : offerCard().code) || 'FRUIT50').toUpperCase() }}</span>
+                <span class="material-symbols-outlined vt-copy-icon">content_copy</span>
+              </div>
+
+              <!-- Conditions -->
+              <div class="vt-cond">
+                <span class="material-symbols-outlined">shopping_bag</span>
+                Min Cart: <strong>₹{{ (editingOffer() ? offerDraft.minOrderAmount : offerCard().minOrderAmount) || 99 }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Perforation line -->
+          <div class="vt-divider">
+            <span class="vt-scissors material-symbols-outlined">content_cut</span>
+          </div>
+
+          <!-- Ticket Stub (Right) -->
+          <div class="vt-stub">
+            <span class="vt-stub-label">DISCOUNT</span>
+            <div class="vt-amount">
+              <span class="currency">₹</span>
+              <span class="value">{{ (editingOffer() ? offerDraft.amount : offerCard().amount) || 50 }}</span>
+            </div>
+            <span class="vt-off-tag">OFF</span>
+            <span class="vt-valid-text">{{ (editingOffer() ? offerDraft.validText : offerCard().validText) || 'On your order' }}</span>
+          </div>
         </div>
-        <div class="op-inactive-badge" *ngIf="!offerCard().isActive">INACTIVE</div>
+      </div>
+
+      <!-- Quick Explanation Callout -->
+      <div class="as-callout" *ngIf="!editingOffer()">
+        <span class="material-symbols-outlined callout-icon">info</span>
+        <div>
+          When enabled, customers can apply code <strong>{{ (offerCard().code || 'FRUIT50').toUpperCase() }}</strong> at checkout to receive <strong>₹{{ offerCard().amount || 0 }} OFF</strong> on orders above <strong>₹{{ offerCard().minOrderAmount || 0 }}</strong>.
+        </div>
       </div>
     </div>
 
-    <!-- Edit Form -->
-    <div class="offer-edit-form" *ngIf="editingOffer()">
-      <div class="as-field">
-        <label>Heading</label>
-        <input type="text" [(ngModel)]="offerDraft.heading" placeholder="e.g. Hurry, ₹50 Free Cash">
-      </div>
-      <div class="as-field">
-        <label>Sub Text</label>
-        <input type="text" [(ngModel)]="offerDraft.subtext" placeholder="e.g. Valid on food orders above ₹99">
-      </div>
-      <div class="as-field-row">
-        <div class="as-field">
-          <label>Coupon Code</label>
-          <input type="text" [(ngModel)]="offerDraft.code" placeholder="e.g. FRUIT50" style="text-transform: uppercase;">
-        </div>
-        <div class="as-field">
-          <label>Discount Amount (₹)</label>
-          <input type="number" [(ngModel)]="offerDraft.amount" min="0" placeholder="50">
+    <!-- ══════════ EDIT FORM ══════════ -->
+    <div class="as-card-section as-edit-section" *ngIf="editingOffer()">
+      <div class="as-section-top">
+        <div class="as-section-title">
+          <span class="material-symbols-outlined as-sec-icon">tune</span>
+          <div>
+            <h3>Configure Offer Details</h3>
+            <p>Adjust the discount values, requirements and banner text</p>
+          </div>
         </div>
       </div>
-      <div class="as-field-row">
-        <div class="as-field">
-          <label>Minimum Shopping Amount (₹)</label>
-          <input type="number" [(ngModel)]="offerDraft.minOrderAmount" min="0" placeholder="99">
-        </div>
-        <div class="as-field">
-          <label>Valid Text</label>
-          <input type="text" [(ngModel)]="offerDraft.validText" placeholder="e.g. Valid on orders above ₹99">
+
+      <!-- Quick Presets -->
+      <div class="as-presets-wrap">
+        <span class="presets-title">⚡ Quick Presets:</span>
+        <div class="presets-list">
+          <button *ngFor="let p of presets" type="button" class="preset-chip" (click)="applyPreset(p)">
+            {{ p.label }}
+          </button>
         </div>
       </div>
-      <div class="as-info-box" style="background:#E8F5E9; padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #2E7D32;">
-        💡 Customers will get <strong>₹{{ offerDraft.amount || 0 }} OFF</strong> when shopping for <strong>₹{{ offerDraft.minOrderAmount || 0 }}+</strong> using code <strong>{{ (offerDraft.code || 'FRUIT50').toUpperCase() }}</strong>. (1-time use per customer).
+
+      <!-- Form Inputs Grid -->
+      <div class="as-form-grid">
+        <!-- Coupon Code -->
+        <div class="as-field">
+          <label>Coupon Code *</label>
+          <div class="as-input-wrap">
+            <span class="material-symbols-outlined">local_offer</span>
+            <input type="text" [(ngModel)]="offerDraft.code" placeholder="e.g. FRUIT50" style="text-transform: uppercase;">
+          </div>
+          <span class="as-field-hint">Customers will type this code in cart</span>
+        </div>
+
+        <!-- Discount Amount -->
+        <div class="as-field">
+          <label>Discount Amount (₹) *</label>
+          <div class="as-input-wrap">
+            <span class="as-prefix">₹</span>
+            <input type="number" [(ngModel)]="offerDraft.amount" min="0" placeholder="50">
+          </div>
+          <span class="as-field-hint">Flat rupee deduction from cart</span>
+        </div>
+
+        <!-- Min Shopping Amount -->
+        <div class="as-field">
+          <label>Minimum Shopping Amount (₹) *</label>
+          <div class="as-input-wrap">
+            <span class="as-prefix">₹</span>
+            <input type="number" [(ngModel)]="offerDraft.minOrderAmount" min="0" placeholder="99">
+          </div>
+          <span class="as-field-hint">Order total must reach this amount</span>
+        </div>
+
+        <!-- Valid Text -->
+        <div class="as-field">
+          <label>Validity Description</label>
+          <div class="as-input-wrap">
+            <span class="material-symbols-outlined">schedule</span>
+            <input type="text" [(ngModel)]="offerDraft.validText" placeholder="e.g. Valid on orders above ₹99">
+          </div>
+          <span class="as-field-hint">Displayed below coupon</span>
+        </div>
+
+        <!-- Heading (Full row) -->
+        <div class="as-field full-row">
+          <label>Banner Heading *</label>
+          <div class="as-input-wrap">
+            <span class="material-symbols-outlined">title</span>
+            <input type="text" [(ngModel)]="offerDraft.heading" placeholder="e.g. Hurry, ₹50 Free Cash expiring soon!">
+          </div>
+        </div>
+
+        <!-- Subtext (Full row) -->
+        <div class="as-field full-row">
+          <label>Banner Subtext</label>
+          <div class="as-input-wrap">
+            <span class="material-symbols-outlined">short_text</span>
+            <input type="text" [(ngModel)]="offerDraft.subtext" placeholder="e.g. Valid on all fresh bowls and juices">
+          </div>
+        </div>
       </div>
-      <div class="as-toggle-row">
-        <label class="fc-toggle-label">
+
+      <!-- Active Switch Row -->
+      <div class="as-toggle-box">
+        <div class="as-toggle-left">
+          <span class="material-symbols-outlined switch-icon">visibility</span>
+          <div>
+            <strong>Offer Status</strong>
+            <p>Show or hide this coupon across user app and checkout</p>
+          </div>
+        </div>
+        <label class="fc-switch">
           <input type="checkbox" [(ngModel)]="offerDraft.isActive">
-          <span class="fc-toggle-switch"></span>
-          <span>Active (show on home page)</span>
+          <span class="fc-slider round"></span>
         </label>
       </div>
-      <div class="as-form-footer">
-        <button class="as-btn-cancel" (click)="cancelEditOffer()">Cancel</button>
-        <button class="as-btn-save" (click)="saveOfferCard()" [disabled]="isSavingOffer()">
-          <span class="material-symbols-outlined" *ngIf="!isSavingOffer()">save</span>
+
+      <!-- Action Buttons -->
+      <div class="as-actions-bar">
+        <button type="button" class="as-btn-cancel" (click)="cancelEditOffer()">
+          Cancel
+        </button>
+        <button type="button" class="as-btn-save" (click)="saveOfferCard()" [disabled]="isSavingOffer()">
+          <span class="material-symbols-outlined" *ngIf="!isSavingOffer()">check_circle</span>
           <span class="fc-btn-spinner" *ngIf="isSavingOffer()"></span>
-          {{ isSavingOffer() ? 'Saving...' : 'Save Offer Card' }}
+          <span>{{ isSavingOffer() ? 'Saving Changes...' : 'Save & Publish Offer' }}</span>
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- ══════════ HOME SLIDES ══════════ -->
-  <div class="as-section">
-    <div class="as-section-header">
-      <div>
-        <h2>🖼️ Home Banners</h2>
-        <p>These appear as the hero slider on the user home page</p>
-      </div>
-      <button class="as-add-btn" (click)="openAddSlide()">
-        <span class="material-symbols-outlined">add</span> Add Banner
-      </button>
-    </div>
-
-    <div class="slides-empty" *ngIf="slides().length === 0">
-      <span class="material-symbols-outlined">image</span>
-      <p>No banners added yet</p>
-    </div>
-
-    <div class="slides-grid" *ngIf="slides().length > 0">
-      <div class="slide-card" *ngFor="let slide of slides()">
-        <div class="slide-img" [style.background]="slide.bg">
-          <img *ngIf="slide.img" [src]="slide.img" [alt]="slide.title">
-          <span class="slide-status-dot" [class.inactive]="slide.status !== 'active'"></span>
-        </div>
-        <div class="slide-body">
-          <div class="slide-tag">{{ slide.tag }}</div>
-          <div class="slide-name">{{ slide.title }}</div>
-          <div class="slide-sub">{{ slide.subtitle }}</div>
-          <div class="slide-order">Order: {{ slide.order }}</div>
-        </div>
-        <div class="slide-actions">
-          <button class="slide-btn edit" (click)="openEditSlide(slide)">
-            <span class="material-symbols-outlined">edit</span>
-          </button>
-          <button class="slide-btn delete" (click)="promptDeleteSlide(slide.id)">
-            <span class="material-symbols-outlined">delete</span>
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
-
-<!-- Slide Drawer -->
-<app-side-drawer [isOpen]="isSlideDrawerOpen()" [title]="isEditingSlide() ? 'Edit Banner' : 'Add Banner'" (close)="closeSlideDrawer()">
-  <form #slideForm="ngForm" (ngSubmit)="saveSlide(slideForm)" class="as-form">
-
-    <div class="as-field">
-      <label>Title *</label>
-      <input type="text" [(ngModel)]="currentSlide.title" name="title" required placeholder="e.g. Fresh Fruit Chaat" #titleF="ngModel" [class.invalid]="titleF.invalid && titleF.touched">
-    </div>
-    <div class="as-field">
-      <label>Subtitle</label>
-      <input type="text" [(ngModel)]="currentSlide.subtitle" name="subtitle" placeholder="e.g. Healthy & Delicious">
-    </div>
-    <div class="as-field">
-      <label>Tag / Badge</label>
-      <input type="text" [(ngModel)]="currentSlide.tag" name="tag" placeholder="e.g. BESTSELLER">
-    </div>
-    <div class="as-field-row">
-      <div class="as-field">
-        <label>Background (CSS)</label>
-        <input type="text" [(ngModel)]="currentSlide.bg" name="bg" placeholder="linear-gradient(...)">
-      </div>
-      <div class="as-field">
-        <label>Display Order</label>
-        <input type="number" [(ngModel)]="currentSlide.order" name="order" min="1">
-      </div>
-    </div>
-    <div class="as-field-row">
-      <div class="as-field">
-        <label>Link</label>
-        <input type="text" [(ngModel)]="currentSlide.link" name="link" placeholder="/menu">
-      </div>
-      <div class="as-field">
-        <label>Button Text</label>
-        <input type="text" [(ngModel)]="currentSlide.btnText" name="btnText" placeholder="Order Now">
-      </div>
-    </div>
-    <div class="as-field">
-      <label>Status</label>
-      <div class="as-radio-row">
-        <label class="as-radio"><input type="radio" [(ngModel)]="currentSlide.status" name="status" value="active"> Active</label>
-        <label class="as-radio"><input type="radio" [(ngModel)]="currentSlide.status" name="status" value="inactive"> Inactive</label>
-      </div>
-    </div>
-    <div class="as-field">
-      <label>Banner Image *</label>
-      <div class="as-img-area">
-        <div class="as-img-preview" *ngIf="currentSlide.img">
-          <img [src]="currentSlide.img" alt="Banner">
-          <button type="button" class="as-img-remove" (click)="currentSlide.img = ''">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <label *ngIf="!currentSlide.img" class="as-img-upload" for="slideImg">
-          <span class="material-symbols-outlined">upload_file</span>
-          <span>{{ isUploading() ? 'Uploading ' + uploadProgress() + '%...' : 'Upload Image' }}</span>
-        </label>
-        <input id="slideImg" type="file" accept="image/*" (change)="onSlideImgSelected($event)" style="display:none">
-      </div>
-    </div>
-
-    <div class="as-form-footer">
-      <button type="button" class="as-btn-cancel" (click)="closeSlideDrawer()">Cancel</button>
-      <button type="submit" class="as-btn-save" [disabled]="isSavingSlide() || isUploading()">
-        <span class="material-symbols-outlined" *ngIf="!isSavingSlide()">save</span>
-        <span class="fc-btn-spinner" *ngIf="isSavingSlide()"></span>
-        {{ isSavingSlide() ? 'Saving...' : (isEditingSlide() ? 'Update Banner' : 'Add Banner') }}
-      </button>
-    </div>
-  </form>
-</app-side-drawer>
-
-<app-confirmation-modal [isOpen]="isDeleteModal()" title="Delete Banner" message="This will remove the banner from the home page." confirmText="Delete" (confirm)="confirmDelete()" (cancel)="cancelDelete()"></app-confirmation-modal>
