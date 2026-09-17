@@ -11,6 +11,7 @@ import { AdminCategoriesComponent } from './admin/admin-categories/admin-categor
 import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
 import { AdminTransactionsComponent } from './admin/admin-transactions/admin-transactions.component';
 import { AdminSettingsComponent } from './admin/admin-settings/admin-settings.component';
+import { AdminComboCardsComponent } from './admin/admin-combo-cards/admin-combo-cards.component';
 
 export const routes: Routes = [
   // ── Admin Routes ────────────────────────────────────────
@@ -26,6 +27,7 @@ export const routes: Routes = [
       { path: 'categories',    component: AdminCategoriesComponent },
       { path: 'orders',        component: AdminOrdersComponent },
       { path: 'transactions',  component: AdminTransactionsComponent },
+      { path: 'combo-cards',   component: AdminComboCardsComponent },
       { path: 'settings',      component: AdminSettingsComponent },
     ]
   },

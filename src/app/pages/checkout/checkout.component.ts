@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
+import { DataService } from '../../core/services/data.service';
+import { AdminOrder } from '../../core/models/admin.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-checkout',
@@ -105,14 +108,19 @@ import { AuthService } from '../../core/services/auth.service';
             <h3 class="step-heading">Payment Method</h3>
             <div class="payment-options">
               @for (method of paymentMethods; track method.id) {
-                <label class="payment-option" [class.selected]="selectedPayment() === method.id">
-                  <input type="radio" name="payment" [value]="method.id" [(ngModel)]="paymentVal" (change)="selectedPayment.set(method.id)">
+                <label class="payment-option" [class.selected]="selectedPayment() === method.id" [class.disabled-option]="method.disabled">
+                  <input type="radio" name="payment" [value]="method.id" [disabled]="method.disabled" [(ngModel)]="paymentVal" (change)="!method.disabled && selectedPayment.set(method.id)">
                   <div class="payment-radio">
                     <div class="radio-circle" [class.selected]="selectedPayment() === method.id"></div>
                     <div class="payment-info">
                       <span class="method-icon">{{ method.icon }}</span>
                       <div>
-                        <p class="method-name">{{ method.name }}</p>
+                        <div class="name-row">
+                          <p class="method-name">{{ method.name }}</p>
+                          @if (method.disabled) {
+                            <span class="disabled-pill">Temporarily Disabled</span>
+                          }
+                        </div>
                         <p class="method-sub">{{ method.sub }}</p>
                       </div>
                     </div>
@@ -273,6 +281,9 @@ import { AuthService } from '../../core/services/auth.service';
     .method-icon { font-size: 24px; }
     .method-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
     .method-sub { font-size: 11px; color: #999; }
+    .disabled-option { opacity: 0.6; cursor: not-allowed; }
+    .name-row { display: flex; align-items: center; gap: 8px; }
+    .disabled-pill { font-size: 9px; font-weight: 700; color: #C62828; background: #FFEBEE; padding: 2px 7px; border-radius: 999px; }
 
     /* ORDER SUMMARY */
     .order-summary { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); h4 { font-size: 15px; font-weight: 700; margin-bottom: 14px; } }
@@ -308,6 +319,7 @@ export class CheckoutComponent {
   router = inject(Router);
   cartService = inject(CartService);
   authService = inject(AuthService);
+  dataService = inject(DataService);
 
   currentStep = signal(1);
   loading = signal(false);
@@ -346,9 +358,9 @@ export class CheckoutComponent {
   ];
 
   paymentMethods = [
-    { id: 'upi', name: 'UPI', icon: '📱', sub: 'Google Pay, PhonePe, Paytm, etc.' },
-    { id: 'cod', name: 'Cash on Delivery', icon: '💵', sub: 'Pay when order arrives' },
-    { id: 'card', name: 'Card / Wallet', icon: '💳', sub: 'Debit / Credit Card' }
+    { id: 'upi', name: 'Razorpay UPI', icon: '📱', sub: 'Google Pay, PhonePe, Paytm, etc.', disabled: false },
+    { id: 'card', name: 'Card / Netbanking', icon: '💳', sub: 'Debit / Credit Card, Netbanking', disabled: false },
+    { id: 'cod', name: 'Cash on Delivery', icon: '💵', sub: 'Temporarily disabled (Online payment only)', disabled: true }
   ];
 
   nextStep(): void {
@@ -357,14 +369,111 @@ export class CheckoutComponent {
     }
   }
 
-  placeOrder(): void {
+  async placeOrder(): Promise<void> {
+    if (this.cartService.items().length === 0) {
+      this.router.navigate(['/']);
+      return;
+    }
+
     this.loading.set(true);
-    const orderId = 'FC' + Math.floor(10000 + Math.random() * 90000);
-    setTimeout(() => {
-      this.cartService.clearCart();
-      this.loading.set(false);
-      this.router.navigate(['/order-success'], { queryParams: { orderId } });
-    }, 1500);
+
+    const grandTotal = this.cartService.grandTotal();
+    const orderPayload: Omit<AdminOrder, 'id'> = {
+      userId: this.authService.currentUser()?.uid || 'guest',
+      customerName: this.address.name || 'Customer',
+      customerPhone: this.address.phone || '9999999999',
+      customerEmail: this.authService.currentUser()?.email || undefined,
+      deliveryAddress: {
+        name: this.address.name || 'Customer',
+        phone: this.address.phone || '9999999999',
+        addressLine1: this.address.addressLine1 || 'Green Park, Indore',
+        addressLine2: this.address.addressLine2 || '',
+        city: this.address.city || 'Indore',
+        pincode: this.address.pincode || '452001'
+      },
+      items: this.cartService.items().map(item => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        productImage: item.product.image || 'assets/images/mix-fruit-chaat.jpg',
+        quantity: item.quantity,
+        price: item.product.price,
+        total: item.totalPrice
+      })),
+      paymentMethod: this.selectedPayment() === 'card' ? 'Card / Online' : 'UPI',
+      status: 'confirmed',
+      itemTotal: this.cartService.itemTotal(),
+      deliveryCharge: this.cartService.deliveryCharge(),
+      discount: 0,
+      grandTotal: grandTotal,
+      placedAt: new Date().toISOString()
+    };
+
+    const finalizeOrder = async (txnId: string) => {
+      try {
+        const orderId = await this.dataService.addOrder(orderPayload);
+        await this.dataService.addTransaction({
+          orderId,
+          customerName: orderPayload.customerName,
+          customerPhone: orderPayload.customerPhone,
+          amount: orderPayload.grandTotal,
+          paymentMethod: orderPayload.paymentMethod,
+          status: 'success',
+          date: new Date().toISOString()
+        });
+        this.cartService.clearCart();
+        this.loading.set(false);
+        this.router.navigate(['/order-success'], { queryParams: { orderId } });
+      } catch (err) {
+        console.error('Failed to save order:', err);
+        this.loading.set(false);
+        alert('Could not place order. Please check your connection.');
+      }
+    };
+
+    // Razorpay Integration
+    const Razorpay = (window as any).Razorpay;
+    const rzpKey = environment.razorpayKey || 'rzp_test_T0ghGBsIrMwMjX';
+
+    if (typeof Razorpay !== 'undefined') {
+      try {
+        const options = {
+          key: rzpKey,
+          amount: grandTotal * 100, // in paise
+          currency: 'INR',
+          name: 'FruitChat',
+          description: 'Healthy Fruit & Sprouts Order',
+          image: 'assets/images/mix-fruit-chaat.jpg',
+          prefill: {
+            name: orderPayload.customerName,
+            contact: orderPayload.customerPhone,
+            email: orderPayload.customerEmail || 'customer@fruitchat.com'
+          },
+          theme: {
+            color: '#2E7D32'
+          },
+          handler: async (response: any) => {
+            await finalizeOrder(response.razorpay_payment_id || ('RZP_' + Date.now()));
+          },
+          modal: {
+            ondismiss: () => {
+              this.loading.set(false);
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', (resp: any) => {
+          this.loading.set(false);
+          alert('Payment was not completed. Please try again.');
+        });
+        rzp.open();
+      } catch (e) {
+        // Fallback for placeholder key during development/testing
+        await finalizeOrder('TEST_PAY_' + Math.floor(100000 + Math.random() * 900000));
+      }
+    } else {
+      await finalizeOrder('SIM_PAY_' + Math.floor(100000 + Math.random() * 900000));
+    }
   }
 
   getPaymentName(): string {

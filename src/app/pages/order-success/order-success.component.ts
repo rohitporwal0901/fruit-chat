@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { DataService } from '../../core/services/data.service';
 
 @Component({
   selector: 'app-order-success',
@@ -51,17 +52,18 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
       </div>
 
       <!-- ITEMS PREVIEW -->
-      <div class="order-preview">
-        <div class="preview-item">
-          <img src="assets/images/mix-fruit-chaat.jpg" alt="Mix Fruit Chaat">
-          <span>Mix Fruit Chaat</span>
+      @if (order()?.items?.length) {
+        <div class="order-preview">
+          @for (item of order()!.items.slice(0, 3); track item.productId) {
+            <div class="preview-item">
+              <img [src]="item.productImage || 'assets/images/mix-fruit-chaat.jpg'" [alt]="item.productName">
+              <span>{{ item.productName }} (x{{ item.quantity }})</span>
+            </div>
+          }
         </div>
-        <div class="preview-item">
-          <img src="assets/images/masala-sprouts.jpg" alt="Masala Sprouts">
-          <span>Masala Sprouts</span>
-        </div>
-      </div>
+      }
     </div>
+
   `,
   styles: [`
     .success-page {
@@ -234,7 +236,10 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 export class OrderSuccessComponent implements OnInit {
   router = inject(Router);
   route = inject(ActivatedRoute);
+  dataService = inject(DataService);
   orderId = signal('FC12345');
+
+  order = computed(() => this.dataService.orders().find(o => o.id === this.orderId()));
 
   confettiItems = Array.from({ length: 20 }, (_, i) => i);
 

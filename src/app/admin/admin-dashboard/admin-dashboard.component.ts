@@ -84,7 +84,7 @@ export class AdminDashboardComponent implements OnInit {
   );
 
   // ── Low Stock ─────────────────────────────────────────────
-  lowStockItems = computed(() => this.dataService.products().filter(p => p.stock < 10));
+  lowStockItems = computed(() => this.dataService.products().filter(p => (p.stock ?? 100) < 10));
 
   // ── PIN ───────────────────────────────────────────────────
   openPinModal()  { this.pinDigits.set([]); this.pinError.set(false); this.showPinModal.set(true); }

@@ -140,7 +140,7 @@
         <div class="low-stock-list">
           <div class="low-stock-row" *ngFor="let p of lowStockItems()">
             <div class="ls-name">{{ p.name }}</div>
-            <div class="ls-stock" [class.critical]="p.stock < 5">{{ p.stock }} left</div>
+            <div class="ls-stock" [class.critical]="(p.stock || 0) < 5">{{ p.stock }} left</div>
           </div>
         </div>
       </div>

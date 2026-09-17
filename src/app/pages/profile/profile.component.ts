@@ -1,7 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { DataService } from '../../core/services/data.service';
+import { CartService } from '../../core/services/cart.service';
+import { AdminOrder } from '../../core/models/admin.model';
 
 interface MenuItem {
   icon: string;
@@ -68,7 +71,7 @@ interface MenuItem {
           <!-- STATS CARD -->
           <div class="profile-stats">
             <div class="stat">
-              <span class="stat-val">24</span>
+              <span class="stat-val">{{ userOrders().length }}</span>
               <span class="stat-label">&#129367; Orders</span>
             </div>
             <div class="stat-divider"></div>
@@ -78,16 +81,99 @@ interface MenuItem {
             </div>
             <div class="stat-divider"></div>
             <div class="stat">
-              <span class="stat-val">&#8377;1,840</span>
-              <span class="stat-label">&#10024; Saved</span>
+              <span class="stat-val">&#8377;{{ totalSpent() }}</span>
+              <span class="stat-label">&#10024; Total Spent</span>
             </div>
           </div>
         </div>
 
         <div class="container profile-content">
+
+          <!-- SWIGGY / ZOMATO STYLE RECENT ORDERS -->
+          <div class="profile-section">
+            <div class="orders-header-row">
+              <h3 class="section-label">My Orders</h3>
+              <span class="orders-count-badge">{{ userOrders().length }} orders</span>
+            </div>
+
+            @if (isLoadingOrders()) {
+              <div class="order-skel-list">
+                @for (i of [1,2]; track i) {
+                  <div class="order-skel-card">
+                    <div class="os-head">
+                      <div class="os-line w-40"></div>
+                      <div class="os-line w-20"></div>
+                    </div>
+                    <div class="os-line w-80"></div>
+                    <div class="os-foot">
+                      <div class="os-line w-30"></div>
+                      <div class="os-btn"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else if (userOrders().length === 0) {
+              <div class="orders-empty-state">
+                <span class="empty-emoji">🥗</span>
+                <h4>No Orders Placed Yet</h4>
+                <p>Explore our fresh fruit chaats and healthy sprouts!</p>
+                <a routerLink="/" class="browse-menu-btn">Order Fresh Now →</a>
+              </div>
+            } @else {
+              <div class="orders-list">
+                @for (order of userOrders(); track order.id) {
+                  <div class="swiggy-order-card" [class.active-card]="isActiveOrder(order.status)">
+                    
+                    <!-- Card Top: Status & Date -->
+                    <div class="soc-top">
+                      <div class="soc-restaurant">
+                        <span class="soc-brand">🍉 FruitChat Kitchen</span>
+                        <span class="soc-date">{{ formatOrderDate(order.placedAt) }}</span>
+                      </div>
+                      <span class="soc-badge" [ngClass]="getStatusBadgeClass(order.status)">
+                        {{ getStatusLabel(order.status) }}
+                      </span>
+                    </div>
+
+                    <!-- Order items summary -->
+                    <div class="soc-items-row">
+                      <div class="soc-items-list">
+                        @for (item of order.items; track item.productId) {
+                          <span class="soc-item-name">
+                            {{ item.productName }} <span class="soc-qty">× {{ item.quantity }}</span>
+                          </span>
+                        }
+                      </div>
+                      <span class="soc-total">₹{{ order.grandTotal }}</span>
+                    </div>
+
+                    <div class="soc-divider"></div>
+
+                    <!-- Card Actions -->
+                    <div class="soc-bottom">
+                      <span class="soc-order-num">#{{ order.id.slice(-6).toUpperCase() }}</span>
+                      <div class="soc-btns">
+                        @if (isActiveOrder(order.status)) {
+                          <a [routerLink]="['/track-order', order.id]" class="soc-track-btn">
+                            🛵 Track Live →
+                          </a>
+                        } @else {
+                          <button class="soc-reorder-btn" (click)="reorder(order)">
+                            🔄 Reorder
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
           <!-- ACTIVITY ITEMS -->
           <div class="profile-section">
-            <h3 class="section-label">My Activity</h3>
+            <h3 class="section-label">More Activity</h3>
             <div class="menu-card">
               @for (item of activityItems; track item.label) {
                 <a [routerLink]="item.route || '/'" class="menu-item">
@@ -334,6 +420,192 @@ interface MenuItem {
       margin: 0;
     }
 
+    /* SWIGGY / ZOMATO STYLE MY ORDERS */
+    .orders-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    .orders-count-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #2E7D32;
+      background: #E8F5E9;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .swiggy-order-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      border: 1px solid #ECEFF1;
+      transition: all 0.2s ease;
+      &.active-card {
+        border-color: #81C784;
+        background: linear-gradient(180deg, #FAFCFA 0%, #FFFFFF 100%);
+      }
+    }
+    .soc-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .soc-restaurant {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .soc-brand {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #1A1A1A;
+    }
+    .soc-date {
+      font-size: 11px;
+      color: #78909C;
+      font-weight: 500;
+    }
+    .soc-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.1px;
+      &.badge-delivered { background: #E8F5E9; color: #2E7D32; }
+      &.badge-preparing { background: #FFF8E1; color: #F57F17; }
+      &.badge-out { background: #EDE7F6; color: #673AB7; }
+      &.badge-confirmed { background: #E3F2FD; color: #1565C0; }
+      &.badge-cancelled { background: #FFEBEE; color: #C62828; }
+    }
+    .soc-items-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .soc-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .soc-item-name {
+      font-size: 13px;
+      color: #37474F;
+      font-weight: 600;
+    }
+    .soc-qty {
+      font-size: 12px;
+      color: #78909C;
+      font-weight: 500;
+    }
+    .soc-total {
+      font-size: 15px;
+      font-weight: 800;
+      color: #1A1A1A;
+      white-space: nowrap;
+    }
+    .soc-divider {
+      height: 1px;
+      background: #F1F3F4;
+      margin-bottom: 12px;
+    }
+    .soc-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .soc-order-num {
+      font-size: 11px;
+      color: #90A4AE;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .soc-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .soc-track-btn {
+      background: #2E7D32;
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      box-shadow: 0 3px 8px rgba(46,125,50,0.25);
+      transition: all 0.2s;
+      &:hover { background: #1B5E20; transform: translateY(-1px); }
+    }
+    .soc-reorder-btn {
+      background: #F1F8E9;
+      color: #2E7D32;
+      border: 1px solid #C8E6C9;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s;
+      &:hover { background: #E8F5E9; border-color: #A5D6A7; }
+    }
+    .orders-empty-state {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border: 1px dashed #DDD;
+      .empty-emoji { font-size: 36px; display: block; margin-bottom: 8px; }
+      h4 { font-size: 15px; font-weight: 800; color: #1A1A1A; margin-bottom: 4px; }
+      p { font-size: 12px; color: #777; margin-bottom: 14px; }
+      .browse-menu-btn {
+        display: inline-block;
+        background: #2E7D32;
+        color: #fff;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        &:hover { background: #1B5E20; }
+      }
+    }
+    .order-skel-list { display: flex; flex-direction: column; gap: 12px; }
+    .order-skel-card {
+      background: #fff; border-radius: 16px; padding: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .os-head, .os-foot { display: flex; justify-content: space-between; align-items: center; }
+    .os-line {
+      height: 12px; border-radius: 4px;
+      background: linear-gradient(90deg, #EAEAEA 25%, #F8F8F8 50%, #EAEAEA 75%);
+      background-size: 200% 100%; animation: skelShimmer 1.4s infinite;
+      &.w-20 { width: 20%; }
+      &.w-30 { width: 30%; }
+      &.w-40 { width: 40%; }
+      &.w-80 { width: 80%; }
+    }
+    .os-btn {
+      width: 70px; height: 26px; border-radius: 8px;
+      background: linear-gradient(90deg, #EAEAEA 25%, #F8F8F8 50%, #EAEAEA 75%);
+      background-size: 200% 100%; animation: skelShimmer 1.4s infinite;
+    }
+
     /* MENU CARD */
     .menu-card {
       background: #fff;
@@ -461,9 +733,88 @@ interface MenuItem {
 })
 export class ProfileComponent {
   authService = inject(AuthService);
+  dataService = inject(DataService);
+  cartService = inject(CartService);
   private router = inject(Router);
 
   readonly isUploadingPhoto = signal<boolean>(false);
+  readonly isLoadingOrders = signal<boolean>(true);
+
+  constructor() {
+    setTimeout(() => this.isLoadingOrders.set(false), 600);
+  }
+
+  userOrders = computed<AdminOrder[]>(() => {
+    const user = this.authService.currentUser();
+    const list = this.dataService.orders();
+    if (!user) return [];
+    const myOrders = list.filter(o =>
+      (o.userId && o.userId === user.uid) ||
+      (user.phone && o.customerPhone && o.customerPhone.includes(user.phone))
+    );
+    // If user has orders specific to account, show them. Otherwise show latest session orders if present
+    return myOrders.length > 0 ? myOrders : list.slice(0, 5);
+  });
+
+  totalSpent = computed(() =>
+    this.userOrders().reduce((acc, o) => acc + (o.grandTotal || 0), 0)
+  );
+
+  isActiveOrder(status: string): boolean {
+    return status === 'pending' || status === 'confirmed' || status === 'preparing' || status === 'out-for-delivery';
+  }
+
+  getStatusBadgeClass(status: string): string {
+    switch (status) {
+      case 'delivered': return 'badge-delivered';
+      case 'preparing': return 'badge-preparing';
+      case 'out-for-delivery': return 'badge-out';
+      case 'confirmed': return 'badge-confirmed';
+      case 'cancelled': return 'badge-cancelled';
+      default: return 'badge-confirmed';
+    }
+  }
+
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'delivered': return '🟢 Delivered';
+      case 'preparing': return '👨‍🍳 Preparing';
+      case 'out-for-delivery': return '🛵 On the way';
+      case 'confirmed': return '📋 Confirmed';
+      case 'cancelled': return '❌ Cancelled';
+      default: return '📋 Placed';
+    }
+  }
+
+  formatOrderDate(dateStr: string): string {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ', ' +
+             d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  reorder(order: AdminOrder): void {
+    if (order.items?.length) {
+      for (const it of order.items) {
+        this.cartService.addToCart({
+          id: it.productId,
+          name: it.productName,
+          price: it.price,
+          image: it.productImage || 'assets/images/mix-fruit-chaat.jpg',
+          category: 'fruit-chaat',
+          rating: 4.8,
+          ratingCount: 50,
+          isVeg: true,
+          description: ''
+        });
+      }
+      this.router.navigate(['/cart']);
+    }
+  }
 
   getUserInitials(): string {
     const user = this.authService.currentUser();

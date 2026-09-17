@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DataService } from '../../core/services/data.service';
 
 interface TrackStep {
   id: string;
@@ -45,12 +46,18 @@ interface TrackStep {
       <div class="container">
         <div class="order-info-card">
           <div class="order-id-row">
-            <span class="order-id-label">Order #{{ orderId() }}</span>
+            <span class="order-id-label">Order #{{ displayOrderId() }}</span>
             <span class="order-status-badge">{{ currentStatusLabel() }}</span>
           </div>
           <div class="order-items-preview">
-            <span class="items-text">🌱 Mix Fruit Chaat • Masala Sprouts</span>
+            <span class="items-text">🌱 {{ getItemsSummary() }}</span>
           </div>
+          @if (currentOrder()) {
+            <div class="order-meta-info">
+              <span class="meta-addr">📍 {{ currentOrder()?.deliveryAddress?.addressLine1 }}</span>
+              <span class="meta-price">₹{{ currentOrder()?.grandTotal }}</span>
+            </div>
+          }
         </div>
 
         <!-- TIMELINE -->
@@ -149,6 +156,17 @@ interface TrackStep {
     .order-status-badge { background: #E8F5E9; color: #2E7D32; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; }
     .items-text { font-size: 13px; color: #666; }
 
+    .order-meta-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #EEE;
+    }
+    .meta-addr { font-size: 11.5px; color: #555; }
+    .meta-price { font-size: 13.5px; font-weight: 800; color: #2E7D32; }
+
     /* TIMELINE */
     .timeline-section { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; }
     .timeline-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
@@ -176,15 +194,67 @@ interface TrackStep {
 export class TrackOrderComponent implements OnInit {
   router = inject(Router);
   route = inject(ActivatedRoute);
+  dataService = inject(DataService);
 
   orderId = signal('FC12345');
 
-  trackSteps = signal<TrackStep[]>([
-    { id: 'placed', label: 'Order Placed', time: '10:32 AM', desc: 'Your order has been received', icon: '📋', done: true },
-    { id: 'preparing', label: 'Preparing', time: '10:35 AM', desc: 'We are preparing your order', icon: '👨‍🍳', done: true },
-    { id: 'out', label: 'Out for Delivery', time: '10:42 AM', desc: 'Your order is on the way', icon: '🛵', done: false },
-    { id: 'delivered', label: 'Delivered', time: 'Est. 10:50 AM', desc: 'Estimated delivery time', icon: '✅', done: false }
-  ]);
+  currentOrder = computed(() => {
+    const id = this.orderId();
+    return this.dataService.orders().find(o => o.id === id || o.id.slice(-6).toUpperCase() === id.toUpperCase());
+  });
+
+  displayOrderId = computed(() => {
+    const o = this.currentOrder();
+    return o ? o.id.slice(-6).toUpperCase() : this.orderId();
+  });
+
+  trackSteps = computed<TrackStep[]>(() => {
+    const o = this.currentOrder();
+    const st = o?.status || 'confirmed';
+
+    return [
+      {
+        id: 'placed',
+        label: 'Order Confirmed',
+        time: o?.placedAt ? new Date(o.placedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '10:32 AM',
+        desc: 'Your healthy order is confirmed',
+        icon: '📋',
+        done: true
+      },
+      {
+        id: 'preparing',
+        label: 'Kitchen Preparing',
+        time: 'Just now',
+        desc: 'Fresh fruits and herbs being prepped',
+        icon: '👨‍🍳',
+        done: st === 'preparing' || st === 'out-for-delivery' || st === 'delivered'
+      },
+      {
+        id: 'out',
+        label: 'Out for Delivery',
+        time: 'Est. 15 mins',
+        desc: 'Delivery hero is on the way to your door',
+        icon: '🛵',
+        done: st === 'out-for-delivery' || st === 'delivered'
+      },
+      {
+        id: 'delivered',
+        label: 'Delivered Fresh',
+        time: 'Delivered',
+        desc: 'Enjoy your delicious fruit meal!',
+        icon: '✅',
+        done: st === 'delivered'
+      }
+    ];
+  });
+
+  getItemsSummary(): string {
+    const o = this.currentOrder();
+    if (o?.items?.length) {
+      return o.items.map(i => `${i.productName} × ${i.quantity}`).join(' • ');
+    }
+    return 'Mix Fruit Chaat • Masala Sprouts';
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');

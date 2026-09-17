@@ -1,0 +1,254 @@
+<!-- Header -->
+<div class="cc-header">
+  <div>
+    <h1 class="cc-title">Combo Cards</h1>
+    <p class="cc-sub">Manage combo banner slides shown on home page</p>
+  </div>
+  <button class="cc-add-btn" (click)="openAdd()">
+    <span class="material-symbols-outlined">add</span>
+    Add Combo
+  </button>
+</div>
+
+<!-- Empty State -->
+<div class="cc-empty" *ngIf="comboCards().length === 0">
+  <span class="material-symbols-outlined">dashboard_customize</span>
+  <h3>No Combo Cards Yet</h3>
+  <p>Add combo cards to show attractive deals on the home page slider</p>
+  <button class="cc-add-btn" (click)="openAdd()">
+    <span class="material-symbols-outlined">add</span> Add First Combo
+  </button>
+</div>
+
+<!-- Combo Cards Grid -->
+<div class="cc-grid" *ngIf="comboCards().length > 0">
+  <div class="cc-card" *ngFor="let card of comboCards()">
+
+    <!-- Preview: matches home page combo slider look -->
+    <div class="cc-preview" [style.background]="card.bg">
+      <div class="cc-prev-content">
+        <div class="cc-prev-left">
+          <span class="cc-prev-tag">{{ card.tag || 'COMBO' }}</span>
+          <h3 class="cc-prev-title">{{ card.title || 'Combo Title' }}</h3>
+          <div class="cc-prev-price-row">
+            <span class="cc-prev-price">₹{{ card.price }}</span>
+            <del class="cc-prev-orig">₹{{ card.originalPrice }}</del>
+            <span class="cc-prev-save" *ngIf="card.originalPrice > card.price">
+              SAVE ₹{{ card.originalPrice - card.price }}
+            </span>
+          </div>
+          <span class="cc-prev-btn">{{ card.btnText }} →</span>
+        </div>
+        <div class="cc-prev-right">
+          <div class="cc-prev-img-frame">
+            <img *ngIf="card.image" [src]="card.image" [alt]="card.title"
+                 onerror="this.src='assets/images/placeholder-product.png'">
+            <span *ngIf="!card.image" class="material-symbols-outlined cc-prev-img-icon">image</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Info & Actions -->
+    <div class="cc-card-body">
+      <div class="cc-card-info">
+        <div class="cc-info-row">
+          <span class="cc-info-label">Order</span>
+          <span class="cc-info-val">#{{ card.order }}</span>
+        </div>
+        <div class="cc-info-row">
+          <span class="cc-info-label">Link</span>
+          <span class="cc-info-val cc-link-val">{{ card.link }}</span>
+        </div>
+        <div class="cc-info-row">
+          <span class="cc-info-label">Status</span>
+          <span class="cc-status-badge" [class.active]="card.status === 'active'">
+            {{ card.status }}
+          </span>
+        </div>
+      </div>
+      <div class="cc-actions">
+        <button class="cc-action-btn edit" (click)="openEdit(card)">
+          <span class="material-symbols-outlined">edit</span> Edit
+        </button>
+        <button class="cc-action-btn delete" (click)="promptDelete(card.id)">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ ADD/EDIT DRAWER ══════════ -->
+<app-side-drawer
+  [isOpen]="isDrawerOpen()"
+  [title]="isEditing() ? 'Edit Combo Card' : 'Add Combo Card'"
+  width="500px"
+  (close)="close()">
+
+  <form #comboForm="ngForm" (ngSubmit)="save(comboForm)" class="cc-form">
+
+    <!-- Live Preview inside drawer -->
+    <div class="cc-drawer-preview" [style.background]="currentCard.bg">
+      <div class="cc-prev-content">
+        <div class="cc-prev-left">
+          <span class="cc-prev-tag">{{ currentCard.tag || 'TAG' }}</span>
+          <h3 class="cc-prev-title">{{ currentCard.title || 'Combo Title' }}</h3>
+          <div class="cc-prev-price-row">
+            <span class="cc-prev-price">₹{{ currentCard.price || 0 }}</span>
+            <del class="cc-prev-orig">₹{{ currentCard.originalPrice || 0 }}</del>
+            <span class="cc-prev-save" *ngIf="savings > 0">SAVE ₹{{ savings }}</span>
+          </div>
+          <span class="cc-prev-btn">{{ currentCard.btnText || 'Order Combo' }} →</span>
+        </div>
+        <div class="cc-prev-right">
+          <div class="cc-prev-img-frame small">
+            <img *ngIf="currentCard.image" [src]="currentCard.image" [alt]="currentCard.title"
+                 onerror="this.src='assets/images/placeholder-product.png'">
+            <span *ngIf="!currentCard.image" class="material-symbols-outlined cc-prev-img-icon">image</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="cc-preview-hint">↑ Live preview of home page combo card</p>
+
+    <!-- Tag -->
+    <div class="cc-field">
+      <label>Tag *</label>
+      <input type="text" [(ngModel)]="currentCard.tag" name="tag" required
+             placeholder="e.g. BESTSELLER COMBO" #tagF="ngModel"
+             [class.invalid]="tagF.invalid && tagF.touched"
+             style="text-transform: uppercase">
+      <span class="field-err" *ngIf="tagF.invalid && tagF.touched">Tag is required</span>
+    </div>
+
+    <!-- Title -->
+    <div class="cc-field">
+      <label>Title *</label>
+      <input type="text" [(ngModel)]="currentCard.title" name="title" required
+             placeholder="e.g. Fruit Chaat + Sprouts" #titleF="ngModel"
+             [class.invalid]="titleF.invalid && titleF.touched">
+      <span class="field-err" *ngIf="titleF.invalid && titleF.touched">Title is required</span>
+    </div>
+
+    <!-- Price Row -->
+    <div class="cc-field-row">
+      <div class="cc-field">
+        <label>Price (₹) *</label>
+        <input type="number" [(ngModel)]="currentCard.price" name="price" required min="0"
+               (keydown)="preventInvalid($event)" placeholder="99" #priceF="ngModel"
+               [class.invalid]="priceF.invalid && priceF.touched">
+        <span class="field-err" *ngIf="priceF.invalid && priceF.touched">Required</span>
+      </div>
+      <div class="cc-field">
+        <label>Original Price (₹) *</label>
+        <input type="number" [(ngModel)]="currentCard.originalPrice" name="originalPrice" required min="0"
+               (keydown)="preventInvalid($event)" placeholder="140" #origF="ngModel"
+               [class.invalid]="origF.invalid && origF.touched">
+        <span class="field-err" *ngIf="origF.invalid && origF.touched">Required</span>
+      </div>
+    </div>
+
+    <!-- Savings indicator -->
+    <div class="cc-savings-hint" *ngIf="savings > 0">
+      💰 Customer saves <strong>₹{{ savings }}</strong>
+    </div>
+
+    <!-- Button Text + Link Row -->
+    <div class="cc-field-row">
+      <div class="cc-field">
+        <label>Button Text</label>
+        <input type="text" [(ngModel)]="currentCard.btnText" name="btnText"
+               placeholder="Order Combo">
+      </div>
+      <div class="cc-field">
+        <label>Link Route</label>
+        <input type="text" [(ngModel)]="currentCard.link" name="link"
+               placeholder="/menu">
+      </div>
+    </div>
+
+    <!-- Display Order -->
+    <div class="cc-field">
+      <label>Display Order</label>
+      <input type="number" [(ngModel)]="currentCard.order" name="order" min="1"
+             (keydown)="preventInvalid($event)" placeholder="1">
+    </div>
+
+    <!-- Status -->
+    <div class="cc-field">
+      <label>Status</label>
+      <div class="cc-radio-row">
+        <label class="cc-radio">
+          <input type="radio" [(ngModel)]="currentCard.status" name="status" value="active"> Active
+        </label>
+        <label class="cc-radio">
+          <input type="radio" [(ngModel)]="currentCard.status" name="status" value="inactive"> Inactive
+        </label>
+      </div>
+    </div>
+
+    <!-- Background Gradient -->
+    <div class="cc-field">
+      <label>Background Color / Gradient</label>
+      <div class="cc-gradient-grid">
+        <div class="cc-grad-swatch"
+             *ngFor="let preset of gradientPresets"
+             [style.background]="preset.value"
+             [class.selected]="currentCard.bg === preset.value"
+             (click)="selectGradient(preset.value)"
+             [title]="preset.label">
+        </div>
+      </div>
+      <input type="text" [(ngModel)]="currentCard.bg" name="bg"
+             placeholder="linear-gradient(125deg, #0A3D18 0%, #239441 100%)"
+             class="cc-custom-bg-input">
+      <span class="cc-hint">Ya custom CSS gradient paste karo</span>
+    </div>
+
+    <!-- Image Upload (Optional) -->
+    <div class="cc-field">
+      <label>Image <span class="optional-hint">(optional)</span></label>
+      <div class="cc-img-area">
+        <div class="cc-img-preview" *ngIf="currentCard.image">
+          <img [src]="currentCard.image" alt="Combo Image"
+               onerror="this.src='assets/images/placeholder-product.png'">
+          <button type="button" class="cc-img-remove" (click)="currentCard.image = ''">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <label *ngIf="!currentCard.image" class="cc-img-upload-btn" for="comboImg">
+          <span class="material-symbols-outlined">upload_file</span>
+          <span>{{ isUploading() ? 'Uploading ' + uploadProgress() + '%...' : 'Upload Image' }}</span>
+        </label>
+        <input id="comboImg" type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none">
+      </div>
+      <!-- URL input -->
+      <input type="text" [(ngModel)]="currentCard.image" name="imageUrl"
+             placeholder="Ya image URL directly paste karo..."
+             class="cc-url-input" *ngIf="!currentCard.image">
+    </div>
+
+    <!-- Submit -->
+    <div class="cc-form-footer">
+      <button type="button" class="cc-btn-cancel" (click)="close()">Cancel</button>
+      <button type="submit" class="cc-btn-save" [disabled]="isSaving() || isUploading()">
+        <span class="material-symbols-outlined" *ngIf="!isSaving()">save</span>
+        <span class="fc-btn-spinner" *ngIf="isSaving()"></span>
+        {{ isSaving() ? 'Saving...' : (isEditing() ? 'Update Combo' : 'Add Combo') }}
+      </button>
+    </div>
+
+  </form>
+</app-side-drawer>
+
+<!-- Delete Modal -->
+<app-confirmation-modal
+  [isOpen]="isDeleteModal()"
+  title="Delete Combo Card"
+  message="Are you sure you want to delete this combo card? It will be removed from the home page slider."
+  confirmText="Delete"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()">
+</app-confirmation-modal>

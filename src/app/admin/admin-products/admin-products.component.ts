@@ -45,8 +45,8 @@ export class AdminProductsComponent implements OnInit {
 
   getEmpty() {
     return {
-      name: '', sku: '', categoryId: '', description: '',
-      price: 0, originalPrice: undefined as any, stock: 0,
+      name: '', categoryId: '', description: '',
+      price: 0, originalPrice: undefined as any, stock: 100,
       status: 'active' as const, images: [],
       isVeg: true, isBestseller: false,
       preparationTime: undefined as any, calories: undefined as any
@@ -56,7 +56,7 @@ export class AdminProductsComponent implements OnInit {
   filteredProducts = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     let list = this.products();
-    if (q) list = list.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+    if (q) list = list.filter(p => p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q)));
     return list;
   });
 
@@ -94,7 +94,7 @@ export class AdminProductsComponent implements OnInit {
     const sku = (this.newProduct.sku || '').trim().toLowerCase();
     if (!sku) { this.dupSkuError.set(''); return; }
     const curId = (this.newProduct as any).id ?? null;
-    const exists = this.products().some(p => p.sku.toLowerCase() === sku && p.id !== curId);
+    const exists = this.products().some(p => (p.sku || '').toLowerCase() === sku && p.id !== curId);
     this.dupSkuError.set(exists ? `SKU "${this.newProduct.sku}" already exists!` : '');
   }
 
@@ -126,19 +126,22 @@ export class AdminProductsComponent implements OnInit {
   removeImage(i: number) { this.newProduct.images.splice(i, 1); }
 
   async saveProduct(form: any) {
-    this.checkDupSku();
-    if (form.invalid || !this.newProduct.images.length || this.dupSkuError()) {
+    if (form.invalid) {
       Object.keys(form.controls).forEach(k => form.controls[k].markAsTouched());
-      if (!this.newProduct.images.length) this.snackbar.show('Please upload at least one image', 'error');
       return;
+    }
+    // Agar koi image nahi upload ki, default placeholder use karo
+    if (!this.newProduct.images.length) {
+      this.newProduct.images = ['assets/images/mix-fruit-chaat.jpg'];
     }
     this.isSaving.set(true);
     try {
       const data: any = {
         ...this.newProduct,
+        sku: this.newProduct.sku || ('FC-' + Math.floor(1000 + Math.random() * 9000)),
         price: Number(this.newProduct.price || 0),
         originalPrice: this.newProduct.originalPrice ? Number(this.newProduct.originalPrice) : null,
-        stock: Number(this.newProduct.stock || 0),
+        stock: Number(this.newProduct.stock ?? 100),
         preparationTime: this.newProduct.preparationTime ? Number(this.newProduct.preparationTime) : null,
         calories: this.newProduct.calories ? Number(this.newProduct.calories) : null,
       };

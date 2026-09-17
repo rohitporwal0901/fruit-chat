@@ -16,7 +16,7 @@ import {
   serverTimestamp,
   Timestamp
 } from '@angular/fire/firestore';
-import { AdminProduct, Category, AdminOrder, Transaction, HomeSlide, OfferCard } from '../models/admin.model';
+import { AdminProduct, Category, AdminOrder, Transaction, HomeSlide, OfferCard, ComboCard } from '../models/admin.model';
 
 @Injectable({ providedIn: 'root' })
 export class DataService {
@@ -28,6 +28,7 @@ export class DataService {
   orders     = signal<AdminOrder[]>([]);
   transactions = signal<Transaction[]>([]);
   homeSlides = signal<HomeSlide[]>([]);
+  comboCards = signal<ComboCard[]>([]);
   offerCard  = signal<OfferCard>({
     heading: 'Hurry, ₹50 Free Cash',
     subtext: 'Valid on food orders above ₹99',
@@ -42,6 +43,7 @@ export class DataService {
     this.listenOrders();
     this.listenTransactions();
     this.listenHomeSlides();
+    this.listenComboCards();
     this.listenOfferCard();
   }
 
@@ -83,6 +85,14 @@ export class DataService {
     const q = query(ref, orderBy('order', 'asc'));
     (collectionData(q, { idField: 'id' }) as any).subscribe((data: HomeSlide[]) => {
       this.homeSlides.set(data);
+    });
+  }
+
+  private listenComboCards() {
+    const ref = collection(this.firestore, 'fc_combo_cards');
+    const q = query(ref, orderBy('order', 'asc'));
+    (collectionData(q, { idField: 'id' }) as any).subscribe((data: ComboCard[]) => {
+      this.comboCards.set(data);
     });
   }
 
@@ -175,6 +185,23 @@ export class DataService {
   async updateOfferCard(data: Partial<OfferCard>): Promise<void> {
     const ref = doc(this.firestore, 'fc_settings', 'offerCard');
     await setDoc(ref, data, { merge: true });
+  }
+
+  // ── Combo Cards ────────────────────────────────────────────
+
+  async addComboCard(combo: Omit<ComboCard, 'id'>): Promise<void> {
+    const ref = collection(this.firestore, 'fc_combo_cards');
+    await addDoc(ref, { ...combo, createdAt: new Date().toISOString() });
+  }
+
+  async updateComboCard(id: string, data: Partial<ComboCard>): Promise<void> {
+    const ref = doc(this.firestore, 'fc_combo_cards', id);
+    await updateDoc(ref, data as any);
+  }
+
+  async deleteComboCard(id: string): Promise<void> {
+    const ref = doc(this.firestore, 'fc_combo_cards', id);
+    await deleteDoc(ref);
   }
 
   // ── Helpers ────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import { ProductCardComponent } from '../../shared/product-card/product-card.com
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
+import { DataService } from '../../core/services/data.service';
 import { Product } from '../../core/models/product.model';
 
 @Component({
@@ -45,29 +46,31 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
-      <!-- OFFER CARD — zig-zag via clip-path, transparent cutouts, entrance animation -->
-      <section class="offer-section">
-        <div class="offer-body" (click)="copyOfferCode($event)">
-          <div class="offer-row">
-            <div class="offer-text-col">
-              <h3 class="offer-heading">Hurry, ₹50 Free Cash<br>expiring soon!</h3>
-              <p class="offer-sub">Valid on food orders above ₹99</p>
-            </div>
-            <div class="offer-pill-col">
-              <div class="offer-pill" [class.claimed]="offerCopied()">
-                <div class="pill-glare"></div>
-                @if (offerCopied()) {
-                  <span class="pill-label">COPIED!</span>
-                  <span class="pill-amount">✓</span>
-                } @else {
-                  <span class="pill-label">CASH AVAILABLE</span>
-                  <span class="pill-amount">₹50</span>
-                }
+      <!-- OFFER CARD — Dynamic from Firestore fc_settings/offerCard -->
+      @if (dataService.offerCard().isActive !== false) {
+        <section class="offer-section">
+          <div class="offer-body" (click)="copyOfferCode($event)">
+            <div class="offer-row">
+              <div class="offer-text-col">
+                <h3 class="offer-heading">{{ dataService.offerCard().heading || 'Hurry, ₹50 Free Cash expiring soon!' }}</h3>
+                <p class="offer-sub">{{ dataService.offerCard().subtext || 'Valid on food orders above ₹99' }}</p>
+              </div>
+              <div class="offer-pill-col">
+                <div class="offer-pill" [class.claimed]="offerCopied()">
+                  <div class="pill-glare"></div>
+                  @if (offerCopied()) {
+                    <span class="pill-label">COPIED!</span>
+                    <span class="pill-amount">✓</span>
+                  } @else {
+                    <span class="pill-label">CASH AVAILABLE</span>
+                    <span class="pill-amount">₹{{ dataService.offerCard().amount || 50 }}</span>
+                  }
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      }
 
       <!-- SEARCH BAR -->
       <div class="container search-section">
@@ -83,41 +86,36 @@ import { Product } from '../../core/models/product.model';
         </div>
       </div>
 
-      <!-- CATEGORY CHIPS (Full-width 4-column layout like Swiggy) -->
+      <!-- CATEGORY CHIPS (Dynamic from Firestore with Skeleton) -->
       <section class="container categories-section">
         <div class="sec-title-clean">
           <span>What's on your mind?</span>
         </div>
-        <div class="categories-grid">
-          <div class="category-item" [class.active]="selectedCategory() === 'fruit-chaat'" (click)="toggleCategory('fruit-chaat')">
-            <div class="cat-img-wrap">
-              <img src="assets/images/mix-fruit-chaat.jpg" alt="Fruit Chaat">
-            </div>
-            <span class="cat-label">Fruit Chaat</span>
+        @if (isLoading()) {
+          <div class="categories-grid">
+            @for (i of [1,2,3,4]; track i) {
+              <div class="category-skel-item">
+                <div class="cat-skel-circle"></div>
+                <div class="cat-skel-text"></div>
+              </div>
+            }
           </div>
-          <div class="category-item" [class.active]="selectedCategory() === 'sprouts'" (click)="toggleCategory('sprouts')">
-            <div class="cat-img-wrap">
-              <img src="assets/images/masala-sprouts.jpg" alt="Sprouts">
-            </div>
-            <span class="cat-label">Sprouts</span>
+        } @else {
+          <div class="categories-grid">
+            @for (cat of displayCategories(); track cat.id) {
+              <div class="category-item" [class.active]="selectedCategory() === cat.id" (click)="toggleCategory(cat.id)">
+                <div class="cat-img-wrap">
+                  <img [src]="cat.image || 'assets/images/mix-fruit-chaat.jpg'" [alt]="cat.name"
+                       onerror="this.src='assets/images/mix-fruit-chaat.jpg'">
+                </div>
+                <span class="cat-label">{{ cat.name }}</span>
+              </div>
+            }
           </div>
-          <div class="category-item" [class.active]="selectedCategory() === 'juices'" (click)="toggleCategory('juices')">
-            <div class="cat-img-wrap">
-              <img src="assets/images/fresh-juice.jpg" alt="Juices">
-            </div>
-            <span class="cat-label">Juices</span>
-          </div>
-          <div class="category-item" [class.active]="selectedCategory() === 'combo'" (click)="toggleCategory('combo')">
-            <div class="cat-img-wrap cat-combo-img">
-              <img src="assets/images/masala-sprouts.jpg" alt="Combos">
-              <span class="cat-combo-badge">Combo</span>
-            </div>
-            <span class="cat-label">Combos</span>
-          </div>
-        </div>
+        }
       </section>
 
-      <!-- ALL PRODUCTS -->
+      <!-- ALL PRODUCTS (Dynamic with Skeleton) -->
       <section class="container all-products-section">
         <div class="section-title">
           <div class="title-with-pill">
@@ -128,7 +126,20 @@ import { Product } from '../../core/models/product.model';
             <button class="clear-filter-link" (click)="setCategory('all')">Show All ✕</button>
           }
         </div>
-        @if (displayProducts().length === 0) {
+        @if (isLoading()) {
+          <div class="product-grid">
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <div class="home-skel-card">
+                <div class="h-skel-img"></div>
+                <div class="h-skel-body">
+                  <div class="h-skel-line short"></div>
+                  <div class="h-skel-line wide"></div>
+                  <div class="h-skel-line med"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (displayProducts().length === 0) {
           <div class="empty-state-home">
             <span class="empty-icon">🔍</span>
             <p>No items found</p>
@@ -143,44 +154,47 @@ import { Product } from '../../core/models/product.model';
         }
       </section>
 
-      <!-- BOTTOM COMBO BANNER SLIDER - Clean, Compact & Premium -->
-      <section class="combo-banner-section">
-        <div class="combo-banner-track"
-             [style.transform]="'translateX(-' + comboIndex() * 100 + '%)'"
-             [style.transition]="comboTransition() ? 'transform 0.48s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'"
-             (transitionend)="onComboTransitionEnd()">
-          @for (slide of comboDisplaySlides(); track slide.uniqueKey) {
-            <div class="combo-banner-slide" [style.background]="slide.bg">
-              <div class="combo-banner-content">
-                <div class="combo-left">
-                  <div class="combo-badge-row">
-                    <span class="combo-pill-tag">{{ slide.tag }}</span>
+      <!-- BOTTOM COMBO BANNER SLIDER - Dynamic from fc_combo_cards -->
+      @if (dynamicComboSlides().length > 0) {
+        <section class="combo-banner-section">
+          <div class="combo-banner-track"
+               [style.transform]="'translateX(-' + comboIndex() * 100 + '%)'"
+               [style.transition]="comboTransition() ? 'transform 0.48s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'"
+               (transitionend)="onComboTransitionEnd()">
+            @for (slide of comboDisplaySlides(); track slide.uniqueKey) {
+              <div class="combo-banner-slide" [style.background]="slide.bg">
+                <div class="combo-banner-content">
+                  <div class="combo-left">
+                    <div class="combo-badge-row">
+                      <span class="combo-pill-tag">{{ slide.tag }}</span>
+                    </div>
+                    <h3 class="combo-card-title">{{ slide.title }}</h3>
+                    <div class="combo-price-row">
+                      <span class="combo-curr-price">&#8377;{{ slide.price }}</span>
+                      <del class="combo-old-price">&#8377;{{ slide.originalPrice }}</del>
+                      <span class="combo-save-badge">SAVE &#8377;{{ slide.savings }}</span>
+                    </div>
+                    <a [routerLink]="slide.link" class="combo-btn">
+                      {{ slide.btnText }} &#8594;
+                    </a>
                   </div>
-                  <h3 class="combo-card-title">{{ slide.title }}</h3>
-                  <div class="combo-price-row">
-                    <span class="combo-curr-price">&#8377;{{ slide.price }}</span>
-                    <del class="combo-old-price">&#8377;{{ slide.originalPrice }}</del>
-                    <span class="combo-save-badge">SAVE &#8377;{{ slide.savings }}</span>
-                  </div>
-                  <a [routerLink]="slide.link" class="combo-btn">
-                    {{ slide.btnText }} &#8594;
-                  </a>
-                </div>
-                <div class="combo-right">
-                  <div class="combo-dish-frame">
-                    <img [src]="slide.image" [alt]="slide.title" class="combo-dish-img">
+                  <div class="combo-right">
+                    <div class="combo-dish-frame">
+                      <img [src]="slide.image" [alt]="slide.title" class="combo-dish-img"
+                           onerror="this.src='assets/images/masala-sprouts.jpg'">
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          }
-        </div>
-        <div class="combo-banner-dots">
-          @for (slide of comboSlides; track slide.id; let i = $index) {
-            <span class="bdot" [class.active]="(comboIndex() % comboSlides.length) === i" (click)="goToCombo(i)"></span>
-          }
-        </div>
-      </section>
+            }
+          </div>
+          <div class="combo-banner-dots">
+            @for (slide of dynamicComboSlides(); track slide.id; let i = $index) {
+              <span class="bdot" [class.active]="(comboIndex() % dynamicComboSlides().length) === i" (click)="goToCombo(i)"></span>
+            }
+          </div>
+        </section>
+      }
 
       <!-- FLOATING VIEW CART TOASTER -->
       @if (cartService.totalItems() > 0) {
@@ -642,6 +656,45 @@ import { Product } from '../../core/models/product.model';
     .all-products-section { padding-top: 18px; padding-bottom: 4px; }
     .product-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
 
+    /* Skeleton Loading Shimmer */
+    .category-skel-item { display: flex; flex-direction: column; align-items: center; }
+    .cat-skel-circle {
+      width: 62px; height: 62px; border-radius: 50%;
+      background: linear-gradient(90deg, #E6E6E6 25%, #F5F5F5 50%, #E6E6E6 75%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.4s infinite;
+    }
+    .cat-skel-text {
+      width: 44px; height: 10px; border-radius: 4px; margin-top: 6px;
+      background: linear-gradient(90deg, #E6E6E6 25%, #F5F5F5 50%, #E6E6E6 75%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.4s infinite;
+    }
+    .home-skel-card {
+      background: #fff; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column;
+    }
+    .h-skel-img {
+      height: 120px;
+      background: linear-gradient(90deg, #EAEAEA 25%, #F8F8F8 50%, #EAEAEA 75%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.4s infinite;
+    }
+    .h-skel-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .h-skel-line {
+      height: 11px; border-radius: 4px;
+      background: linear-gradient(90deg, #EAEAEA 25%, #F8F8F8 50%, #EAEAEA 75%);
+      background-size: 200% 100%;
+      animation: skelShimmer 1.4s infinite;
+      &.short { width: 45%; }
+      &.wide { width: 85%; }
+      &.med { width: 60%; }
+    }
+    @keyframes skelShimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
     /* ===== BOTTOM COMBO BANNER SLIDER ===== */
     .combo-banner-section {
       position: relative;
@@ -926,21 +979,48 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   private productService = inject(ProductService);
   cartService = inject(CartService);
   authService = inject(AuthService);
+  dataService = inject(DataService);
+  isLoading = signal(true);
   searchQuery = '';
 
   selectedCategory = signal<string>('all');
 
+  constructor() {
+    setTimeout(() => this.isLoading.set(false), 700);
+  }
+
+  displayCategories = computed(() => {
+    const list = this.dataService.categories().filter(c => c.status === 'active');
+    if (list.length > 0) {
+      return list.map(c => ({
+        id: c.id,
+        name: c.name,
+        image: c.image || 'assets/images/mix-fruit-chaat.jpg'
+      }));
+    }
+    return [
+      { id: 'fruit-chaat', name: 'Fruit Chaat', image: 'assets/images/mix-fruit-chaat.jpg' },
+      { id: 'sprouts', name: 'Sprouts', image: 'assets/images/masala-sprouts.jpg' },
+      { id: 'juices', name: 'Juices', image: 'assets/images/fresh-juice.jpg' },
+      { id: 'combo', name: 'Combos', image: 'assets/images/masala-sprouts.jpg' },
+    ];
+  });
+
   displayProducts = computed<Product[]>(() => {
     let list = this.productService.getAll();
     if (this.selectedCategory() !== 'all') {
-      list = list.filter(p => p.category === this.selectedCategory());
+      const catVal = this.selectedCategory().toLowerCase();
+      list = list.filter(p => {
+        const pCat = (p.category || '').toLowerCase();
+        return pCat === catVal || pCat.includes(catVal) || catVal.includes(pCat);
+      });
     }
     if (this.searchQuery.trim()) {
       const q = this.searchQuery.toLowerCase();
       list = list.filter(p =>
         p.name.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
+        (p.category && p.category.toLowerCase().includes(q))
       );
     }
     return list;
@@ -1076,10 +1156,33 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     },
   ];
 
-  comboDisplaySlides = computed(() => [
-    ...this.comboSlides.map(s => ({ ...s, uniqueKey: `combo-${s.id}` })),
-    { ...this.comboSlides[0], uniqueKey: 'combo-clone-first' }
-  ]);
+  dynamicComboSlides = computed(() => {
+    const list = this.dataService.comboCards().filter(c => c.status === 'active');
+    if (list.length > 0) {
+      return list.map((c, i) => ({
+        id: c.id || (i + 1),
+        tag: c.tag || 'SPECIAL DEAL',
+        title: c.title,
+        price: c.price,
+        originalPrice: c.originalPrice,
+        savings: (c.originalPrice ? c.originalPrice - c.price : 0),
+        btnText: c.btnText || 'Order Combo',
+        link: c.link || '/menu',
+        image: c.image || 'assets/images/masala-sprouts.jpg',
+        bg: c.bg || 'linear-gradient(125deg, #0A3D18 0%, #15662B 50%, #239441 100%)',
+      }));
+    }
+    return this.comboSlides;
+  });
+
+  comboDisplaySlides = computed(() => {
+    const slides = this.dynamicComboSlides();
+    if (!slides.length) return [];
+    return [
+      ...slides.map(s => ({ ...s, uniqueKey: `combo-${s.id}` })),
+      { ...slides[0], uniqueKey: 'combo-clone-first' }
+    ];
+  });
 
   comboIndex = signal(0);
   comboTransition = signal(true);
@@ -1185,7 +1288,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   nextCombo(): void {
-    if (this.comboIndex() >= this.comboSlides.length) {
+    const total = this.dynamicComboSlides().length;
+    if (!total) return;
+    if (this.comboIndex() >= total) {
       this.comboTransition.set(false);
       this.comboIndex.set(0);
       setTimeout(() => {
@@ -1199,7 +1304,8 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   onComboTransitionEnd(): void {
-    if (this.comboIndex() >= this.comboSlides.length) {
+    const total = this.dynamicComboSlides().length;
+    if (total && this.comboIndex() >= total) {
       this.comboTransition.set(false);
       this.comboIndex.set(0);
       setTimeout(() => {
@@ -1209,8 +1315,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   goToCombo(i: number): void {
+    const total = this.dynamicComboSlides().length;
+    if (!total) return;
     if (this.comboTimer) clearInterval(this.comboTimer);
-    if (this.comboIndex() >= this.comboSlides.length) {
+    if (this.comboIndex() >= total) {
       this.comboTransition.set(false);
       this.comboIndex.set(0);
       setTimeout(() => {

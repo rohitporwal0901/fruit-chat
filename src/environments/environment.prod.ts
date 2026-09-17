@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  razorpayKey: "rzp_test_T0ghGBsIrMwMjX",
   firebase: {
     apiKey: "AIzaSyDagNDyMeE38DQt-kjD1XsfmKmv6EicKBU",
     authDomain: "fruit-chats.firebaseapp.com",
@@ -10,3 +11,4 @@ export const environment = {
     measurementId: "G-236CZK5YHY"
   }
 };
+

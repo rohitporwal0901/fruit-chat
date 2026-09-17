@@ -30,7 +30,7 @@ export class AdminCategoriesComponent {
   isUploading    = signal(false);
   uploadProgress = signal(0);
 
-  currentCat: Partial<Category> & { image: string } = this.getEmpty();
+  currentCat: Partial<Category> = this.getEmpty();
 
   getEmpty() {
     return { name: '', description: '', image: '', status: 'active' as const };
@@ -75,9 +75,12 @@ export class AdminCategoriesComponent {
   }
 
   async save(form: any) {
-    if (form.invalid || !this.currentCat.image) {
-      this.snackbar.show(form.invalid ? 'Fill required fields' : 'Please upload an image', 'error');
+    if (form.invalid) {
+      this.snackbar.show('Fill required fields', 'error');
       return;
+    }
+    if (!this.currentCat.image) {
+      this.currentCat.image = 'assets/images/mix-fruit-chaat.jpg';
     }
     this.isSaving.set(true);
     try {

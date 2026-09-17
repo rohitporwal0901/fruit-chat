@@ -5,12 +5,12 @@
 export interface AdminProduct {
   id: string;
   name: string;
-  sku: string;
+  sku?: string;
   categoryId: string;
   description: string;
   price: number;           // Selling price shown to user
   originalPrice?: number;  // MRP / Crossed price
-  stock: number;
+  stock?: number;
   status: 'active' | 'disabled';
   images: string[];
   isVeg: boolean;
@@ -30,7 +30,7 @@ export interface AdminCustomization {
 export interface Category {
   id: string;
   name: string;
-  image: string;
+  image?: string;
   description: string;
   status: 'active' | 'disabled';
   createdAt?: string;
@@ -104,4 +104,19 @@ export interface OfferCard {
   amount: number;      // e.g. 50
   validText: string;   // e.g. "Valid on orders above ₹99"
   isActive: boolean;
+}
+
+export interface ComboCard {
+  id: string;
+  tag: string;           // e.g. "BESTSELLER COMBO"
+  title: string;         // e.g. "Fruit Chaat + Sprouts"
+  price: number;
+  originalPrice: number;
+  btnText: string;       // e.g. "Order Combo"
+  link: string;          // route e.g. "/menu"
+  image: string;         // Firebase Storage URL (optional)
+  bg: string;            // CSS gradient string
+  status: 'active' | 'inactive';
+  order: number;         // display order
+  createdAt?: string;
 }

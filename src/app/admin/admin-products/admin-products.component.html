@@ -19,79 +19,80 @@
   <div class="ap-count">{{ filteredProducts().length }} products</div>
 </div>
 
-<!-- Loading skeleton -->
-<div class="ap-skeleton" *ngIf="isLoading()">
-  <div class="skel-row" *ngFor="let i of [1,2,3,4,5]"></div>
+<!-- Loading skeleton (card format) -->
+<div class="ap-card-grid" *ngIf="isLoading()">
+  <div class="ap-skel-card" *ngFor="let i of [1,2,3,4,5,6]">
+    <div class="skel-img"></div>
+    <div class="skel-body">
+      <div class="skel-line wide"></div>
+      <div class="skel-line short"></div>
+      <div class="skel-line medium"></div>
+      <div class="skel-actions"></div>
+    </div>
+  </div>
 </div>
 
-<!-- Products Table -->
-<div class="ap-table-wrap" *ngIf="!isLoading()">
+<!-- Products Card Grid -->
+<div *ngIf="!isLoading()">
   <div class="ap-empty" *ngIf="filteredProducts().length === 0">
     <span class="material-symbols-outlined">inventory_2</span>
     <h3>No Products Found</h3>
     <p>{{ searchQuery() ? 'No results for "' + searchQuery() + '"' : 'Add your first product!' }}</p>
   </div>
 
-  <table class="ap-table" *ngIf="filteredProducts().length > 0">
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>SKU</th>
-        <th>Category</th>
-        <th>Price</th>
-        <th>Stock</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let product of paginatedProducts()">
-        <td>
-          <div class="ap-prod-cell">
-            <div class="ap-prod-img">
-              <img *ngIf="product.images?.length" [src]="product.images[0]" [alt]="product.name">
-              <span *ngIf="!product.images?.length" class="material-symbols-outlined">image_not_supported</span>
-            </div>
-            <div class="ap-prod-info">
-              <div class="ap-prod-name">{{ product.name }}</div>
-              <div class="ap-prod-tag">
-                <span class="veg-tag" [class.nonveg]="!product.isVeg">{{ product.isVeg ? '🟢 Veg' : '🔴 Non-Veg' }}</span>
-                <span class="best-tag" *ngIf="product.isBestseller">⭐ Bestseller</span>
-              </div>
-            </div>
-          </div>
-        </td>
-        <td><span class="ap-sku">{{ product.sku }}</span></td>
-        <td><span class="ap-cat">{{ getCategoryName(product.categoryId) }}</span></td>
-        <td>
-          <div class="ap-price-cell">
-            <span class="ap-price">₹{{ product.price }}</span>
-            <del class="ap-orig-price" *ngIf="product.originalPrice">₹{{ product.originalPrice }}</del>
-          </div>
-        </td>
-        <td>
-          <span class="ap-stock" [class.low]="product.stock < 10" [class.out]="product.stock === 0">
-            {{ product.stock === 0 ? 'Out of Stock' : product.stock + ' units' }}
+  <div class="ap-card-grid" *ngIf="filteredProducts().length > 0">
+    <div class="ap-prod-card" *ngFor="let product of paginatedProducts()">
+
+      <!-- Product Image -->
+      <div class="apc-img-wrap">
+        <img *ngIf="product.images?.length" [src]="product.images[0]" [alt]="product.name"
+             onerror="this.src='assets/images/placeholder-product.png'">
+        <div *ngIf="!product.images?.length" class="apc-img-placeholder">
+          <span class="material-symbols-outlined">image_not_supported</span>
+        </div>
+        <!-- Status badge on top-right -->
+        <span class="apc-status-badge" [class.active]="product.status === 'active'">
+          {{ product.status }}
+        </span>
+      </div>
+
+      <!-- Card Body -->
+      <div class="apc-body">
+        <!-- Name + Badges -->
+        <div class="apc-name">{{ product.name }}</div>
+        <div class="apc-tags">
+          <span class="apc-tag veg" [class.nonveg]="!product.isVeg">
+            {{ product.isVeg ? '🟢 Veg' : '🔴 Non-Veg' }}
           </span>
-        </td>
-        <td>
-          <span class="ap-status" [class.active]="product.status === 'active'">
-            {{ product.status }}
-          </span>
-        </td>
-        <td>
-          <div class="ap-actions">
-            <button class="ap-action-btn edit" (click)="openEditDrawer(product)" title="Edit">
-              <span class="material-symbols-outlined">edit</span>
-            </button>
-            <button class="ap-action-btn delete" (click)="promptDelete(product.id)" title="Delete">
-              <span class="material-symbols-outlined">delete</span>
-            </button>
+          <span class="apc-tag best" *ngIf="product.isBestseller">⭐ Bestseller</span>
+        </div>
+
+        <!-- Category -->
+        <div class="apc-meta-row">
+          <span class="apc-cat">{{ getCategoryName(product.categoryId) }}</span>
+        </div>
+
+        <!-- Price -->
+        <div class="apc-price-stock">
+          <div class="apc-price-col">
+            <span class="apc-price">₹{{ product.price }}</span>
+            <del class="apc-orig" *ngIf="product.originalPrice">₹{{ product.originalPrice }}</del>
           </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="apc-actions">
+        <button class="apc-action-btn edit" (click)="openEditDrawer(product)" title="Edit">
+          <span class="material-symbols-outlined">edit</span> Edit
+        </button>
+        <button class="apc-action-btn delete" (click)="promptDelete(product.id)" title="Delete">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <!-- Pagination -->
   <div class="ap-pagination" *ngIf="totalPages() > 1">
@@ -121,16 +122,6 @@
              placeholder="e.g. Mix Fruit Chaat" #nameF="ngModel"
              [class.invalid]="nameF.invalid && nameF.touched">
       <span class="field-err" *ngIf="nameF.invalid && nameF.touched">Name is required</span>
-    </div>
-
-    <!-- SKU -->
-    <div class="ap-field">
-      <label>SKU / Product Code *</label>
-      <input type="text" [(ngModel)]="newProduct.sku" name="sku" required
-             placeholder="e.g. MFC-001" (blur)="checkDupSku()" #skuF="ngModel"
-             [class.invalid]="(skuF.invalid && skuF.touched) || !!dupSkuError()">
-      <span class="field-err" *ngIf="skuF.invalid && skuF.touched">SKU is required</span>
-      <span class="field-err" *ngIf="dupSkuError()">{{ dupSkuError() }}</span>
     </div>
 
     <!-- Category -->
@@ -165,15 +156,6 @@
         <input type="number" [(ngModel)]="newProduct.originalPrice" name="originalPrice" min="0"
                (keydown)="preventInvalid($event)" placeholder="e.g. 100 (optional)">
       </div>
-    </div>
-
-    <!-- Stock -->
-    <div class="ap-field">
-      <label>Stock *</label>
-      <input type="number" [(ngModel)]="newProduct.stock" name="stock" required min="0"
-             (keydown)="preventInvalid($event)" placeholder="e.g. 50" #stockF="ngModel"
-             [class.invalid]="stockF.invalid && stockF.touched">
-      <span class="field-err" *ngIf="stockF.invalid && stockF.touched">Required</span>
     </div>
 
     <!-- Extra Info Row -->
@@ -221,9 +203,9 @@
       </div>
     </div>
 
-    <!-- Images -->
+    <!-- Images (Optional) -->
     <div class="ap-field">
-      <label>Product Images *</label>
+      <label>Product Images <span class="optional-hint">(optional)</span></label>
       <div class="ap-img-upload">
         <label class="ap-img-upload-btn" for="imgInput">
           <span class="material-symbols-outlined">upload</span>
@@ -231,6 +213,7 @@
         </label>
         <input id="imgInput" type="file" accept="image/*" multiple (change)="onFileSelected($event)" style="display:none">
       </div>
+      <p class="ap-img-hint">Agar image nahi upload ki, default placeholder use hoga</p>
       <div class="ap-img-preview" *ngIf="newProduct.images.length > 0">
         <div class="ap-img-thumb" *ngFor="let img of newProduct.images; let i = index">
           <img [src]="img" alt="Product image">
