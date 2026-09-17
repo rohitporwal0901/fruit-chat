@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <!-- Background Brand Gradient -->
+    <linearGradient id="fcBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="50%" stop-color="#16A34A"/>
+      <stop offset="100%" stop-color="#15803D"/>
+    </linearGradient>
+
+    <!-- Strawberry Gradient -->
+    <linearGradient id="fcBerry" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF3366"/>
+      <stop offset="100%" stop-color="#D90429"/>
+    </linearGradient>
+
+    <!-- Orange Gradient -->
+    <linearGradient id="fcOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFAA00"/>
+      <stop offset="100%" stop-color="#FF6A00"/>
+    </linearGradient>
+
+    <!-- Bowl Shadow -->
+    <filter id="fcShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.8" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Circular Badge -->
+  <circle cx="32" cy="32" r="30" fill="url(#fcBg)"/>
+  <circle cx="32" cy="32" r="28.5" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+
+  <!-- Fruit Chaat Salad Contents (Behind bowl rim) -->
+  <!-- Orange Slice -->
+  <path d="M28 35 C32 23, 46 25, 46 35 Z" fill="url(#fcOrange)"/>
+  <path d="M32 34 C34 27, 42 28, 43 34 Z" fill="#FFE082"/>
+
+  <!-- Fresh Strawberry -->
+  <path d="M19 35 C19 25, 30 22, 33 34 Z" fill="url(#fcBerry)"/>
+  <!-- Berry seeds -->
+  <circle cx="24" cy="29" r="0.7" fill="#FFE4E6"/>
+  <circle cx="28" cy="30" r="0.7" fill="#FFE4E6"/>
+  <circle cx="23" cy="33" r="0.7" fill="#FFE4E6"/>
+
+  <!-- Kiwi / Green Melon slice -->
+  <ellipse cx="26" cy="33" rx="4.5" ry="3.5" fill="#A3E635"/>
+  <ellipse cx="26" cy="33" rx="2" ry="1.5" fill="#ECFCCB"/>
+
+  <!-- Fresh Mint Herb Sprig -->
+  <path d="M32 24 C32 15, 22 17, 23 25 C28 25, 30 24, 32 24 Z" fill="#4ADE80"/>
+  <path d="M32 24 C33 14, 43 16, 42 24 C37 24, 34 24, 32 24 Z" fill="#22C55E"/>
+  <path d="M32 27 L32 23" stroke="#15803D" stroke-width="1.2" stroke-linecap="round"/>
+
+  <!-- Sparkle of Chaat Masala / Freshness -->
+  <path d="M48 16 L49 19 L52 20 L49 21 L48 24 L47 21 L44 20 L47 19 Z" fill="#FBBF24"/>
+
+  <!-- White Ceramic Bowl -->
+  <path d="M12 34 C12 47, 52 47, 52 34 Q32 37 12 34 Z" fill="#FFFFFF" filter="url(#fcShadow)"/>
+  <ellipse cx="32" cy="46" rx="9" ry="2" fill="#E2E8F0"/>
+
+  <!-- Bowl rim highlight -->
+  <path d="M14 35 Q32 37.5 50 35" stroke="#F1F5F9" stroke-width="1.2" fill="none"/>
+</svg>
