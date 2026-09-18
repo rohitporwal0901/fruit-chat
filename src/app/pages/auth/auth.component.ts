@@ -782,7 +782,7 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
       align-items: center;
       gap: 5px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
-      transform: rotate(-6deg);
+      transform: rotate(-3deg);
       border: 1.5px solid rgba(255, 255, 255, 0.4);
     }
 
@@ -1258,10 +1258,11 @@ export class AuthComponent implements OnInit, OnDestroy {
 
   /* ── Carousel ─────────────────────────────────── */
   readonly photos = [
-    'assets/images/fruit-bowl-hero.jpg',
-    'assets/images/pineapple-chaat.jpg',
-    'assets/images/mix-fruit-chaat.jpg',
-    'assets/images/watermelon-chaat.jpg'
+    'assets/images/auth-slide-pineapple.jpg',
+    'assets/images/auth-slide-fruit-bowl.jpg',
+    'assets/images/auth-slide-juices.jpg',
+    'assets/images/auth-slide-watermelon.jpg',
+    'assets/images/auth-slide-sprouts.jpg'
   ];
   readonly currentSlide  = signal<number>(0);
   readonly enteringSlide = signal<number>(-1);   // -1 = no transition
