@@ -169,19 +169,7 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
           <!-- ── Bottom Action Dock (Sticky & Always Visible on Mini Mobile) ── -->
           <div class="bottom-action-dock" [class.dock-up]="landingCardUp()">
             <button type="button" class="login-pill-btn" id="login-btn" (click)="openActionSheet()">
-              <span class="btn-icon user-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </span>
-              <span class="btn-text">Login</span>
-              <span class="btn-icon arrow-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                  <polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </span>
+              <span class="btn-text">Continue</span>
             </button>
           </div>
         </div>
@@ -411,27 +399,6 @@ type AuthStep = 'phone' | 'pin' | 'forgot-pin' | 'register';
                           [class.pbox-on]="digit !== ''"
                           (input)="onPinInput($event, i, 'reg')"
                           (keydown)="onPinKeyDown($event, i, 'reg')"
-                        />
-                      }
-                    </div>
-                  </div>
-
-                  <!-- Confirm PIN boxes -->
-                  <div class="rfield">
-                    <label class="rlabel">Confirm 4-Digit PIN</label>
-                    <div class="pin-row" id="reg-confirm-row">
-                      @for (digit of regConfirmPinDigits; track $index; let i = $index) {
-                        <input
-                          #regConfirmPinRef
-                          type="password"
-                          inputmode="numeric"
-                          maxlength="1"
-                          class="pbox"
-                          [id]="'rcpin-' + i"
-                          [value]="digit"
-                          [class.pbox-on]="digit !== ''"
-                          (input)="onPinInput($event, i, 'reg-confirm')"
-                          (keydown)="onPinKeyDown($event, i, 'reg-confirm')"
                         />
                       }
                     </div>
@@ -1513,17 +1480,14 @@ export class AuthComponent implements OnInit, OnDestroy {
 
   /* ── Register ─────────────────────────────────── */
   canRegister(): boolean {
-    const pin  = this.getPinStr('reg');
-    const conf = this.getPinStr('reg-confirm');
-    return !!this.registerName.trim() && pin.length === 4 && pin === conf;
+    const pin = this.getPinStr('reg');
+    return !!this.registerName.trim() && pin.length === 4;
   }
 
   async registerUser(): Promise<void> {
     if (!this.registerName.trim()) { this.errorMessage.set('Please enter your full name.'); return; }
-    const pin  = this.getPinStr('reg');
-    const conf = this.getPinStr('reg-confirm');
-    if (pin.length !== 4)  { this.errorMessage.set('Please set a 4-digit security PIN.'); return; }
-    if (pin !== conf)       { this.errorMessage.set('PINs do not match. Please try again.'); return; }
+    const pin = this.getPinStr('reg');
+    if (pin.length !== 4) { this.errorMessage.set('Please set a 4-digit security PIN.'); return; }
 
     this.errorMessage.set('');
     this.isLoading.set(true);
@@ -1540,6 +1504,10 @@ export class AuthComponent implements OnInit, OnDestroy {
 
   /* ── Navigate ─────────────────────────────────── */
   private navigateAfterLogin(): void {
+    if (this.authService.currentUser()?.role === 'admin') {
+      this.router.navigateByUrl('/admin/login');
+      return;
+    }
     const url = this.route.snapshot.queryParamMap.get('returnUrl') || '/';
     this.router.navigateByUrl(url);
   }
