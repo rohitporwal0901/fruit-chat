@@ -1,8 +1,57 @@
 <div class="ao-header">
-  <div>
+  <div class="ao-header-top">
     <h1 class="ao-title">Orders</h1>
-    <p class="ao-sub">Manage and track all customer orders</p>
+
+    <div class="ao-header-right">
+      <div class="ao-date-container">
+        <label class="ao-date-picker-box" for="orderDatePicker" title="Filter orders by date">
+          <span class="material-symbols-outlined ao-date-icon">calendar_today</span>
+          <input
+            id="orderDatePicker"
+            type="date"
+            class="ao-date-input"
+            [ngModel]="selectedDate()"
+            (ngModelChange)="onDateChange($event)"
+            (click)="openPicker($event)"
+            title="Filter orders by date"
+            aria-label="Filter orders by date"
+          />
+          <button
+            *ngIf="selectedDate()"
+            type="button"
+            class="ao-date-clear-btn"
+            (click)="clearDate(); $event.stopPropagation(); $event.preventDefault()"
+            title="Clear date filter (show all orders)"
+            aria-label="Clear date filter"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </label>
+
+        <div class="ao-date-pills" *ngIf="!isTodaySelected() || !selectedDate()">
+          <button
+            type="button"
+            class="ao-date-pill-btn"
+            [class.active]="isTodaySelected()"
+            (click)="setToday()"
+            title="Filter to today's orders"
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            class="ao-date-pill-btn"
+            *ngIf="selectedDate()"
+            (click)="clearDate()"
+            title="Show all orders"
+          >
+            All
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
+  <p class="ao-sub">Manage and track all customer orders</p>
 </div>
 
 <!-- Status Filter Tabs -->
@@ -34,8 +83,19 @@
   <!-- Orders List -->
   <div class="ao-list-wrap">
     <div class="ao-empty" *ngIf="filteredOrders().length === 0">
-      <span class="material-symbols-outlined">shopping_bag</span>
-      <p>No orders in this category</p>
+      <span class="material-symbols-outlined">{{ selectedDate() ? 'event_busy' : 'shopping_bag' }}</span>
+      <p *ngIf="selectedDate(); else genericEmpty">
+        No orders found for {{ isTodaySelected() ? 'today' : formattedSelectedDate() }}
+      </p>
+      <ng-template #genericEmpty>
+        <p>No orders in this category</p>
+      </ng-template>
+      <div class="ao-empty-actions" *ngIf="selectedDate()">
+        <button type="button" class="ao-empty-btn" (click)="clearDate()">
+          <span class="material-symbols-outlined">calendar_month</span>
+          View All Orders
+        </button>
+      </div>
     </div>
 
     <div class="ao-order-card" *ngFor="let order of filteredOrders()"
