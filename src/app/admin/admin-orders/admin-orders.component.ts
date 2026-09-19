@@ -116,6 +116,15 @@ export class AdminOrdersComponent {
     finally { this.isUpdating.set(null); }
   }
 
+  async copyOrderId(id: string) {
+    try {
+      await navigator.clipboard.writeText(id);
+      this.snackbar.show('Order ID copied to clipboard', 'success');
+    } catch {
+      this.snackbar.show('Failed to copy Order ID', 'error');
+    }
+  }
+
   getStatusClass(s: string) {
     const map: any = { pending:'status-pending', confirmed:'status-confirmed', preparing:'status-preparing', 'out-for-delivery':'status-delivery', delivered:'status-delivered', cancelled:'status-cancelled' };
     return map[s] || '';

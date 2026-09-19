@@ -1,8 +1,10 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
+
+declare const L: any;
 
 interface TrackStep {
   id: string;
@@ -29,17 +31,22 @@ interface TrackStep {
         <div class="header-spacer"></div>
       </div>
 
-      <!-- MAP PLACEHOLDER -->
+      <!-- MAP PLACEHOLDER / ACTUAL MAP -->
       <div class="map-section">
-        <div class="map-placeholder">
-          <div class="map-overlay">
-            <div class="delivery-pin">{{ getVehicleEmoji() }}</div>
-            <div class="delivery-wave"></div>
+        <div #mapContainer class="leaflet-map-container" [class.hidden]="!showMap()"></div>
+        
+        @if (!showMap()) {
+          <div class="map-placeholder">
+            <div class="map-overlay">
+              <div class="delivery-pin">{{ getVehicleEmoji() }}</div>
+              <div class="delivery-wave"></div>
+            </div>
           </div>
-          <div class="eta-card">
-            <span class="eta-label">{{ etaLabel() }}</span>
-            <span class="eta-time">{{ estimatedDeliveryTime() }}</span>
-          </div>
+        }
+        
+        <div class="eta-card">
+          <span class="eta-label">{{ etaLabel() }}</span>
+          <span class="eta-time">{{ estimatedDeliveryTime() }}</span>
         </div>
       </div>
 
@@ -145,14 +152,16 @@ interface TrackStep {
       justify-self: end;
     }
 
-    .map-section { height: 200px; background: linear-gradient(135deg, #E8F5E9, #C8E6C9, #A5D6A7); position: relative; overflow: hidden; }
-    .map-placeholder { width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
+    .map-section { height: 280px; background: linear-gradient(135deg, #E8F5E9, #C8E6C9, #A5D6A7); position: relative; overflow: hidden; }
+    .leaflet-map-container { width: 100%; height: 100%; z-index: 1; }
+    .leaflet-map-container.hidden { display: none; }
+    .map-placeholder { width: 100%; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 2; }
     .map-overlay { display: flex; flex-direction: column; align-items: center; }
-    .delivery-pin { font-size: 48px; animation: bounce 1.2s infinite alternate; }
+    .delivery-pin { font-size: 48px; animation: bounce 1.2s infinite alternate; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
     .delivery-wave { width: 80px; height: 16px; background: rgba(0,0,0,0.08); border-radius: 50%; margin-top: 4px; }
     @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
 
-    .eta-card { position: absolute; bottom: 16px; right: 16px; background: #fff; border-radius: 12px; padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: flex; flex-direction: column; align-items: center; min-width: 130px; }
+    .eta-card { position: absolute; bottom: 16px; right: 16px; background: #fff; border-radius: 12px; padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: flex; flex-direction: column; align-items: center; min-width: 130px; z-index: 10; }
     .eta-label { font-size: 10px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
     .eta-time { font-size: 18px; font-weight: 800; color: #1A1A1A; }
 
@@ -246,13 +255,26 @@ interface TrackStep {
     }
   `]
 })
-export class TrackOrderComponent implements OnInit {
+export class TrackOrderComponent implements OnInit, OnDestroy {
   router = inject(Router);
   route = inject(ActivatedRoute);
   dataService = inject(DataService);
   authService = inject(AuthService);
 
+  @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
+
   orderId = signal('FC12345');
+  
+  // Map properties
+  private map: any = null;
+  private deliveryMarker: any = null;
+  private homeMarker: any = null;
+  private unsubscribeLive: (() => void) | null = null;
+  
+  showMap = computed(() => {
+    const o = this.currentOrder();
+    return o?.status === 'out-for-delivery';
+  });
 
   currentOrder = computed(() => {
     const id = this.orderId();
@@ -423,6 +445,15 @@ export class TrackOrderComponent implements OnInit {
     return o?.grandTotal ?? 180;
   }
 
+  constructor() {
+    // React to changes in order status to initialize map
+    effect(() => {
+      if (this.showMap()) {
+        setTimeout(() => this.initMap(), 100);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -432,6 +463,69 @@ export class TrackOrderComponent implements OnInit {
       const qId = params.get('orderId');
       if (qId && !this.route.snapshot.paramMap.get('id')) {
         this.orderId.set(qId);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.unsubscribeLive) {
+      this.unsubscribeLive();
+    }
+    if (this.map) {
+      this.map.remove();
+    }
+  }
+
+  private initMap(): void {
+    if (this.map || typeof L === 'undefined') return;
+
+    const o = this.currentOrder();
+    if (!o) return;
+
+    // Use order delivery lat/lng or default to Indore
+    const homeLat = (o.deliveryAddress as any)?.lat || 22.7196;
+    const homeLng = (o.deliveryAddress as any)?.lng || 75.8577;
+
+    this.map = L.map(this.mapContainer.nativeElement, {
+      center: [homeLat, homeLng],
+      zoom: 15,
+      zoomControl: false
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(this.map);
+
+    // Add home marker
+    const homeIcon = L.divIcon({
+      html: '<div style="font-size: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">🏠</div>',
+      className: 'custom-div-icon',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30]
+    });
+    this.homeMarker = L.marker([homeLat, homeLng], { icon: homeIcon }).addTo(this.map);
+
+    // Create delivery marker (hidden initially)
+    const bikeIcon = L.divIcon({
+      html: '<div style="font-size: 34px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)); animation: bounce 1s infinite alternate;">🛵</div>',
+      className: 'custom-div-icon',
+      iconSize: [34, 34],
+      iconAnchor: [17, 34]
+    });
+    this.deliveryMarker = L.marker([homeLat, homeLng], { icon: bikeIcon });
+
+    // Start listening to live location
+    this.unsubscribeLive = this.dataService.listenToLiveDelivery(o.id, (data) => {
+      if (data) {
+        if (!this.map.hasLayer(this.deliveryMarker)) {
+          this.deliveryMarker.addTo(this.map);
+        }
+        // Animate marker to new position
+        this.deliveryMarker.setLatLng([data.lat, data.lng]);
+        
+        // Adjust map bounds to show both markers smoothly
+        const group = new L.featureGroup([this.homeMarker, this.deliveryMarker]);
+        this.map.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 16 });
       }
     });
   }

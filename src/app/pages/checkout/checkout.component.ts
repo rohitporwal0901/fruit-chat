@@ -60,55 +60,15 @@ import { environment } from '../../../environments/environment';
                 <p class="addr-city">{{ address.city }}</p>
               </div>
               <div class="addr-actions">
-                <button class="edit-btn" (click)="editingAddress.set(!editingAddress())" type="button" aria-label="Edit address">
-                  @if (editingAddress()) {
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span>Done</span>
-                  } @else {
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    <span>Edit</span>
-                  }
+                <button class="edit-btn" (click)="authService.openMapPicker()" type="button" aria-label="Edit address">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span>Edit</span>
                 </button>
               </div>
             </div>
-
-            @if (editingAddress()) {
-              <div class="address-form">
-                <div class="form-group">
-                  <label>Full Name *</label>
-                  <input type="text" [(ngModel)]="address.name" placeholder="Your full name">
-                </div>
-                <div class="form-group">
-                  <label>Phone *</label>
-                  <input type="tel" [(ngModel)]="address.phone" placeholder="10-digit mobile number">
-                </div>
-                <div class="form-group">
-                  <label>Address Line 1 *</label>
-                  <input type="text" [(ngModel)]="address.addressLine1" placeholder="House/Flat No., Street">
-                </div>
-                <div class="form-group">
-                  <label>Address Line 2</label>
-                  <input type="text" [(ngModel)]="address.addressLine2" placeholder="Landmark (optional)">
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>City *</label>
-                    <input type="text" [(ngModel)]="address.city" placeholder="City">
-                  </div>
-                  <div class="form-group">
-                    <label>Pincode *</label>
-                    <input type="text" [(ngModel)]="address.pincode" placeholder="6-digit pincode">
-                  </div>
-                </div>
-              </div>
-            }
-
-            <button class="add-address-btn">+ Add New Address</button>
           </div>
         }
 
@@ -303,10 +263,8 @@ import { environment } from '../../../environments/environment';
       &:active { transform: scale(0.95); }
     }
 
-    .address-form { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
     .form-group { margin-bottom: 14px; label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; } input { width: 100%; border: 1.5px solid #EEE; border-radius: 10px; padding: 10px 14px; font-family: 'Poppins', sans-serif; font-size: 14px; color: #1A1A1A; outline: none; transition: border-color 0.2s; &:focus { border-color: #4CAF50; } &::placeholder { color: #bbb; } } }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .add-address-btn { width: 100%; background: none; border: 2px dashed #C8E6C9; border-radius: 12px; padding: 14px; color: #2E7D32; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: all 0.2s; &:hover { background: #F1F8E9; } }
 
     /* PAYMENT */
     .payment-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
@@ -385,7 +343,6 @@ export class CheckoutComponent {
 
   currentStep = signal(1);
   loading = signal(false);
-  editingAddress = signal(false);
   selectedPayment = signal('upi');
   paymentVal = 'upi';
 
@@ -395,7 +352,9 @@ export class CheckoutComponent {
     addressLine1: this.authService.activeAddress().fullAddress || '123, Green Park, Indore', 
     addressLine2: '', 
     city: this.authService.activeAddress().detail || 'Indore', 
-    pincode: '452001' 
+    pincode: '452001',
+    lat: this.authService.activeAddress().lat || 22.7196,
+    lng: this.authService.activeAddress().lng || 75.8577
   };
 
   constructor() {
@@ -409,6 +368,8 @@ export class CheckoutComponent {
       if (active) {
         this.address.addressLine1 = active.fullAddress;
         this.address.city = active.detail;
+        this.address.lat = active.lat || 22.7196;
+        this.address.lng = active.lng || 75.8577;
       }
     });
   }
@@ -455,7 +416,9 @@ export class CheckoutComponent {
         addressLine1: this.address.addressLine1 || 'Green Park, Indore',
         addressLine2: this.address.addressLine2 || '',
         city: this.address.city || 'Indore',
-        pincode: this.address.pincode || '452001'
+        pincode: this.address.pincode || '452001',
+        lat: this.address.lat,
+        lng: this.address.lng
       },
       items: this.cartService.items().map(item => ({
         productId: item.product.id,

@@ -64,6 +64,8 @@ export interface AdminDeliveryAddress {
   addressLine2?: string;
   city: string;
   pincode: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface AdminOrderItem {

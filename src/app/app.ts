@@ -2,11 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { NavbarComponent } from './shared/navbar/navbar.component';
+import { MapPickerComponent } from './shared/map-picker/map-picker.component';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent],
+  imports: [RouterOutlet, NavbarComponent, MapPickerComponent],
   template: `
     @if (!isAuthRoute()) {
       <app-navbar></app-navbar>
@@ -14,6 +16,10 @@ import { NavbarComponent } from './shared/navbar/navbar.component';
     <main class="main-content" [class.no-nav]="isAuthRoute()">
       <router-outlet></router-outlet>
     </main>
+
+    @if (authService.showMapPicker()) {
+      <app-map-picker></app-map-picker>
+    }
   `,
   styles: [`
     .main-content {
@@ -36,6 +42,7 @@ import { NavbarComponent } from './shared/navbar/navbar.component';
 export class App {
   title = 'fruit-chat';
   private router = inject(Router);
+  authService = inject(AuthService);
   readonly isAuthRoute = signal<boolean>(false);
 
   constructor() {

@@ -124,7 +124,12 @@
         <button class="ao-back-btn" (click)="closeDetail()" type="button" title="Back to orders">
           <span class="material-symbols-outlined">arrow_back</span>
         </button>
-        <h3>Order #{{ selectedOrder()!.id.slice(-6).toUpperCase() }}</h3>
+        <h3>
+          Order #{{ selectedOrder()!.id.slice(-6).toUpperCase() }}
+          <button class="ao-copy-btn" (click)="copyOrderId(selectedOrder()!.id)" title="Copy full Order ID">
+            <span class="material-symbols-outlined">content_copy</span>
+          </button>
+        </h3>
       </div>
       <div class="ao-detail-header-right">
         <span class="ao-status ao-status-detail" [class]="getStatusClass(selectedOrder()!.status)">

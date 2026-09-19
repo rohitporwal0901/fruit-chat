@@ -22,13 +22,13 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard',     component: AdminDashboardComponent },
-      { path: 'products',      component: AdminProductsComponent },
-      { path: 'categories',    component: AdminCategoriesComponent },
-      { path: 'orders',        component: AdminOrdersComponent },
-      { path: 'transactions',  component: AdminTransactionsComponent },
-      { path: 'combo-cards',   component: AdminComboCardsComponent },
-      { path: 'settings',      component: AdminSettingsComponent },
+      { path: 'dashboard', component: AdminDashboardComponent },
+      { path: 'products', component: AdminProductsComponent },
+      { path: 'categories', component: AdminCategoriesComponent },
+      { path: 'orders', component: AdminOrdersComponent },
+      { path: 'transactions', component: AdminTransactionsComponent },
+      { path: 'combo-cards', component: AdminComboCardsComponent },
+      { path: 'settings', component: AdminSettingsComponent },
     ]
   },
 

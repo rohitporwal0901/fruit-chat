@@ -268,6 +268,24 @@ export class DataService {
     await deleteDoc(ref);
   }
 
+  // ── Live Delivery Tracking ───────────────────────────────
+
+  async updateLiveDelivery(orderId: string, lat: number, lng: number): Promise<void> {
+    const ref = doc(this.firestore, 'fc_live_deliveries', orderId);
+    await setDoc(ref, { lat, lng, updatedAt: new Date().toISOString() }, { merge: true });
+  }
+
+  listenToLiveDelivery(orderId: string, callback: (data: {lat: number, lng: number} | null) => void): () => void {
+    const ref = doc(this.firestore, 'fc_live_deliveries', orderId);
+    return onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        callback(snap.data() as {lat: number, lng: number});
+      } else {
+        callback(null);
+      }
+    });
+  }
+
   // ── Coupon Usage Tracking ─────────────────────────────────
 
   async markCouponUsed(userId: string | undefined, code: string): Promise<void> {
