@@ -74,18 +74,24 @@ import { Product } from '../../core/models/product.model';
               <div class="progress-track">
                 <div class="progress-fill" [style.width.%]="getProgressPercent(activeOrders()[0].status)"></div>
                 <div class="moving-rider" [style.left.%]="getProgressPercent(activeOrders()[0].status)">
-                  <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="10" y="35" width="25" height="25" rx="3" fill="#FF9800"/>
-                    <path d="M15 65 L40 65 L45 50 L65 50 L75 65 L85 65 A5 5 0 0 1 85 75 L15 75 A5 5 0 0 1 15 65 Z" fill="#4CAF50"/>
-                    <path d="M60 50 L70 30 L75 30" fill="none" stroke="#2E7D32" stroke-width="4" stroke-linecap="round"/>
-                    <circle cx="75" cy="30" r="3" fill="#1B5E20"/>
-                    <path d="M35 50 C35 35 45 35 50 35 L60 35 L65 45 L50 45 L45 50 Z" fill="#FFB74D"/>
-                    <circle cx="55" cy="25" r="8" fill="#FFCC80"/>
-                    <path d="M45 25 A10 10 0 0 1 65 25 Z" fill="#2E7D32"/>
-                    <circle cx="25" cy="75" r="10" fill="#333"/>
-                    <circle cx="25" cy="75" r="4" fill="#BDBDBD"/>
-                    <circle cx="75" cy="75" r="10" fill="#333"/>
-                    <circle cx="75" cy="75" r="4" fill="#BDBDBD"/>
+                  <!-- High-Quality Scalable SVG (No Pixelation, Transparent Background) -->
+                  <svg width="46" height="46" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="24" width="18" height="18" rx="2" fill="#2E7D32"/>
+                    <path d="M6 30 L24 30" stroke="#1B5E20" stroke-width="1.5"/>
+                    <circle cx="15" cy="33" r="3" fill="#4CAF50"/>
+                    <path d="M12 48 L28 48 L32 38 L48 38 L54 48 L60 48 A3 3 0 0 1 60 54 L12 54 A3 3 0 0 1 12 48 Z" fill="#4CAF50"/>
+                    <path d="M46 38 L52 24 L56 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+                    <ellipse cx="58" cy="42" rx="3" ry="4" fill="#FFC107"/>
+                    <path d="M58 42 L66 36 L66 48 Z" fill="#FFC107" opacity="0.3"/> 
+                    <path d="M26 38 C26 24 38 24 40 24 L48 24 L52 32 L40 32 L36 38 Z" fill="#FF9800"/>
+                    <path d="M42 26 L48 34 L54 34" fill="none" stroke="#F57C00" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="44" cy="16" r="6" fill="#FFCC80"/>
+                    <path d="M36 16 A8 8 0 0 1 52 16 Z" fill="#1B5E20"/>
+                    <circle cx="20" cy="54" r="7" fill="#424242"/>
+                    <circle cx="20" cy="54" r="3" fill="#BDBDBD"/>
+                    <circle cx="52" cy="54" r="7" fill="#424242"/>
+                    <circle cx="52" cy="54" r="3" fill="#BDBDBD"/>
+                    <path d="M2 42 L8 42 M0 48 L6 48" stroke="#CFD8DC" stroke-width="1.5" stroke-linecap="round"/>
                   </svg>
                 </div>
               </div>
@@ -367,7 +373,6 @@ import { Product } from '../../core/models/product.model';
       align-items: flex-start;
       justify-content: space-between;
       width: 100%;
-      margin-bottom: 24px;
     }
     
     .aos-info {
@@ -428,6 +433,7 @@ import { Product } from '../../core/models/product.model';
       width: 100%;
       position: relative;
       padding-bottom: 2px;
+      margin-top: 48px; /* Adds space so the rider doesn't overlap the top buttons */
     }
     .progress-track {
       width: 100%;
@@ -444,16 +450,16 @@ import { Product } from '../../core/models/product.model';
     }
     .moving-rider {
       position: absolute;
-      top: -26px;
+      top: -42px; /* Sits exactly on the track line */
       transform: translateX(-50%);
       transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
       animation: bounceRide 1s infinite alternate;
       z-index: 2;
     }
     @keyframes bounceRide {
       0% { transform: translateX(-50%) translateY(0); }
-      100% { transform: translateX(-50%) translateY(-2px); }
+      100% { transform: translateX(-50%) translateY(-3px); }
     }
 
     /* ===== HERO BANNER SLIDER (REFERENCE CARD STYLE) ===== */
