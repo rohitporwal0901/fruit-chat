@@ -1,0 +1,214 @@
+<div class="auth-root">
+
+  <!-- ==================== SPLASH SCREEN ==================== -->
+  @if (step() === 'splash') {
+    <div class="splash-screen">
+      <!-- Full screen background image -->
+      <img src="assets/images/auth-slide-fruit-bowl.jpg" alt="Background" class="splash-bg" />
+      
+      <div class="splash-content animate-fade-in">
+        <div class="brand-logo">
+          <!-- F Fresh Logo as per mockup -->
+          <svg viewBox="0 0 120 120" class="logo-svg">
+            <!-- F -->
+            <path d="M40 30h35v12H54v14h18v12H54v32H40V30z" fill="#1B5E20"/>
+            <!-- Floating Leaf -->
+            <path d="M78 24c10-8 22-5 22-5-4 12-14 16-14 16-6 2-14-3-14-3 1-5 6-8 6-8z" fill="#4CAF50"/>
+          </svg>
+          <h1>Fresh</h1>
+        </div>
+        <p class="tagline">Healthy &bull; Fresh &bull; Delicious</p>
+        
+        <div class="spacer"></div>
+        
+        <div class="splash-footer">
+          <p class="mood-text">Good Food<br>Good Mood</p>
+          <svg class="mood-underline" viewBox="0 0 200 20" preserveAspectRatio="none">
+            <path d="M10,10 Q100,20 190,5" stroke="#1B5E20" stroke-width="3" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== ONBOARDING SCREENS ==================== -->
+  @if (step() === 'onboarding') {
+    <div class="onboarding-screen animate-fade-in">
+      <button type="button" class="skip-btn" (click)="skipOnboarding()">Skip</button>
+      
+      <div class="carousel-container">
+        <!-- Background Image -->
+        <div class="carousel-bg-wrap">
+          <img [src]="photos[currentSlide()]" alt="Onboarding Image" class="carousel-img" />
+        </div>
+        
+        <!-- Bottom Card -->
+        <div class="carousel-card">
+          <!-- Wavy top edge -->
+          <svg class="card-wave" viewBox="0 0 1440 120" preserveAspectRatio="none">
+            <path fill="#FFFFFF" d="M0,60 C360,120 1080,0 1440,60 L1440,120 L0,120 Z"></path>
+          </svg>
+          
+          <h2 class="carousel-title">{{ carouselTitles[currentSlide()] }}</h2>
+          <p class="carousel-desc">{{ carouselDesc[currentSlide()] }}</p>
+          
+          <div class="carousel-footer">
+            <div class="dots">
+              @for (p of photos; track $index) {
+                <span class="dot" [class.active]="$index === currentSlide()"></span>
+              }
+            </div>
+            
+            <button type="button" class="next-btn" (click)="nextSlide()">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== LOGIN / SIGNUP SCREEN ==================== -->
+  @if (step() === 'login' || step() === 'signup') {
+    <div class="auth-screen animate-fade-in">
+      <div class="top-logo">
+        <!-- Floating Background Leaves -->
+        <svg class="floating-leaf leaf-1" viewBox="0 0 120 120">
+          <path d="M78 24c10-8 22-5 22-5-4 12-14 16-14 16-6 2-14-3-14-3 1-5 6-8 6-8z" fill="#C8E6C9"/>
+        </svg>
+        <svg class="floating-leaf leaf-2" viewBox="0 0 120 120">
+          <path d="M78 24c10-8 22-5 22-5-4 12-14 16-14 16-6 2-14-3-14-3 1-5 6-8 6-8z" fill="#C8E6C9"/>
+        </svg>
+
+        <svg viewBox="0 0 120 120" class="mini-logo-svg">
+          <!-- F -->
+          <path d="M40 30h35v12H54v14h18v12H54v32H40V30z" fill="#1B5E20"/>
+          <!-- Floating Leaf -->
+          <path d="M78 24c10-8 22-5 22-5-4 12-14 16-14 16-6 2-14-3-14-3 1-5 6-8 6-8z" fill="#4CAF50"/>
+        </svg>
+        <h2>Fresh</h2>
+        <p class="tagline-mini">Healthy &bull; Fresh &bull; Delicious</p>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-header">
+          <h3>{{ step() === 'login' ? 'Welcome Back!' : 'Create Your Account' }}</h3>
+          <p>{{ step() === 'login' ? 'Log in to your account and continue your healthy journey.' : 'Join us for fresh, healthy and delicious food, always!' }}</p>
+        </div>
+
+        <!-- Banners -->
+        @if (errorMessage()) {
+          <div class="banner error-banner">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <div class="form-group">
+          @if (step() === 'signup') {
+            <div class="input-wrap">
+              <span class="icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#9CA3AF" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              <input type="text" placeholder="Full Name" [(ngModel)]="fullName" />
+            </div>
+          }
+          
+          <div class="input-wrap">
+            <span class="icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#9CA3AF" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </span>
+            <input type="tel" placeholder="Mobile Number" [(ngModel)]="phoneNumber" maxlength="10" />
+          </div>
+        </div>
+
+        @if (step() === 'login') {
+          <div class="remember-row">
+            <label class="checkbox-container">
+              <input type="checkbox" checked />
+              <span class="checkmark"></span>
+              Remember me
+            </label>
+          </div>
+        }
+
+        <button type="button" class="primary-btn" [disabled]="isLoading()" (click)="submitPhoneForm()">
+          @if (isLoading()) {
+            <span class="spinner"></span>
+          } @else {
+            {{ step() === 'login' ? 'Login' : 'Sign Up' }} &rarr;
+          }
+        </button>
+
+        <div class="divider">
+          <span>or</span>
+        </div>
+
+        <div class="auth-footer-link">
+          @if (step() === 'login') {
+            <p>Don't have an account? <a (click)="goToSignup()">Sign Up</a></p>
+          } @else {
+            <p class="terms-text">By signing up, you agree to our<br><a>Terms & Conditions</a> and <a>Privacy Policy</a></p>
+            <p style="margin-top:20px;">Already have an account? <a (click)="goToLogin()">Login</a></p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== VERIFY PIN SCREEN ==================== -->
+  @if (step() === 'verify') {
+    <div class="auth-screen animate-fade-in">
+      <button type="button" class="back-btn" (click)="step.set(authMode())">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#111827" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      
+      <div class="verify-icon">
+        <img src="assets/images/auth-pin-icon.jpg" alt="Enter PIN" class="verify-img" />
+      </div>
+
+      <div class="auth-card verify-card">
+        <div class="auth-header">
+          <h3>Verify Your Number</h3>
+          <p>We've sent a 4 digit code to<br><strong>+91 {{ phoneNumber }}</strong></p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="banner error-banner">{{ errorMessage() }}</div>
+        }
+
+        <div class="pin-boxes">
+          @for (digit of pinDigits; track $index; let i = $index) {
+            <input
+              #pinRef
+              type="password"
+              inputmode="numeric"
+              maxlength="1"
+              class="pin-box"
+              [value]="digit"
+              [class.active]="digit !== ''"
+              (input)="onPinInput($event, i)"
+              (keydown)="onPinKeyDown($event, i)"
+            />
+          }
+        </div>
+
+        <!-- REMOVED: Resend OTP text -->
+
+        <button type="button" class="primary-btn" [disabled]="isLoading() || getPinStr().length !== 4" (click)="verifyPin()">
+          @if (isLoading()) {
+            <span class="spinner"></span>
+          } @else {
+            Verify
+          }
+        </button>
+
+        <div class="auth-footer-link" style="margin-top:24px;">
+          <p><a (click)="step.set(authMode())" style="color:#1B5E20;font-weight:700;">Change Number</a></p>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
