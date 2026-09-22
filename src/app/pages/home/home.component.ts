@@ -48,6 +48,52 @@ import { Product } from '../../core/models/product.model';
         </div>
       </section>
 
+      <!-- ACTIVE ORDER STRIP (ONLY SHOWN IF EXACTLY 1 ACTIVE ORDER) -->
+      @if (activeOrdersCount() === 1) {
+        <div class="home-active-order-wrapper">
+          <!-- SINGLE ORDER UI WITH PROGRESS BAR (EXACT MOCKUP) -->
+          <div class="active-order-strip light-theme single-order" [routerLink]="'/track-order/' + activeOrders()[0].id">
+            <div class="aos-top-row">
+              <div class="aos-info">
+                <span class="aos-title dark-text">{{ getStatusText(activeOrders()[0].status) }}</span>
+                <span class="aos-sub dark-sub">Order #{{ activeOrders()[0].id.slice(-6).toUpperCase() }}</span>
+              </div>
+              <div class="aos-actions" (click)="$event.stopPropagation()">
+                <a [routerLink]="'/track-order/' + activeOrders()[0].id" class="icon-btn track-btn">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  Track
+                </a>
+                <a href="tel:+919827664121" class="icon-btn call-btn">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  Call
+                </a>
+              </div>
+            </div>
+            
+            <div class="aos-progress-wrapper">
+              <div class="progress-track">
+                <div class="progress-fill" [style.width.%]="getProgressPercent(activeOrders()[0].status)"></div>
+                <div class="moving-rider" [style.left.%]="getProgressPercent(activeOrders()[0].status)">
+                  <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="10" y="35" width="25" height="25" rx="3" fill="#FF9800"/>
+                    <path d="M15 65 L40 65 L45 50 L65 50 L75 65 L85 65 A5 5 0 0 1 85 75 L15 75 A5 5 0 0 1 15 65 Z" fill="#4CAF50"/>
+                    <path d="M60 50 L70 30 L75 30" fill="none" stroke="#2E7D32" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="75" cy="30" r="3" fill="#1B5E20"/>
+                    <path d="M35 50 C35 35 45 35 50 35 L60 35 L65 45 L50 45 L45 50 Z" fill="#FFB74D"/>
+                    <circle cx="55" cy="25" r="8" fill="#FFCC80"/>
+                    <path d="M45 25 A10 10 0 0 1 65 25 Z" fill="#2E7D32"/>
+                    <circle cx="25" cy="75" r="10" fill="#333"/>
+                    <circle cx="25" cy="75" r="4" fill="#BDBDBD"/>
+                    <circle cx="75" cy="75" r="10" fill="#333"/>
+                    <circle cx="75" cy="75" r="4" fill="#BDBDBD"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- OFFER CARD — Dynamic from Firestore fc_settings/offerCard (with Skeleton Loading) -->
       @if (dataService.isOfferCardLoading()) {
         <section class="offer-section">
@@ -284,6 +330,131 @@ import { Product } from '../../core/models/product.model';
       border-radius: 999px;
     }
     .view-all { font-size: 11px; font-weight: 700; color: #2E7D32; text-decoration: none; }
+
+    /* ACTIVE ORDER STRIP (BLINKIT STYLE FOR HOME) */
+    .home-active-order-wrapper {
+      padding: 14px 14px 0;
+      animation: slideDownFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @keyframes slideDownFadeIn {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .active-order-strip.light-theme {
+      background: #F4FBF6; /* Match mockup background */
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+      border: 1px solid #E1EFE6;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .active-order-strip.light-theme.multi-order {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+    }
+    .active-order-strip.light-theme:active { transform: scale(0.98); }
+    .active-order-strip.light-theme:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+    
+    .aos-top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    
+    .aos-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .aos-title.dark-text {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0D4A22;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .aos-sub.dark-sub {
+      font-size: 11.5px;
+      color: #617C6B;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .aos-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .icon-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .icon-btn.call-btn {
+      background: #ffffff;
+      border: 1px solid #2E7D32;
+      color: #2E7D32;
+    }
+    .icon-btn.call-btn:hover { background: #F4FBF6; }
+    .icon-btn.track-btn {
+      background: #2E7D32;
+      border: 1px solid #2E7D32;
+      color: #fff;
+    }
+    .icon-btn.track-btn:hover { background: #1B5E20; border-color: #1B5E20; }
+
+    /* Progress Bar */
+    .aos-progress-wrapper {
+      width: 100%;
+      position: relative;
+      padding-bottom: 2px;
+    }
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: #E3F2E7;
+      border-radius: 999px;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #2E7D32;
+      border-radius: 999px;
+      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .moving-rider {
+      position: absolute;
+      top: -26px;
+      transform: translateX(-50%);
+      transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+      animation: bounceRide 1s infinite alternate;
+      z-index: 2;
+    }
+    @keyframes bounceRide {
+      0% { transform: translateX(-50%) translateY(0); }
+      100% { transform: translateX(-50%) translateY(-2px); }
+    }
 
     /* ===== HERO BANNER SLIDER (REFERENCE CARD STYLE) ===== */
     .banner-section {
@@ -1109,6 +1280,24 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     setTimeout(() => this.isLoading.set(false), 700);
   }
 
+  activeOrders = computed(() => {
+    const user = this.authService.currentUser();
+    if (!user) return [];
+    const cleanPhone = (p?: string) => (p || '').replace(/\D/g, '').slice(-10);
+    const uPhone = cleanPhone(user.phone);
+    const uEmail = (user.email || '').trim().toLowerCase();
+    
+    return this.dataService.orders().filter(o => {
+      const match = (o.userId && user.uid && o.userId === user.uid) ||
+                    (uPhone && o.customerPhone && cleanPhone(o.customerPhone) === uPhone) ||
+                    (uEmail && o.customerEmail && o.customerEmail.trim().toLowerCase() === uEmail);
+      if (!match) return false;
+      return o.status === 'pending' || o.status === 'confirmed' || o.status === 'preparing' || o.status === 'out-for-delivery';
+    });
+  });
+
+  activeOrdersCount = computed(() => this.activeOrders().length);
+
   displayCategories = computed(() => {
     const list = this.dataService.categories().filter(c => c.status === 'active');
     if (list.length > 0) {
@@ -1495,6 +1684,27 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   toggleCategory(cat: string): void {
     this.selectedCategory.set(this.selectedCategory() === cat ? 'all' : cat);
+  }
+
+  getStatusText(status: string): string {
+    switch (status) {
+      case 'pending': return 'Order Placed';
+      case 'confirmed': return 'Order Confirmed';
+      case 'preparing': return 'Food is being prepared';
+      case 'out-for-delivery': return 'Rider is on the way';
+      default: return 'Order In Progress';
+    }
+  }
+
+  getProgressPercent(status: string): number {
+    switch (status) {
+      case 'pending': return 10;
+      case 'confirmed': return 35;
+      case 'preparing': return 65;
+      case 'out-for-delivery': return 95;
+      case 'delivered': return 100;
+      default: return 0;
+    }
   }
 
   getSectionTitle(): string {

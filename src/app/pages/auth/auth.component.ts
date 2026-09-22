@@ -122,6 +122,7 @@ export class AuthComponent implements OnInit, OnDestroy {
           this.errorMessage.set('Account not found. Please sign up.');
         } else {
           this.step.set('verify');
+          window.scrollTo(0, 0);
           setTimeout(() => this.focusPin(0), 100);
         }
       } else {
@@ -129,6 +130,7 @@ export class AuthComponent implements OnInit, OnDestroy {
           this.errorMessage.set('Account already exists. Please login.');
         } else {
           this.step.set('verify');
+          window.scrollTo(0, 0);
           setTimeout(() => this.focusPin(0), 100);
         }
       }

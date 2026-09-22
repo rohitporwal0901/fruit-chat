@@ -52,26 +52,8 @@ import { Product } from '../../core/models/product.model';
           </div>
           <div class="divider"></div>
         }
-        @if (product()!.customizations?.length) {
-          <div class="detail-section">
-            <h3 class="section-heading">Customize Your Order</h3>
-            <div class="customization-list">
-              @for (custom of product()!.customizations!; track custom.id) {
-                <label class="custom-item" [for]="custom.id">
-                  <div class="custom-check-wrap">
-                    <input type="checkbox" [id]="custom.id" [checked]="selectedCustoms().includes(custom.id)" (change)="toggleCustom(custom.id)">
-                    <div class="custom-checkmark">@if(selectedCustoms().includes(custom.id)){<span>✓</span>}</div>
-                  </div>
-                  <span class="custom-name">{{ custom.name }}</span>
-                  @if (custom.extraPrice > 0) {
-                    <span class="custom-price">+ ₹{{ custom.extraPrice }}</span>
-                  }
-                </label>
-              }
-            </div>
-          </div>
-          <div class="divider"></div>
-        }
+       
+         
         <div class="qty-section">
           <h3 class="section-heading">Quantity</h3>
           <div class="qty-stepper">

@@ -41,20 +41,7 @@ import { Product } from '../../core/models/product.model';
           </div>
 
           <!-- Search Bar -->
-          <div class="menu-search-bar">
-            <svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              type="text"
-              placeholder="Search dishes, fruits, sprouts..."
-              [(ngModel)]="searchQuery"
-              (input)="onSearch()">
-            @if (searchQuery) {
-              <button class="clear-btn" (click)="clearSearch()">✕</button>
-            }
-          </div>
+         
         </div>
 
         <!-- Filter Chips integrated into the header -->
