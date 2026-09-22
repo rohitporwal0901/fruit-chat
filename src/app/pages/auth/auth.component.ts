@@ -29,8 +29,8 @@ export class AuthComponent implements OnInit, OnDestroy {
   /* -- Carousel -- */
   readonly photos = [
     'assets/images/auth-slide-fruit-bowl.jpg',
-    'assets/images/auth-slide-juices.jpg',
-    'assets/images/auth-slide-sprouts.jpg',
+    'assets/images/fresh-juice.jpg',
+    'assets/images/auth-slide-sprouts.jpg'
   ];
   readonly carouselTitles = [
     'Fresh Fruits, Naturally Good',
