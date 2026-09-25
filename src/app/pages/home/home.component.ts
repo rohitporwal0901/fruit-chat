@@ -74,52 +74,52 @@ import { Product } from '../../core/models/product.model';
               </div>
             </div>
 
-            <!-- Progress bar with moving rider -->
-            <div class="boc-progress-area">
-              <div class="boc-track">
-                <div class="boc-fill" [style.width.%]="getProgressPercent(activeOrders()[0].status)"></div>
-                <div class="boc-rider" [style.left.%]="getProgressPercent(activeOrders()[0].status)">
-                  <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="24" width="18" height="18" rx="2" fill="#2E7D32"/>
-                    <path d="M6 30 L24 30" stroke="#1B5E20" stroke-width="1.5"/>
-                    <circle cx="15" cy="33" r="3" fill="#4CAF50"/>
-                    <path d="M12 48 L28 48 L32 38 L48 38 L54 48 L60 48 A3 3 0 0 1 60 54 L12 54 A3 3 0 0 1 12 48 Z" fill="#4CAF50"/>
-                    <path d="M46 38 L52 24 L56 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
-                    <ellipse cx="58" cy="42" rx="3" ry="4" fill="#FFC107"/>
-                    <path d="M26 38 C26 24 38 24 40 24 L48 24 L52 32 L40 32 L36 38 Z" fill="#FF9800"/>
-                    <path d="M42 26 L48 34 L54 34" fill="none" stroke="#F57C00" stroke-width="2.5" stroke-linecap="round"/>
-                    <circle cx="44" cy="16" r="6" fill="#FFCC80"/>
-                    <path d="M36 16 A8 8 0 0 1 52 16 Z" fill="#1B5E20"/>
-                    <circle cx="20" cy="54" r="7" fill="#424242"/>
-                    <circle cx="20" cy="54" r="3" fill="#BDBDBD"/>
-                    <circle cx="52" cy="54" r="7" fill="#424242"/>
-                    <circle cx="52" cy="54" r="3" fill="#BDBDBD"/>
-                    <path d="M2 42 L8 42 M0 48 L6 48" stroke="#CFD8DC" stroke-width="1.5" stroke-linecap="round"/>
-                  </svg>
-                </div>
+            <!-- Modern Unified Delivery Timeline -->
+            <div class="boc-timeline-wrap">
+              <div class="boc-track-line">
+                <div class="boc-track-fill" [style.width.%]="getProgressPercent(activeOrders()[0].status)"></div>
               </div>
-            </div>
 
-            <!-- Mini steps row -->
-            <div class="boc-steps-row">
-              <div class="boc-step" [class.boc-step-done]="isStatusAtLeast(activeOrders()[0].status, 'confirmed')" [class.boc-step-active]="activeOrders()[0].status === 'confirmed' || activeOrders()[0].status === 'pending'">
-                <span>📋</span>
-                <span class="boc-step-lbl">Confirmed</span>
-              </div>
-              <div class="boc-step-line" [class.boc-step-line-done]="isStatusAtLeast(activeOrders()[0].status, 'preparing')"></div>
-              <div class="boc-step" [class.boc-step-done]="isStatusAtLeast(activeOrders()[0].status, 'preparing')" [class.boc-step-active]="activeOrders()[0].status === 'preparing'">
-                <span>👨‍🍳</span>
-                <span class="boc-step-lbl">Cooking</span>
-              </div>
-              <div class="boc-step-line" [class.boc-step-line-done]="isStatusAtLeast(activeOrders()[0].status, 'out-for-delivery')"></div>
-              <div class="boc-step" [class.boc-step-done]="isStatusAtLeast(activeOrders()[0].status, 'out-for-delivery')" [class.boc-step-active]="activeOrders()[0].status === 'out-for-delivery'">
-                <span>🛵</span>
-                <span class="boc-step-lbl">On Way</span>
-              </div>
-              <div class="boc-step-line" [class.boc-step-line-done]="activeOrders()[0].status === 'delivered'"></div>
-              <div class="boc-step" [class.boc-step-done]="activeOrders()[0].status === 'delivered'" [class.boc-step-active]="activeOrders()[0].status === 'delivered'">
-                <span>🎉</span>
-                <span class="boc-step-lbl">Delivered</span>
+              <div class="boc-nodes-row">
+                <!-- 1. Confirmed -->
+                <div class="boc-node" [class.done]="isStatusAtLeast(activeOrders()[0].status, 'confirmed')" [class.current]="activeOrders()[0].status === 'confirmed' || activeOrders()[0].status === 'pending'">
+                  <div class="boc-node-circle">
+                    @if (isStatusAtLeast(activeOrders()[0].status, 'preparing')) {
+                      <span>✓</span>
+                    } @else {
+                      <span>📋</span>
+                    }
+                  </div>
+                  <span class="boc-node-label">Confirmed</span>
+                </div>
+
+                <!-- 2. Cooking -->
+                <div class="boc-node" [class.done]="isStatusAtLeast(activeOrders()[0].status, 'preparing')" [class.current]="activeOrders()[0].status === 'preparing'">
+                  <div class="boc-node-circle">
+                    @if (isStatusAtLeast(activeOrders()[0].status, 'out-for-delivery')) {
+                      <span>✓</span>
+                    } @else {
+                      <span>👨‍🍳</span>
+                    }
+                  </div>
+                  <span class="boc-node-label">Kitchen</span>
+                </div>
+
+                <!-- 3. Out for Delivery -->
+                <div class="boc-node" [class.done]="isStatusAtLeast(activeOrders()[0].status, 'out-for-delivery')" [class.current]="activeOrders()[0].status === 'out-for-delivery'">
+                  <div class="boc-node-circle" [class.pulsing]="activeOrders()[0].status === 'out-for-delivery'">
+                    <span>🛵</span>
+                  </div>
+                  <span class="boc-node-label">On Way</span>
+                </div>
+
+                <!-- 4. Delivered -->
+                <div class="boc-node" [class.done]="activeOrders()[0].status === 'delivered'" [class.current]="activeOrders()[0].status === 'delivered'">
+                  <div class="boc-node-circle">
+                    <span>🎉</span>
+                  </div>
+                  <span class="boc-node-label">Delivered</span>
+                </div>
               </div>
             </div>
           </div>
@@ -444,65 +444,88 @@ import { Product } from '../../core/models/product.model';
     .boc-call-btn { background: #F0FBF2; border: 1.5px solid #C8E6C9; color: #2E7D32; }
     .boc-call-btn:hover { background: #E8F5E9; }
 
-    /* Progress bar */
-    .boc-progress-area {
+    /* Modern Unified Delivery Timeline */
+    .boc-timeline-wrap {
       position: relative;
-      margin-top: 40px;
-      padding-bottom: 4px;
+      margin-top: 14px;
+      padding: 4px 6px 2px;
     }
-    .boc-track {
-      width: 100%; height: 5px;
-      background: #E8F5E9; border-radius: 999px;
+    .boc-track-line {
+      position: absolute;
+      top: 18px;
+      left: 32px;
+      right: 32px;
+      height: 3px;
+      background: #E5E7EB;
+      border-radius: 99px;
+      z-index: 1;
+    }
+    .boc-track-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2E7D32, #4CAF50);
+      border-radius: 99px;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .boc-nodes-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       position: relative;
-    }
-    .boc-fill {
-      height: 100%; background: linear-gradient(90deg, #2E7D32, #4CAF50);
-      border-radius: 999px;
-      transition: width 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .boc-rider {
-      position: absolute; top: -40px;
-      transform: translateX(-50%);
-      transition: left 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
-      animation: bocBounce 1.1s infinite alternate;
       z-index: 2;
     }
-    @keyframes bocBounce {
-      from { transform: translateX(-50%) translateY(0); }
-      to { transform: translateX(-50%) translateY(-4px); }
-    }
-
-    /* Mini steps row */
-    .boc-steps-row {
-      display: flex;
-      align-items: center;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid #F0F0F0;
-    }
-    .boc-step {
+    .boc-node {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 5px;
+      width: 58px;
+    }
+    .boc-node-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #F3F4F6;
+      border: 2px solid #E5E7EB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 13px;
-      flex-shrink: 0;
-      opacity: 0.4;
-      transition: opacity 0.3s;
+      color: #9CA3AF;
+      transition: all 0.3s;
     }
-    .boc-step.boc-step-done, .boc-step.boc-step-active { opacity: 1; }
-    .boc-step-lbl { font-size: 8.5px; font-weight: 700; color: #555; }
-    .boc-step.boc-step-active .boc-step-lbl { color: #2E7D32; font-weight: 800; }
-    .boc-step-line {
-      flex: 1;
-      height: 2px;
-      background: #E8E8E8;
-      border-radius: 1px;
-      margin: 0 3px;
-      transition: background 0.3s;
+    .boc-node.done .boc-node-circle {
+      background: #2E7D32;
+      border-color: #2E7D32;
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(46, 125, 50, 0.28);
     }
-    .boc-step-line.boc-step-line-done { background: linear-gradient(90deg, #2E7D32, #4CAF50); }
+    .boc-node.current .boc-node-circle {
+      background: #E8F5E9;
+      border-color: #2E7D32;
+      color: #2E7D32;
+      font-size: 14px;
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+    }
+    .boc-node-circle.pulsing {
+      animation: livePulse 1.4s infinite;
+    }
+    .boc-node-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9CA3AF;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .boc-node.done .boc-node-label {
+      color: #1F2937;
+      font-weight: 700;
+    }
+    .boc-node.current .boc-node-label {
+      color: #2E7D32;
+      font-weight: 800;
+    }
 
     /* ===== HERO BANNER SLIDER (REFERENCE CARD STYLE) ===== */
     .banner-section {

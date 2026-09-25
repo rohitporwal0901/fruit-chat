@@ -1,9 +1,11 @@
-import { Component, inject, signal, output, AfterViewInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import {
+  Component, inject, signal, Output, EventEmitter,
+  OnInit, OnDestroy, ViewChild, ElementRef, NgZone
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LocationService, GeocodeResult } from '../../core/services/location.service';
-import { AddressOption } from '../../core/models/user.model';
-import { AuthService } from '../../core/services/auth.service';
+import { MapService, SearchResult } from '../../core/services/map.service';
+import { CartService } from '../../core/services/cart.service';
 
 declare const L: any;
 
@@ -12,139 +14,179 @@ declare const L: any;
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="map-modal-backdrop" (click)="close()">
-      <div class="map-modal-card" (click)="$event.stopPropagation()">
-        
-        <!-- HEADER -->
-        <div class="map-header">
-          <div class="header-info">
-            <h3 class="header-title">Select Delivery Location</h3>
-            <p class="header-sub">Move map to place pin accurately</p>
-          </div>
-          <button class="close-btn" (click)="close()" type="button" aria-label="Close">✕</button>
+    <!-- BOTTOM SHEET OVERLAY -->
+    <div class="mp-overlay" (click)="onOverlayClick($event)">
+      <div class="mp-sheet" [class.mp-sheet-open]="isOpen()">
+
+        <!-- SHEET HANDLE -->
+        <div class="mp-handle-wrap" (click)="close()">
+          <div class="mp-handle"></div>
         </div>
 
-        <!-- SEARCH BAR OVER MAP -->
-        <div class="search-overlay">
-          <div class="search-input-box">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <!-- HEADER -->
+        <div class="mp-header">
+          <div class="mp-header-text">
+            <h3 class="mp-title">📍 Select Delivery Location</h3>
+            <p class="mp-sub">Drag pin on map or search Indore locations</p>
+          </div>
+          <button class="mp-close-btn" (click)="close()" aria-label="Close">✕</button>
+        </div>
+
+        <!-- SEARCH CONTAINER -->
+        <div class="mp-search-container">
+          <div class="mp-search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input 
-              type="text" 
-              placeholder="Search area, apartment or landmark..." 
+            <input
+              type="text"
+              class="mp-search-input"
               [(ngModel)]="searchQuery"
               (input)="onSearchInput()"
+              (focus)="onSearchFocus()"
+              (click)="onSearchFocus()"
+              placeholder="Search colony, mall, area in Indore..."
+              id="map-search-input"
+              autocomplete="off"
             />
-            @if (searchQuery) {
-              <button class="clear-btn" (click)="searchQuery = ''; searchResults.set([])">✕</button>
+            @if (isSearching()) {
+              <div class="search-spin"></div>
             }
+            @if (searchQuery) {
+              <button class="mp-clear-btn" (click)="clearSearch()" title="Clear">✕</button>
+            }
+            <button class="mp-gps-pill" (click)="useCurrentLocation()" [disabled]="gpsLoading()" title="Detect My Current GPS Location">
+              @if (gpsLoading()) {
+                <div class="gps-spin"></div>
+              } @else {
+                <span>🎯 GPS</span>
+              }
+            </button>
           </div>
 
-          <!-- SEARCH SUGGESTIONS -->
-          @if (searchResults().length > 0) {
-            <div class="search-results-list">
-              @for (item of searchResults(); track item.fullAddress) {
-                <div class="search-item" (click)="selectSearchResult(item)">
-                  <span class="item-icon">📍</span>
-                  <div class="item-text">
-                    <strong class="item-main">{{ item.detail }}</strong>
-                    <span class="item-sub">{{ item.fullAddress }}</span>
+          <!-- GOOGLE MAPS STYLE AUTOCOMPLETE SUGGESTIONS -->
+          @if (suggestions().length > 0) {
+            <div class="mp-suggestions-dropdown">
+              <div class="sug-header">
+                <span>Indore Locations & Suggestions</span>
+                <button class="sug-close-btn" (click)="suggestions.set([])">✕</button>
+              </div>
+              <div class="sug-list">
+                @for (s of suggestions(); track s.lat + '-' + s.lng + '-' + s.shortName) {
+                  <div
+                    class="mp-sug-item"
+                    (mousedown)="$event.preventDefault(); selectSuggestion(s)"
+                    (click)="selectSuggestion(s)"
+                  >
+                    <div class="sug-icon-bubble">{{ s.icon || '📍' }}</div>
+                    <div class="sug-text-area">
+                      <div class="sug-title-row">
+                        <span class="sug-title">{{ s.shortName }}</span>
+                        @if (s.distanceText) {
+                          <span class="sug-dist-chip">{{ s.distanceText }}</span>
+                        }
+                      </div>
+                      <p class="sug-desc">{{ s.displayName }}</p>
+                    </div>
                   </div>
-                </div>
-              }
+                }
+              </div>
             </div>
           }
         </div>
 
-        <!-- MAP CONTAINER -->
-        <div class="map-wrapper">
-          <div #mapContainer class="leaflet-map"></div>
+        <!-- SCROLLABLE BODY (Map + Route Details) -->
+        <div class="mp-scroll-body">
           
-          <!-- FIXED CENTER PIN (SWIGGY/ZOMATO STYLE) -->
-          <div class="center-pin-container" [class.bouncing]="isDragging()">
-            <div class="pin-pulse"></div>
-            <div class="pin-icon">
-              <svg viewBox="0 0 24 24" width="38" height="38" fill="#2E7D32">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>
+          <!-- MAP CONTAINER -->
+          <div class="mp-map-container">
+            <div #mapEl class="mp-map"></div>
+            <div class="map-floating-badge">
+              <span>👆 Tap map or drag red pin to adjust</span>
             </div>
           </div>
 
-          <!-- CURRENT GPS BUTTON -->
-          <button class="gps-float-btn" (click)="locateCurrentPosition()" [disabled]="isLocating()" type="button">
-            @if (isLocating()) {
-              <div class="spinner"></div>
-            } @else {
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2E7D32" stroke-width="2.5">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
-              </svg>
-            }
-            <span>Use Current Location</span>
-          </button>
+          <!-- ROUTE INFO CARD -->
+          <div class="mp-route-card">
+            
+            <!-- PICKUP POINT -->
+            <div class="route-item pickup-item">
+              <div class="route-node green"></div>
+              <div class="route-content">
+                <div class="route-tag green-tag">STORE PICKUP</div>
+                <p class="route-main">Atal Dwar, LIG, Indore</p>
+                <span class="route-sub">Fresh Fruit & Chaat Kitchen</span>
+              </div>
+            </div>
+
+            <!-- CONNECTOR WITH LIVE ROUTE STATS -->
+            <div class="route-connector-row">
+              <div class="route-vert-line"></div>
+              <div class="route-stats-pill">
+                @if (routeLoading()) {
+                  <div class="calc-loading">
+                    <div class="route-spin"></div>
+                    <span>Calculating real road distance...</span>
+                  </div>
+                } @else if (distanceKm() > 0) {
+                  <div class="chips-flex">
+                    <span class="stat-badge dist-badge">📏 {{ distanceKm() }} km</span>
+                    <span class="stat-badge eta-badge">⏱️ {{ etaMin() }} mins</span>
+                    <span class="stat-badge" [class.charge-ok]="!outOfRange()" [class.charge-err]="outOfRange()">
+                      {{ outOfRange() ? '❌ Out of range (>10km)' : '💰 Delivery: ₹' + deliveryCharge() }}
+                    </span>
+                  </div>
+                } @else {
+                  <span class="calc-idle">Tap map or search above to select drop point</span>
+                }
+              </div>
+            </div>
+
+            <!-- DROP POINT -->
+            <div class="route-item drop-item">
+              <div class="route-node red"></div>
+              <div class="route-content">
+                <div class="route-tag red-tag">DELIVERY DROP</div>
+                <p class="route-main">{{ dropAddress() || 'Drag red pin on map or search above' }}</p>
+                @if (dropAddress()) {
+                  <span class="route-sub verified">✓ Location Selected</span>
+                }
+              </div>
+            </div>
+
+          </div>
+
+          @if (gpsError()) {
+            <div class="mp-gps-error">
+              ⚠️ {{ gpsError() }}
+            </div>
+          }
+
         </div>
 
-        <!-- BOTTOM ADDRESS DETAILS SHEET -->
-        <div class="location-details-sheet">
-          <div class="address-preview">
-            <div class="addr-badge">DELIVERING TO</div>
-            <h4 class="addr-heading">{{ currentDetail() || 'Detecting location...' }}</h4>
-            <p class="addr-full">{{ currentFullAddress() }}</p>
-          </div>
-
-          <!-- FLAT / HOUSE NO INPUT -->
-          <div class="form-row">
-            <input 
-              type="text" 
-              class="flat-input" 
-              placeholder="House / Flat / Floor No. (Optional)" 
-              [(ngModel)]="flatNumber"
-            />
-          </div>
-
-          <!-- ADDRESS TAG SELECTOR -->
-          <div class="tag-selector">
-            <span class="tag-title">Save as:</span>
-            <div class="tag-pills">
-              <button 
-                type="button" 
-                class="tag-pill" 
-                [class.active]="selectedTag() === 'Home'" 
-                (click)="selectedTag.set('Home')"
-              >
-                🏠 Home
-              </button>
-              <button 
-                type="button" 
-                class="tag-pill" 
-                [class.active]="selectedTag() === 'Work'" 
-                (click)="selectedTag.set('Work')"
-              >
-                🏢 Work
-              </button>
-              <button 
-                type="button" 
-                class="tag-pill" 
-                [class.active]="selectedTag() === 'Other'" 
-                (click)="selectedTag.set('Other')"
-              >
-                📍 Other
-              </button>
+        <!-- FIXED STICKY FOOTER -->
+        <div class="mp-footer">
+          @if (outOfRange()) {
+            <div class="mp-out-range-banner">
+              ⚠️ Delivery not available beyond 10 km from Atal Dwar, LIG. Please choose a nearby location.
             </div>
-          </div>
-
-          <!-- CONFIRM BUTTON -->
-          <button 
-            type="button" 
-            class="confirm-btn" 
-            [disabled]="isGeocoding()"
+          }
+          <button
+            class="mp-confirm-btn"
+            id="confirm-location-btn"
+            [disabled]="!dropAddress() || outOfRange() || routeLoading()"
             (click)="confirmLocation()"
           >
-            @if (isGeocoding()) {
-              <span>Detecting Address...</span>
+            @if (routeLoading()) {
+              <div class="btn-spin"></div>
+              <span>Calculating Route...</span>
+            } @else if (!dropAddress()) {
+              <span>Select Location on Map</span>
+            } @else if (outOfRange()) {
+              <span>Location Out of Range (>10km)</span>
             } @else {
-              <span>Confirm Location & Proceed</span>
+              <span>Confirm Delivery Location (₹{{ deliveryCharge() }})</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             }
           </button>
         </div>
@@ -153,518 +195,834 @@ declare const L: any;
     </div>
   `,
   styles: [`
-    .map-modal-backdrop {
+    /* OVERLAY - GUARANTEED HIGHEST Z-INDEX (99999) */
+    .mp-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
-      z-index: 3000;
+      z-index: 99999;
       display: flex;
       align-items: flex-end;
-      justify-content: center;
-      animation: fadeIn 0.2s ease-out;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
 
-    @media (min-width: 768px) {
-      .map-modal-backdrop {
-        align-items: center;
-        padding: 20px;
-      }
-    }
-
-    .map-modal-card {
+    /* BOTTOM SHEET */
+    .mp-sheet {
       width: 100%;
-      max-width: 520px;
-      background: #ffffff;
+      height: 90vh;
+      max-height: 90vh;
+      background: #FFFFFF;
       border-radius: 24px 24px 0 0;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.28);
       position: relative;
-      max-height: 92vh;
-      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
-      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @media (min-width: 768px) {
-      .map-modal-card {
-        border-radius: 24px;
-        height: 85vh;
-      }
+    .mp-sheet.mp-sheet-open {
+      transform: translateY(0);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .map-header {
+    /* HANDLE */
+    .mp-handle-wrap {
       display: flex;
-      align-items: center;
+      justify-content: center;
+      padding: 10px 0 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .mp-handle {
+      width: 44px;
+      height: 5px;
+      background: #E0E0E0;
+      border-radius: 99px;
+    }
+
+    /* HEADER */
+    .mp-header {
+      display: flex;
       justify-content: space-between;
-      padding: 14px 18px;
-      background: #ffffff;
-      border-bottom: 1px solid #F0F0F0;
-      z-index: 10;
+      align-items: center;
+      padding: 4px 18px 8px;
+      flex-shrink: 0;
     }
-
-    .header-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 16px;
+    .mp-header-text { flex: 1; }
+    .mp-title {
+      font-size: 16.5px;
       font-weight: 800;
-      color: #111827;
+      color: #1A1A1A;
       margin: 0;
+      letter-spacing: -0.2px;
     }
-
-    .header-sub {
+    .mp-sub {
       font-size: 11.5px;
-      color: #6B7280;
+      color: #71717A;
       margin: 2px 0 0;
     }
+    .mp-close-btn {
+      background: #F4F4F5;
+      border: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 700;
+      color: #52525B;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      &:hover { background: #E4E4E7; color: #18181B; }
+      &:active { transform: scale(0.92); }
+    }
 
-    .close-btn {
+    /* SEARCH CONTAINER */
+    .mp-search-container {
+      padding: 0 16px 10px;
+      position: relative;
+      flex-shrink: 0;
+      z-index: 1000;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .mp-search-box {
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      background: #F4F5F7;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 4px 8px 4px 12px;
+      gap: 8px;
+      transition: all 0.2s;
+      &:focus-within {
+        border-color: #2E7D32;
+        background: #FFFFFF;
+        box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12);
+      }
+    }
+    .search-icon {
+      color: #71717A;
+      flex-shrink: 0;
+    }
+    .mp-search-input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      background: transparent;
+      padding: 8px 0;
+      font-size: 13.5px;
+      font-family: inherit;
+      color: #1A1A1A;
+      outline: none;
+      &::placeholder { color: #9CA3AF; }
+    }
+    .search-spin {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #D1D5DB;
+      border-top-color: #2E7D32;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    .mp-clear-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: #9CA3AF;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      &:hover { color: #374151; }
+    }
+    .mp-gps-pill {
+      background: #E8F5E9;
+      border: 1px solid #C8E6C9;
+      color: #2E7D32;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      &:hover:not(:disabled) {
+        background: #C8E6C9;
+      }
+      &:disabled { opacity: 0.6; cursor: not-allowed; }
+    }
+    .gps-spin {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #A5D6A7;
+      border-top-color: #2E7D32;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* GOOGLE MAPS STYLE AUTOCOMPLETE DROPDOWN */
+    .mp-suggestions-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 16px;
+      right: 16px;
+      background: #FFFFFF;
+      border-radius: 14px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.08);
+      max-height: 270px;
+      display: flex;
+      flex-direction: column;
+      z-index: 100000;
+      overflow: hidden;
+      animation: popIn 0.2s ease-out;
+    }
+    .sug-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      background: #F9FAFB;
+      border-bottom: 1px solid #F3F4F6;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #6B7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .sug-close-btn {
+      background: none;
+      border: none;
+      color: #9CA3AF;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px;
+      &:hover { color: #374151; }
+    }
+    .sug-list {
+      overflow-y: auto;
+      flex: 1;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mp-sug-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #F3F4F6;
+      transition: background 0.15s;
+      &:last-child { border-bottom: none; }
+      &:hover { background: #F0FDF4; }
+      &:active { background: #DCFCE7; }
+    }
+    .sug-icon-bubble {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      border: none;
       background: #F3F4F6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .sug-text-area { flex: 1; min-width: 0; }
+    .sug-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .sug-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #111827;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sug-dist-chip {
+      font-size: 10px;
+      font-weight: 700;
+      color: #15803D;
+      background: #DCFCE7;
+      padding: 2px 7px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+    .sug-desc {
+      font-size: 11.5px;
+      color: #6B7280;
+      margin: 2px 0 0;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* SCROLLABLE BODY */
+    .mp-scroll-body {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+      padding: 0 16px 14px;
+      gap: 12px;
+    }
+
+    /* MAP CONTAINER */
+    .mp-map-container {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      border: 1px solid #E5E7EB;
+      flex-shrink: 0;
+    }
+    .mp-map {
+      height: 230px;
+      width: 100%;
+      z-index: 1;
+      background: #E8ECEF;
+    }
+    .map-floating-badge {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
       color: #374151;
-      font-size: 14px;
+      pointer-events: none;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    /* ROUTE CARD */
+    .mp-route-card {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .route-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .route-node {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 3px;
+      &.green {
+        background: #2E7D32;
+        box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.18);
+      }
+      &.red {
+        background: #E53935;
+        box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.18);
+      }
+    }
+    .route-content { flex: 1; min-width: 0; }
+    .route-tag {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      &.green-tag { color: #2E7D32; }
+      &.red-tag { color: #E53935; }
+    }
+    .route-main {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1F2937;
+      margin: 0;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .route-sub {
+      font-size: 11px;
+      color: #9CA3AF;
+      margin-top: 2px;
+      display: block;
+      &.verified { color: #16A34A; font-weight: 600; }
+    }
+
+    /* CONNECTOR */
+    .route-connector-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 6px 0;
+      padding-left: 6px;
+    }
+    .route-vert-line {
+      width: 2px;
+      height: 42px;
+      background: #D1D5DB;
+      border-radius: 99px;
+    }
+    .route-stats-pill { flex: 1; min-width: 0; }
+    .calc-loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #2E7D32;
+    }
+    .route-spin {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #A7F3D0;
+      border-top-color: #059669;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .calc-idle {
+      font-size: 11.5px;
+      color: #9CA3AF;
+      font-style: italic;
+    }
+
+    .chips-flex {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .stat-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+      &.dist-badge {
+        background: #EFF6FF;
+        color: #1D4ED8;
+      }
+      &.eta-badge {
+        background: #FEF3C7;
+        color: #B45309;
+      }
+      &.charge-ok {
+        background: #DCFCE7;
+        color: #15803D;
+      }
+      &.charge-err {
+        background: #FEE2E2;
+        color: #B91C1C;
+      }
+    }
+
+    .mp-gps-error {
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      color: #DC2626;
+      font-weight: 600;
+    }
+
+    /* FOOTER (FIXED PINNED AT BOTTOM) */
+    .mp-footer {
+      flex-shrink: 0;
+      background: #FFFFFF;
+      border-top: 1px solid #F3F4F6;
+      padding: 12px 18px max(20px, env(safe-area-inset-bottom));
+      box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.08);
+      z-index: 50;
+      position: relative;
+    }
+    .mp-out-range-banner {
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 11.5px;
+      color: #DC2626;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+      line-height: 1.35;
+    }
+    .mp-confirm-btn {
+      width: 100%;
+      height: 50px;
+      background: linear-gradient(135deg, #2E7D32, #1B5E20);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      &:active { background: #E5E7EB; }
-    }
-
-    /* SEARCH OVERLAY */
-    .search-overlay {
-      position: absolute;
-      top: 68px;
-      left: 14px;
-      right: 14px;
-      z-index: 1000;
-    }
-
-    .search-input-box {
-      display: flex;
-      align-items: center;
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 9px 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
-      border: 1px solid #E5E7EB;
-    }
-
-    .search-icon {
-      width: 16px;
-      height: 16px;
-      color: #2E7D32;
-      flex-shrink: 0;
-      margin-right: 8px;
-    }
-
-    .search-input-box input {
-      flex: 1;
-      border: none;
-      outline: none;
-      font-size: 13px;
-      color: #111827;
-      font-family: inherit;
-      &::placeholder { color: #9CA3AF; }
-    }
-
-    .clear-btn {
-      border: none;
-      background: transparent;
-      color: #9CA3AF;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .search-results-list {
-      margin-top: 6px;
-      background: #ffffff;
-      border-radius: 14px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      max-height: 190px;
-      overflow-y: auto;
-      border: 1px solid #E5E7EB;
-    }
-
-    .search-item {
-      display: flex;
-      align-items: flex-start;
       gap: 10px;
-      padding: 10px 14px;
-      cursor: pointer;
-      border-bottom: 1px solid #F3F4F6;
-      &:last-child { border-bottom: none; }
-      &:active, &:hover { background: #F9FAFB; }
-    }
-
-    .item-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
-    .item-text { display: flex; flex-direction: column; min-width: 0; }
-    .item-main { font-size: 13px; color: #111827; font-weight: 700; }
-    .item-sub { font-size: 11px; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px; }
-
-    /* MAP WRAPPER */
-    .map-wrapper {
-      position: relative;
-      height: 250px;
-      width: 100%;
-      background: #e5e3df;
-      overflow: hidden;
-    }
-
-    @media (min-width: 768px) {
-      .map-wrapper {
-        height: 320px;
+      box-shadow: 0 6px 20px rgba(46, 125, 50, 0.35);
+      transition: all 0.2s;
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 26px rgba(46, 125, 50, 0.45);
+      }
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+      &:disabled {
+        background: #E5E7EB;
+        color: #9CA3AF;
+        box-shadow: none;
+        cursor: not-allowed;
       }
     }
-
-    .leaflet-map {
-      width: 100%;
-      height: 100%;
-    }
-
-    /* CENTER PIN */
-    .center-pin-container {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -100%);
-      pointer-events: none;
-      z-index: 999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: transform 0.15s ease-out;
-      &.bouncing {
-        transform: translate(-50%, -120%);
-      }
-    }
-
-    .pin-pulse {
-      position: absolute;
-      bottom: 0;
-      width: 12px;
-      height: 6px;
-      background: rgba(0, 0, 0, 0.25);
-      border-radius: 50%;
-      filter: blur(1px);
-    }
-
-    .pin-icon {
-      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
-    }
-
-    /* GPS BUTTON */
-    .gps-float-btn {
-      position: absolute;
-      bottom: 14px;
-      right: 14px;
-      background: #ffffff;
-      border: 1.5px solid #2E7D32;
-      border-radius: 999px;
-      padding: 7px 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #2E7D32;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-      z-index: 999;
-      &:active { transform: scale(0.96); }
-    }
-
-    .spinner {
+    .btn-spin {
       width: 16px;
       height: 16px;
-      border: 2px solid #2E7D32;
-      border-top-color: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #FFFFFF;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* DETAILS SHEET */
-    .location-details-sheet {
-      padding: 16px 18px 22px;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .addr-badge {
-      font-size: 9.5px;
-      font-weight: 800;
-      color: #2E7D32;
-      letter-spacing: 0.6px;
-    }
-
-    .addr-heading {
-      font-family: 'Outfit', sans-serif;
-      font-size: 16px;
-      font-weight: 800;
-      color: #111827;
-      margin: 3px 0 2px;
-    }
-
-    .addr-full {
-      font-size: 11.5px;
-      color: #6B7280;
-      line-height: 1.4;
-      margin: 0;
-      max-height: 34px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    .flat-input {
-      width: 100%;
-      border: 1.5px solid #E5E7EB;
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-size: 13px;
-      outline: none;
-      box-sizing: border-box;
-      font-family: inherit;
-      &:focus {
-        border-color: #2E7D32;
-        box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
-      }
-    }
-
-    .tag-selector {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .tag-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    .tag-pills {
-      display: flex;
-      gap: 8px;
-    }
-
-    .tag-pill {
-      border: 1.5px solid #E5E7EB;
-      background: #F9FAFB;
-      border-radius: 999px;
-      padding: 5px 12px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #4B5563;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      &.active {
-        border-color: #2E7D32;
-        background: #E8F5E9;
-        color: #1B5E20;
-      }
-    }
-
-    .confirm-btn {
-      width: 100%;
-      background: #2E7D32;
-      color: #ffffff;
-      border: none;
-      border-radius: 14px;
-      padding: 13px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(46, 125, 50, 0.3);
-      transition: all 0.2s ease;
-      &:active {
-        transform: scale(0.98);
-        background: #1B5E20;
-      }
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes popIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
   `]
 })
-export class MapPickerComponent implements AfterViewInit, OnDestroy {
-  private locationService = inject(LocationService);
-  private authService = inject(AuthService);
+export class MapPickerComponent implements OnInit, OnDestroy {
+  @Output() locationConfirmed = new EventEmitter<void>();
+  @Output() closed = new EventEmitter<void>();
+  @ViewChild('mapEl') mapElRef!: ElementRef<HTMLDivElement>;
 
-  @ViewChild('mapContainer') mapContainerRef!: ElementRef<HTMLDivElement>;
+  mapService  = inject(MapService);
+  cartService = inject(CartService);
+  ngZone      = inject(NgZone);
 
-  readonly onSelect = output<AddressOption>();
-  readonly onClose = output<void>();
+  isOpen         = signal(false);
+  searchQuery    = '';
+  suggestions    = signal<SearchResult[]>([]);
+  dropAddress    = signal('');
+  distanceKm     = signal(0);
+  etaMin         = signal(0);
+  deliveryCharge = signal(0);
+  outOfRange     = signal(false);
+  routeLoading   = signal(false);
+  isSearching    = signal(false);
+  gpsLoading     = signal(false);
+  gpsError       = signal('');
 
-  // Map state
   private map: any = null;
-  readonly isDragging = signal<boolean>(false);
-  readonly isLocating = signal<boolean>(false);
-  readonly isGeocoding = signal<boolean>(false);
+  private pickupMarker: any = null;
+  private dropMarker: any = null;
+  private routeLayer: any = null;
+  private routeCasingLayer: any = null;
+  private searchTimer: any = null;
 
-  // Address details state
-  readonly currentDetail = signal<string>('Detecting location...');
-  readonly currentFullAddress = signal<string>('Please wait while we resolve your address.');
-  private currentCoords = { lat: 22.7196, lng: 75.8577 };
-
-  flatNumber = '';
-  readonly selectedTag = signal<'Home' | 'Work' | 'Other'>('Home');
-
-  // Search state
-  searchQuery = '';
-  readonly searchResults = signal<GeocodeResult[]>([]);
-  private searchDebounce: any = null;
-
-  ngAfterViewInit(): void {
-    this.initMap();
-  }
-
-  ngOnDestroy(): void {
-    if (this.map) {
-      this.map.remove();
-    }
+  ngOnInit(): void {
+    setTimeout(() => this.isOpen.set(true), 30);
+    setTimeout(() => this.initMap(), 120);
   }
 
   private initMap(): void {
+    if (!this.mapElRef?.nativeElement) return;
+
     if (typeof L === 'undefined') {
-      console.warn('Leaflet not loaded from CDN yet');
-      return;
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => this.buildMap();
+      document.head.appendChild(script);
+    } else {
+      this.buildMap();
     }
+  }
 
-    const active = this.authService.activeAddress();
-    const initLat = active.lat || 22.7196;
-    const initLng = active.lng || 75.8577;
-    this.currentCoords = { lat: initLat, lng: initLng };
+  private buildMap(): void {
+    const el = this.mapElRef.nativeElement;
+    const pickup = this.mapService.PICKUP;
 
-    this.map = L.map(this.mapContainerRef.nativeElement, {
-      center: [initLat, initLng],
-      zoom: 16,
-      zoomControl: false
-    });
+    this.map = L.map(el, {
+      zoomControl: true,
+      attributionControl: false
+    }).setView([pickup.lat, pickup.lng], 14);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
+    // ESRI World Street Map: Clean, high-res, Google Maps aesthetic, 100% free with NO "KEY REQUIRED" watermark!
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19
     }).addTo(this.map);
 
-    this.map.on('movestart', () => {
-      this.isDragging.set(true);
+    // Pickup marker: Atal Dwar, LIG (Green with pulsing ring)
+    const greenIcon = L.divIcon({
+      html: `
+        <div style="position:relative;display:flex;align-items:center;justify-content:center;width:34px;height:34px">
+          <div style="position:absolute;width:30px;height:30px;background:rgba(46,125,50,0.3);border-radius:50%"></div>
+          <div style="width:18px;height:18px;background:#2E7D32;border:3px solid #FFFFFF;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,0.35);z-index:2"></div>
+        </div>
+      `,
+      className: '',
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
     });
 
-    this.map.on('moveend', () => {
-      this.isDragging.set(false);
-      const center = this.map.getCenter();
-      this.currentCoords = { lat: center.lat, lng: center.lng };
-      this.updateAddressFromCoords(center.lat, center.lng);
+    this.pickupMarker = L.marker([pickup.lat, pickup.lng], { icon: greenIcon, draggable: false })
+      .addTo(this.map)
+      .bindPopup('<b>🟢 Store Pickup</b><br>Atal Dwar, LIG Colony, Indore');
+
+    // Drop marker: Red pin (Draggable)
+    const redIcon = L.divIcon({
+      html: `
+        <div style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.35));cursor:grab">
+          <svg width="34" height="42" viewBox="0 0 24 30" fill="none">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 18 12 18s12-9 12-18c0-6.63-5.37-12-12-12z" fill="#E53935"/>
+            <circle cx="12" cy="11" r="4.5" fill="#FFFFFF"/>
+          </svg>
+        </div>
+      `,
+      className: '',
+      iconSize: [34, 42],
+      iconAnchor: [17, 40]
     });
 
-    // Initial reverse geocode
-    this.updateAddressFromCoords(initLat, initLng);
+    const savedLat = this.cartService.dropLat();
+    const savedLng = this.cartService.dropLng();
+    const dropStart = (savedLat && savedLng)
+      ? [savedLat, savedLng]
+      : [pickup.lat - 0.012, pickup.lng - 0.008];
+
+    this.dropMarker = L.marker(dropStart, { icon: redIcon, draggable: true })
+      .addTo(this.map)
+      .bindTooltip('📍 Drag me to delivery spot', { permanent: false, direction: 'top' });
+
+    this.dropMarker.on('dragend', () => {
+      const pos = this.dropMarker.getLatLng();
+      this.ngZone.run(() => this.onDropMoved(pos.lat, pos.lng));
+    });
+
+    this.map.on('click', (e: any) => {
+      this.dropMarker.setLatLng([e.latlng.lat, e.latlng.lng]);
+      this.ngZone.run(() => this.onDropMoved(e.latlng.lat, e.latlng.lng));
+    });
+
+    this.onDropMoved(dropStart[0], dropStart[1]);
   }
 
-  async locateCurrentPosition(): Promise<void> {
-    this.isLocating.set(true);
-    try {
-      const coords = await this.locationService.getCurrentPosition();
-      this.currentCoords = coords;
-      if (this.map) {
-        this.map.setView([coords.lat, coords.lng], 16, { animate: true });
+  async onDropMoved(lat: number, lng: number): Promise<void> {
+    this.routeLoading.set(true);
+
+    const addr = await this.mapService.reverseGeocode(lat, lng);
+    this.dropAddress.set(addr);
+
+    const pickup = this.mapService.PICKUP;
+    const route = await this.mapService.getRoute(pickup.lat, pickup.lng, lat, lng);
+
+    if (route) {
+      const charge = this.mapService.getDeliveryCharge(route.distanceKm);
+      const serviceable = this.mapService.isServiceable(route.distanceKm);
+
+      this.distanceKm.set(route.distanceKm);
+      this.etaMin.set(this.mapService.getEtaMinutes(route.distanceKm, route.durationMinutes));
+      this.deliveryCharge.set(charge > 0 ? charge : 15);
+      this.outOfRange.set(!serviceable);
+
+      if (this.routeCasingLayer) {
+        this.map.removeLayer(this.routeCasingLayer);
+        this.routeCasingLayer = null;
       }
-      await this.updateAddressFromCoords(coords.lat, coords.lng);
-    } finally {
-      this.isLocating.set(false);
+      if (this.routeLayer) {
+        this.map.removeLayer(this.routeLayer);
+        this.routeLayer = null;
+      }
+
+      if (serviceable) {
+        this.routeCasingLayer = L.polyline(route.route, {
+          color: '#155724',
+          weight: 7,
+          opacity: 0.35,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(this.map);
+
+        this.routeLayer = L.polyline(route.route, {
+          color: '#2E7D32',
+          weight: 4.5,
+          opacity: 0.95,
+          lineJoin: 'round',
+          lineCap: 'round'
+        }).addTo(this.map);
+      } else {
+        this.routeLayer = L.polyline(route.route, {
+          color: '#E53935',
+          weight: 4,
+          opacity: 0.8,
+          dashArray: '8, 8'
+        }).addTo(this.map);
+      }
+
+      this.map.fitBounds([[pickup.lat, pickup.lng], [lat, lng]], {
+        padding: [35, 35],
+        maxZoom: 16
+      });
     }
+
+    this.routeLoading.set(false);
   }
 
-  private async updateAddressFromCoords(lat: number, lng: number): Promise<void> {
-    this.isGeocoding.set(true);
-    try {
-      const res = await this.locationService.reverseGeocode(lat, lng);
-      this.currentDetail.set(res.detail);
-      this.currentFullAddress.set(res.fullAddress);
-    } catch {
-      this.currentDetail.set('Selected Area');
-      this.currentFullAddress.set(`Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-    } finally {
-      this.isGeocoding.set(false);
-    }
+  onSearchFocus(): void {
+    // Show top Indore hotspots immediately on focus / click
+    const popular = this.mapService.INDORE_PLACES.slice(0, 8).map(p => {
+      const dist = this.mapService.getHaversineDistanceKm(
+        this.mapService.PICKUP.lat, this.mapService.PICKUP.lng, p.lat, p.lng
+      );
+      return {
+        lat: p.lat,
+        lng: p.lng,
+        shortName: p.name,
+        displayName: p.address,
+        icon: p.icon,
+        distanceKm: dist,
+        distanceText: `${dist} km away`
+      };
+    });
+    this.suggestions.set(popular);
   }
 
-  onSearchInput(): void {
-    clearTimeout(this.searchDebounce);
-    if (!this.searchQuery || this.searchQuery.trim().length < 3) {
-      this.searchResults.set([]);
+  async onSearchInput(): Promise<void> {
+    clearTimeout(this.searchTimer);
+    const q = this.searchQuery.trim();
+
+    if (!q) {
+      this.onSearchFocus();
+      this.isSearching.set(false);
       return;
     }
-    this.searchDebounce = setTimeout(async () => {
-      const results = await this.locationService.searchLocation(this.searchQuery);
-      this.searchResults.set(results);
-    }, 400);
+
+    this.isSearching.set(true);
+
+    const instantResults = await this.mapService.searchAddress(q);
+    if (instantResults.length > 0) {
+      this.suggestions.set(instantResults);
+    }
+
+    this.searchTimer = setTimeout(async () => {
+      const fullResults = await this.mapService.searchAddress(q);
+      this.ngZone.run(() => {
+        this.suggestions.set(fullResults);
+        this.isSearching.set(false);
+      });
+    }, 280);
   }
 
-  selectSearchResult(item: GeocodeResult): void {
-    this.searchResults.set([]);
-    this.searchQuery = '';
-    this.currentCoords = { lat: item.lat, lng: item.lng };
-    if (this.map) {
-      this.map.setView([item.lat, item.lng], 16, { animate: true });
+  selectSuggestion(s: SearchResult): void {
+    this.searchQuery = s.shortName;
+    this.suggestions.set([]);
+    if (this.dropMarker) {
+      this.dropMarker.setLatLng([s.lat, s.lng]);
     }
-    this.currentDetail.set(item.detail);
-    this.currentFullAddress.set(item.fullAddress);
+    this.onDropMoved(s.lat, s.lng);
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.onSearchFocus();
+  }
+
+  useCurrentLocation(): void {
+    if (!navigator.geolocation) {
+      this.gpsError.set('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    this.gpsLoading.set(true);
+    this.gpsError.set('');
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.ngZone.run(() => {
+          this.gpsLoading.set(false);
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+
+          if (this.dropMarker) {
+            this.dropMarker.setLatLng([lat, lng]);
+          }
+          this.onDropMoved(lat, lng);
+        });
+      },
+      (err) => {
+        this.ngZone.run(() => {
+          this.gpsLoading.set(false);
+          this.gpsError.set('Could not fetch GPS location. Please tap on map or search.');
+          setTimeout(() => this.gpsError.set(''), 4000);
+        });
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
   }
 
   confirmLocation(): void {
-    const full = this.flatNumber.trim() 
-      ? `${this.flatNumber.trim()}, ${this.currentFullAddress()}`
-      : this.currentFullAddress();
+    if (!this.dropAddress() || this.outOfRange()) return;
 
-    const tagIcons: Record<string, string> = {
-      Home: '🏠',
-      Work: '🏢',
-      Other: '📍'
-    };
+    const pos = this.dropMarker.getLatLng();
 
-    const address: AddressOption = {
-      id: 'addr_' + Date.now(),
-      label: this.selectedTag(),
-      icon: tagIcons[this.selectedTag()] || '📍',
-      detail: this.currentDetail(),
-      fullAddress: full,
-      lat: this.currentCoords.lat,
-      lng: this.currentCoords.lng,
-      isDefault: true
-    };
+    this.cartService.dropDisplayName.set(this.dropAddress());
+    this.cartService.dropLat.set(pos.lat);
+    this.cartService.dropLng.set(pos.lng);
+    this.cartService.deliveryDistanceKm.set(this.distanceKm());
 
-    // Update in AuthService
-    this.authService.setActiveAddress(address);
-    this.onSelect.emit(address);
+    this.mapService.dropLocation.set({
+      lat: pos.lat,
+      lng: pos.lng,
+      displayName: this.dropAddress()
+    });
+
+    this.locationConfirmed.emit();
     this.close();
   }
 
   close(): void {
-    this.authService.closeMapPicker();
-    this.onClose.emit();
+    this.isOpen.set(false);
+    setTimeout(() => this.closed.emit(), 360);
+  }
+
+  onOverlayClick(e: MouseEvent): void {
+    if ((e.target as HTMLElement).classList.contains('mp-overlay')) {
+      this.close();
+    }
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.searchTimer);
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
   }
 }

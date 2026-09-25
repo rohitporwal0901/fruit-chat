@@ -1,7 +1,11 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { DataService } from '../../core/services/data.service';
+import { CartService } from '../../core/services/cart.service';
+import { MapService } from '../../core/services/map.service';
+
+declare const L: any;
 
 @Component({
   selector: 'app-order-success',
@@ -11,10 +15,24 @@ import { DataService } from '../../core/services/data.service';
     <div class="success-page">
       <!-- CONFETTI CIRCLES -->
       <div class="confetti" aria-hidden="true">
-        @for (i of confettiItems; track i) {
-          <div class="confetti-piece" [style]="getConfettiStyle(i)"></div>
+        @for (style of confettiStyles; track $index) {
+          <div class="confetti-piece" [style]="style"></div>
         }
       </div>
+
+      <!-- MINI LIVE MAP -->
+        <div class="success-map-wrap">
+          <div #miniMapEl class="success-mini-map"></div>
+          <div class="map-overlay-label">
+            <span class="mol-dot green"></span>
+            <span>Atal Dwar</span>
+            <div class="mol-line"></div>
+            <span class="mol-emoji">🛵</span>
+            <div class="mol-line"></div>
+            <span class="mol-dot red"></span>
+            <span>Your Location</span>
+          </div>
+        </div>
 
       <!-- SUCCESS CARD -->
       <div class="success-card animate-scaleIn">
@@ -231,29 +249,149 @@ import { DataService } from '../../core/services/data.service';
 
     @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     .animate-scaleIn { animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+
+    /* MINI MAP */
+    .success-map-wrap {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      position: relative;
+      z-index: 1;
+    }
+    .success-mini-map {
+      height: 200px;
+      width: 100%;
+    }
+    .map-overlay-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 16px;
+    }
+    .mol-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      &.green { background: #4CAF50; box-shadow: 0 0 0 2px rgba(76,175,80,0.4); }
+      &.red   { background: #F44336; box-shadow: 0 0 0 2px rgba(244,67,54,0.4); }
+    }
+    .mol-line { flex: 1; height: 1px; background: rgba(255,255,255,0.4); }
+    .mol-emoji { font-size: 18px; }
+    .map-overlay-label span:not(.mol-dot):not(.mol-emoji) { font-size: 11px; color: #fff; font-weight: 600; white-space: nowrap; }
   `]
 })
-export class OrderSuccessComponent implements OnInit {
+export class OrderSuccessComponent implements OnInit, OnDestroy {
   router = inject(Router);
   route = inject(ActivatedRoute);
   dataService = inject(DataService);
+  cartService = inject(CartService);
+  mapService  = inject(MapService);
   orderId = signal('FC12345');
 
-  order = computed(() => this.dataService.orders().find(o => o.id === this.orderId()));
+  @ViewChild('miniMapEl') miniMapEl!: ElementRef<HTMLDivElement>;
 
-  confettiItems = Array.from({ length: 20 }, (_, i) => i);
+  order = computed(() => this.dataService.orders().find(o => o.id === this.orderId()));
+  confettiStyles: string[] = [];
+
+  private miniMap: any = null;
+  private riderMarker: any = null;
 
   ngOnInit(): void {
     const id = this.route.snapshot.queryParamMap.get('orderId');
     if (id) this.orderId.set(id);
+
+    // Precalculate deterministic confetti styles to prevent NG0100
+    const colors = ['#2E7D32', '#4CAF50', '#FFC107', '#FF6B35', '#9C27B0', '#2196F3'];
+    this.confettiStyles = Array.from({ length: 20 }, (_, i) => {
+      const color = colors[i % colors.length];
+      const left = ((i * 17 + 7) % 96);
+      const delay = (i * 0.25) % 4;
+      const duration = 2.5 + ((i * 3) % 4);
+      return `left:${left}%;background:${color};animation-delay:${delay}s;animation-duration:${duration}s;top:-20px;`;
+    });
+
+    // Init mini map after DOM renders
+    setTimeout(() => this.initMiniMap(), 400);
   }
 
-  getConfettiStyle(i: number): string {
-    const colors = ['#2E7D32', '#4CAF50', '#FFC107', '#FF6B35', '#9C27B0', '#2196F3'];
-    const color = colors[i % colors.length];
-    const left = (i * 5 + Math.random() * 10) % 100;
-    const delay = (i * 0.3) % 5;
-    const duration = 3 + (i % 4);
-    return `left:${left}%;background:${color};animation-delay:${delay}s;animation-duration:${duration}s;top:-20px;`;
+  ngOnDestroy(): void {
+    if (this.miniMap) { this.miniMap.remove(); this.miniMap = null; }
+  }
+
+  private initMiniMap(): void {
+    if (!this.miniMapEl?.nativeElement || typeof L === 'undefined') return;
+
+    const PICKUP_LAT = 22.7378;
+    const PICKUP_LNG = 75.8867;
+
+    const dropLat = this.cartService.dropLat() || 22.7196;
+    const dropLng = this.cartService.dropLng() || 75.8577;
+
+    this.miniMap = L.map(this.miniMapEl.nativeElement, {
+      zoomControl: false, attributionControl: false,
+      dragging: false, scrollWheelZoom: false
+    }).setView([PICKUP_LAT, PICKUP_LNG], 13);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(this.miniMap);
+
+    // Pickup marker
+    const pIcon = L.divIcon({
+      html: `<div style="background:#2E7D32;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
+      className: '', iconSize: [16, 16], iconAnchor: [8, 8]
+    });
+    L.marker([PICKUP_LAT, PICKUP_LNG], { icon: pIcon }).addTo(this.miniMap);
+
+    // Drop marker
+    const dIcon = L.divIcon({
+      html: '<div style="font-size:22px">🏠</div>',
+      className: '', iconSize: [22, 22], iconAnchor: [11, 22]
+    });
+    L.marker([dropLat, dropLng], { icon: dIcon }).addTo(this.miniMap);
+
+    this.miniMap.fitBounds([[PICKUP_LAT, PICKUP_LNG], [dropLat, dropLng]], { padding: [20, 20] });
+
+    // Draw route + animate rider
+    this.drawMiniRoute(PICKUP_LAT, PICKUP_LNG, dropLat, dropLng);
+  }
+
+  private async drawMiniRoute(fromLat: number, fromLng: number, toLat: number, toLng: number): Promise<void> {
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.code !== 'Ok' || !data.routes?.length) return;
+
+      const coords: [number, number][] = data.routes[0].geometry.coordinates
+        .map((c: any) => [c[1], c[0]] as [number, number]);
+
+      L.polyline(coords, { color: '#2E7D32', weight: 3, opacity: 0.8, dashArray: '6, 4' }).addTo(this.miniMap);
+
+      // Animated rider
+      const bikeIcon = L.divIcon({
+        html: '<div style="font-size:22px">🛵</div>',
+        className: '', iconSize: [22, 22], iconAnchor: [11, 22]
+      });
+      this.riderMarker = L.marker(coords[0], { icon: bikeIcon }).addTo(this.miniMap);
+
+      let idx = 0;
+      const interval = Math.max(1200, 30000 / coords.length);
+      const move = () => {
+        if (!this.riderMarker || !this.miniMap) return;
+        if (idx >= coords.length) idx = 0;
+        this.riderMarker.setLatLng(coords[idx]);
+        idx++;
+        setTimeout(move, interval);
+      };
+      setTimeout(move, 600);
+    } catch { /* ignore */ }
   }
 }

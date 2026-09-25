@@ -566,8 +566,8 @@ export class TrackOrderComponent implements OnInit, OnDestroy {
   private unsubscribeLive: (() => void) | null = null;
 
   showMap = computed(() => {
-    const o = this.currentOrder();
-    return o?.status === 'out-for-delivery';
+    // Always show map (not just out-for-delivery)
+    return true;
   });
 
   currentOrder = computed(() => {
@@ -736,20 +736,30 @@ export class TrackOrderComponent implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      if (this.showMap()) setTimeout(() => this.initMap(), 100);
+      const o = this.currentOrder();
+      const loading = this.isPageLoading();
+      if (!loading && o && !this.map) {
+        setTimeout(() => this.initMap(), 150);
+      }
     });
 
     // Resolve skeleton once orders data is available
     effect(() => {
       const orders = this.dataService.orders();
       if (orders !== null && orders !== undefined) {
-        setTimeout(() => this.isPageLoading.set(false), 500);
+        setTimeout(() => {
+          this.isPageLoading.set(false);
+          setTimeout(() => this.initMap(), 150);
+        }, 300);
       }
     });
   }
 
   ngOnInit(): void {
-    setTimeout(() => this.isPageLoading.set(false), 3000); // max timeout fallback
+    setTimeout(() => {
+      this.isPageLoading.set(false);
+      setTimeout(() => this.initMap(), 150);
+    }, 1500);
 
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -767,30 +777,139 @@ export class TrackOrderComponent implements OnInit, OnDestroy {
   }
 
   private initMap(): void {
-    if (this.map || typeof L === 'undefined') return;
+    if (this.map) return;
+    if (!this.mapContainer?.nativeElement) {
+      setTimeout(() => this.initMap(), 150);
+      return;
+    }
+
+    if (typeof L === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => this.initMap();
+      document.head.appendChild(script);
+      return;
+    }
+
     const o = this.currentOrder();
-    if (!o) return;
+    if (!o) {
+      setTimeout(() => this.initMap(), 250);
+      return;
+    }
 
     const homeLat = (o.deliveryAddress as any)?.lat || 22.7196;
     const homeLng = (o.deliveryAddress as any)?.lng || 75.8577;
 
-    this.map = L.map(this.mapContainer.nativeElement, { center: [homeLat, homeLng], zoom: 15, zoomControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(this.map);
+    // Fixed Pickup: Atal Dwar, LIG, Indore
+    const PICKUP_LAT = 22.7378;
+    const PICKUP_LNG = 75.8867;
 
-    const homeIcon = L.divIcon({ html: '<div style="font-size:30px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))">🏠</div>', className: 'custom-div-icon', iconSize: [30,30], iconAnchor: [15,30] });
-    this.homeMarker = L.marker([homeLat, homeLng], { icon: homeIcon }).addTo(this.map);
+    try {
+      this.map = L.map(this.mapContainer.nativeElement, {
+        center: [PICKUP_LAT, PICKUP_LNG], zoom: 13,
+        zoomControl: false
+      });
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(this.map);
 
-    const bikeIcon = L.divIcon({ html: '<div style="font-size:34px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4))">🛵</div>', className: 'custom-div-icon', iconSize: [34,34], iconAnchor: [17,34] });
-    this.deliveryMarker = L.marker([homeLat, homeLng], { icon: bikeIcon });
+      // Pickup marker (green dot)
+      const pickupIcon = L.divIcon({
+        html: `<div style="background:#2E7D32;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>`,
+        className: '', iconSize: [20, 20], iconAnchor: [10, 10]
+      });
+      L.marker([PICKUP_LAT, PICKUP_LNG], { icon: pickupIcon })
+        .addTo(this.map)
+        .bindPopup('🟢 Atal Dwar, LIG — Pickup');
 
-    this.unsubscribeLive = this.dataService.listenToLiveDelivery(o.id, (data) => {
-      if (data) {
-        if (!this.map.hasLayer(this.deliveryMarker)) this.deliveryMarker.addTo(this.map);
-        this.deliveryMarker.setLatLng([data.lat, data.lng]);
-        const group = new L.featureGroup([this.homeMarker, this.deliveryMarker]);
-        this.map.fitBounds(group.getBounds(), { padding: [40,40], maxZoom: 16 });
+      // Home/Drop marker
+      const homeIcon = L.divIcon({
+        html: '<div style="font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))">🏠</div>',
+        className: 'custom-div-icon', iconSize: [30, 30], iconAnchor: [15, 30]
+      });
+      this.homeMarker = L.marker([homeLat, homeLng], { icon: homeIcon })
+        .addTo(this.map)
+        .bindPopup('🔴 Your Delivery Location');
+
+      // Fit map to show both markers
+      this.map.fitBounds([[PICKUP_LAT, PICKUP_LNG], [homeLat, homeLng]], { padding: [40, 40] });
+
+      // Draw route line (OSRM)
+      this.drawRouteAndAnimate(PICKUP_LAT, PICKUP_LNG, homeLat, homeLng, o);
+    } catch (e) {
+      console.warn('Map initialization failed, will retry:', e);
+      setTimeout(() => this.initMap(), 300);
+    }
+  }
+
+  private async drawRouteAndAnimate(
+    fromLat: number, fromLng: number,
+    toLat: number, toLng: number,
+    order: any
+  ): Promise<void> {
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.code !== 'Ok' || !data.routes?.length) return;
+
+      const coords: [number, number][] = data.routes[0].geometry.coordinates
+        .map((c: any) => [c[1], c[0]] as [number, number]);
+
+      // Draw route polyline
+      const isDelivering = order?.status === 'out-for-delivery';
+      L.polyline(coords, {
+        color: '#2E7D32',
+        weight: 4,
+        opacity: 0.7,
+        dashArray: isDelivering ? '' : '8, 6'
+      }).addTo(this.map);
+
+      // Add rider icon if out-for-delivery — animate along route
+      if (isDelivering) {
+        const bikeIcon = L.divIcon({
+          html: '<div style="font-size:30px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4))">🛵</div>',
+          className: 'custom-div-icon', iconSize: [34, 34], iconAnchor: [17, 34]
+        });
+        this.deliveryMarker = L.marker(coords[0], { icon: bikeIcon }).addTo(this.map);
+        this.animateRider(coords);
       }
-    });
+
+      // Also listen for real Firestore live location
+      this.unsubscribeLive = this.dataService.listenToLiveDelivery(order.id, (liveData) => {
+        if (liveData) {
+          if (!this.deliveryMarker) {
+            const bikeIcon = L.divIcon({
+              html: '<div style="font-size:30px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4))">🛵</div>',
+              className: 'custom-div-icon', iconSize: [34, 34], iconAnchor: [17, 34]
+            });
+            this.deliveryMarker = L.marker([liveData.lat, liveData.lng], { icon: bikeIcon }).addTo(this.map);
+          } else {
+            this.deliveryMarker.setLatLng([liveData.lat, liveData.lng]);
+          }
+          this.map.panTo([liveData.lat, liveData.lng]);
+        }
+      });
+    } catch (e) {
+      // Fallback: no route line
+      console.warn('Route draw failed', e);
+    }
+  }
+
+  private animateRider(coords: [number, number][]): void {
+    let idx = 0;
+    const totalSteps = coords.length;
+    const interval = Math.max(1500, 45000 / totalSteps); // ~45s total animation
+
+    const move = () => {
+      if (!this.deliveryMarker || !this.map) return;
+      if (idx >= totalSteps) {
+        idx = 0; // loop
+      }
+      this.deliveryMarker.setLatLng(coords[idx]);
+      idx++;
+      setTimeout(move, interval);
+    };
+    setTimeout(move, 500);
   }
 
   isCurrentStep(step: TrackStep): boolean {

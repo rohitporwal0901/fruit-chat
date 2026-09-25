@@ -7,11 +7,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { DataService } from '../../core/services/data.service';
 import { AdminOrder } from '../../core/models/admin.model';
 import { environment } from '../../../environments/environment';
+import { MapPickerComponent } from '../../shared/map-picker/map-picker.component';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MapPickerComponent],
   template: `
     <div class="checkout-page">
       <!-- HEADER -->
@@ -23,6 +24,17 @@ import { environment } from '../../../environments/environment';
         <h2 class="checkout-title">Checkout</h2>
         <div class="header-spacer"></div>
       </div>
+
+      <!-- TOAST NOTIFICATION (REPLACES BROWSER ALERT) -->
+      @if (toast()) {
+        <div class="checkout-toast animate-toast" [class]="'toast-' + toast()!.type">
+          <span class="toast-icon">
+            {{ toast()!.type === 'warning' ? '📍' : toast()!.type === 'error' ? '❌' : '✅' }}
+          </span>
+          <span class="toast-text">{{ toast()!.message }}</span>
+          <button class="toast-close-btn" (click)="toast.set(null)">✕</button>
+        </div>
+      }
 
       <!-- STEPPER -->
       <div class="stepper-wrap">
@@ -48,28 +60,86 @@ import { environment } from '../../../environments/environment';
       <!-- STEP CONTENT -->
       <div class="container step-content">
 
+        @if (cartService.items().length === 0) {
+          <div class="empty-cart-pane animate-fadeInUp">
+            <div class="empty-icon-bubble">🛒</div>
+            <h3 class="empty-heading">Your cart is empty</h3>
+            <p class="empty-desc">Please add delicious fresh fruit chaat or salad to your cart before proceeding.</p>
+            <button class="btn-browse-menu" (click)="router.navigate(['/menu'])">
+              Explore Fresh Menu 🥗
+            </button>
+          </div>
+        } @else {
+
         <!-- STEP 1: ADDRESS -->
         @if (currentStep() === 1) {
           <div class="step-pane animate-fadeInUp">
             <h3 class="step-heading">Delivery Address</h3>
-            <div class="saved-address">
-              <div class="addr-icon">📍</div>
+
+            <!-- PICKUP (fixed store) -->
+            <div class="addr-block pickup-block">
+              <div class="addr-dot green"></div>
               <div class="addr-info">
-                <p class="addr-name">{{ address.name || 'Add your name' }}</p>
-                <p class="addr-text">{{ address.addressLine1 || 'Select delivery address' }}</p>
-                <p class="addr-city">{{ address.city }}</p>
+                <span class="addr-label green-tag">STORE PICKUP</span>
+                <p class="addr-main">Atal Dwar, LIG, Indore</p>
+                <span class="addr-sub">Fresh Fruit & Chaat Kitchen</span>
               </div>
-              <div class="addr-actions">
-                <button class="edit-btn" (click)="authService.openMapPicker()" type="button" aria-label="Edit address">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                  <span>Edit</span>
-                </button>
-              </div>
+              <div class="store-badge">🏪 Store</div>
             </div>
+
+            <!-- ROUTE CONNECTOR -->
+            <div class="route-separator">
+              <div class="route-line-vert"></div>
+              @if (cartService.deliveryDistanceKm() > 0) {
+                <div class="route-sep-chips">
+                  <span class="sep-chip dist">📏 {{ cartService.deliveryDistanceKm() | number:'1.1-1' }} km</span>
+                  <span class="sep-chip charge">💰 Delivery ₹{{ cartService.deliveryCharge() }}</span>
+                </div>
+              } @else {
+                <div class="route-sep-chips">
+                  <span class="sep-chip pending">Choose delivery point</span>
+                </div>
+              }
+            </div>
+
+            <!-- DROP (user selects) -->
+            <div
+              class="addr-block drop-block"
+              [class.drop-empty]="!cartService.dropDisplayName()"
+              [class.pulse-highlight]="pulseDropError()"
+            >
+              <div class="addr-dot red"></div>
+              <div class="addr-info">
+                <span class="addr-label red-tag">DELIVERY TO</span>
+                <p class="addr-main">{{ cartService.dropDisplayName() || 'Tap to select delivery location' }}</p>
+                @if (cartService.dropDisplayName()) {
+                  <span class="addr-sub verified">✓ Location confirmed on map</span>
+                }
+              </div>
+              <button class="map-pick-btn" (click)="showMapPicker.set(true)" type="button" id="open-map-btn">
+                {{ cartService.dropDisplayName() ? 'Change Location' : 'Select on Map' }}
+              </button>
+            </div>
+
+            @if (!cartService.dropDisplayName()) {
+              <div class="addr-cta-banner" (click)="showMapPicker.set(true)">
+                <div class="cta-banner-icon">🗺️</div>
+                <div class="cta-banner-text">
+                  <p class="cta-banner-title">Select Delivery Location on Map</p>
+                  <p class="cta-banner-sub">Tap here to choose your exact drop point in Indore</p>
+                </div>
+                <span class="cta-banner-arrow">→</span>
+              </div>
+            }
           </div>
+        }
+
+        <!-- MAP PICKER BOTTOM SHEET -->
+        @if (showMapPicker()) {
+          <app-map-picker
+            (locationConfirmed)="onMapLocationConfirmed()"
+            (closed)="showMapPicker.set(false)"
+          ></app-map-picker>
         }
 
         <!-- STEP 2: PAYMENT -->
@@ -136,8 +206,12 @@ import { environment } from '../../../environments/environment';
             <h3 class="step-heading">Confirm Order</h3>
             <div class="confirm-section">
               <div class="confirm-row">
+                <span class="confirm-label">🏪 Pickup</span>
+                <span class="confirm-val">Atal Dwar, LIG, Indore</span>
+              </div>
+              <div class="confirm-row">
                 <span class="confirm-label">📍 Deliver to</span>
-                <span class="confirm-val">{{ address.addressLine1 || 'Green Park, Indore' }}</span>
+                <span class="confirm-val">{{ address.addressLine1 || 'Indore' }}</span>
               </div>
               <div class="confirm-row">
                 <span class="confirm-label">💳 Payment</span>
@@ -147,6 +221,12 @@ import { environment } from '../../../environments/environment';
                 <span class="confirm-label">🛒 Items</span>
                 <span class="confirm-val">{{ cartService.totalItems() }} items</span>
               </div>
+              @if (cartService.deliveryDistanceKm() > 0) {
+                <div class="confirm-row">
+                  <span class="confirm-label">📏 Distance</span>
+                  <span class="confirm-val">{{ cartService.deliveryDistanceKm() | number:'1.1-1' }} km</span>
+                </div>
+              }
               @if (cartService.discount() > 0) {
                 <div class="confirm-row discount-row">
                   <span class="confirm-label">🎟️ Coupon ({{ cartService.appliedCoupon()?.code }})</span>
@@ -154,30 +234,33 @@ import { environment } from '../../../environments/environment';
                 </div>
               }
               <div class="confirm-row grand-row">
-                <span class="confirm-label">💰 Total</span>
+                <span class="confirm-label">💰 Grand Total</span>
                 <span class="confirm-total">₹{{ cartService.grandTotal() }}</span>
               </div>
             </div>
           </div>
         }
+        }
       </div>
 
       <!-- CTA BUTTON -->
-      <div class="checkout-cta">
-        @if (currentStep() < 3) {
-          <button class="btn-next" (click)="nextStep()">
-            {{ currentStep() === 2 ? 'Review Order' : 'Continue' }} →
-          </button>
-        } @else {
-          <button class="btn-place" (click)="placeOrder()">
-            {{ loading() ? 'Placing...' : 'Place Order 🎉' }}
-          </button>
-        }
-      </div>
+      @if (cartService.items().length > 0) {
+        <div class="checkout-cta">
+          @if (currentStep() < 3) {
+            <button class="btn-next" (click)="nextStep()">
+              {{ currentStep() === 2 ? 'Review Order' : 'Continue' }} →
+            </button>
+          } @else {
+            <button class="btn-place" (click)="placeOrder()" [disabled]="loading()">
+              {{ loading() ? 'Placing Order...' : 'Place Order 🎉 (₹' + cartService.grandTotal() + ')' }}
+            </button>
+          }
+        </div>
+      }
     </div>
   `,
   styles: [`
-    .checkout-page { background: #F8F9FA; min-height: 100vh; }
+    .checkout-page { background: #F8F9FA; min-height: 100vh; position: relative; }
 
     .checkout-header {
       background: #fff;
@@ -219,13 +302,62 @@ import { environment } from '../../../environments/environment';
       &:active { background: #E4E4E7; transform: scale(0.95); }
     }
 
-    .header-spacer {
-      width: 75px;
-      justify-self: end;
+    .header-spacer { width: 75px; justify-self: end; }
+
+    /* TOAST NOTIFICATION */
+    .checkout-toast {
+      position: fixed;
+      top: 60px;
+      left: 16px;
+      right: 16px;
+      max-width: 440px;
+      margin: 0 auto;
+      z-index: 1050;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+      font-size: 13px;
+      font-weight: 600;
+      &.toast-warning {
+        background: #FFFBEB;
+        border: 1.5px solid #FCD34D;
+        color: #92400E;
+      }
+      &.toast-error {
+        background: #FEF2F2;
+        border: 1.5px solid #FCA5A5;
+        color: #B91C1C;
+      }
+      &.toast-success {
+        background: #F0FDF4;
+        border: 1.5px solid #86EFAC;
+        color: #166534;
+      }
     }
+    .toast-icon { font-size: 16px; flex-shrink: 0; }
+    .toast-text { flex: 1; line-height: 1.35; }
+    .toast-close-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+      opacity: 0.65;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 2px 6px;
+      &:hover { opacity: 1; }
+    }
+    @keyframes toastSlide {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-toast { animation: toastSlide 0.25s ease-out; }
 
     /* STEPPER */
-    .stepper-wrap { background: #fff; padding: 16px 20px; border-bottom: 1px solid #EEE; }
+    .stepper-wrap { background: #fff; padding: 14px 20px; border-bottom: 1px solid #EEE; }
     .stepper { display: flex; align-items: center; justify-content: center; gap: 0; }
     .step-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .step-circle { width: 28px; height: 28px; border-radius: 50%; background: #EEE; color: #999; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
@@ -236,35 +368,144 @@ import { environment } from '../../../environments/environment';
     .step-line.active { background: #2E7D32; }
 
     /* STEP CONTENT */
-    .step-content { padding-top: 20px; padding-bottom: 120px; }
-    .step-pane { }
-    .step-heading { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+    .step-content { padding-top: 18px; padding-bottom: 140px; }
+    .step-heading { font-size: 17px; font-weight: 800; margin-bottom: 16px; color: #1A1A1A; }
 
-    /* ADDRESS */
-    .saved-address { background: #fff; border-radius: 14px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; }
-    .addr-icon { font-size: 24px; flex-shrink: 0; }
-    .addr-info { flex: 1; min-width: 0; .addr-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; } .addr-text { font-size: 13px; color: #555; word-break: break-word; } .addr-city { font-size: 12px; color: #999; } }
-    .addr-actions { display: flex; align-items: flex-start; justify-content: flex-end; flex-shrink: 0; }
-    .edit-btn {
-      background: #E8F5E9;
-      border: 1px solid #C8E6C9;
+    /* ADDRESS BLOCKS */
+    .addr-block {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border: 1px solid #E5E7EB;
+      transition: all 0.2s;
+      &.drop-empty {
+        border: 1.5px dashed #CBD5E1;
+        background: #FAFAFA;
+      }
+      &.pulse-highlight {
+        animation: pulseRed 0.8s ease-in-out;
+        border-color: #EF4444;
+      }
+    }
+    @keyframes pulseRed {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .addr-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      &.green { background: #2E7D32; box-shadow: 0 0 0 4px rgba(46,125,50,0.18); }
+      &.red   { background: #E53935; box-shadow: 0 0 0 4px rgba(229,57,53,0.18); }
+    }
+    .addr-info { flex: 1; min-width: 0; }
+    .addr-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      display: block;
+      margin-bottom: 2px;
+      &.green-tag { color: #2E7D32; }
+      &.red-tag { color: #E53935; }
+    }
+    .addr-main {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1A1A1A;
+      margin: 0;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .addr-sub {
+      font-size: 11px;
+      color: #9CA3AF;
+      margin-top: 2px;
+      display: block;
+      &.verified { color: #15803D; font-weight: 600; }
+    }
+    .store-badge {
+      font-size: 11px;
+      font-weight: 700;
       color: #2E7D32;
+      background: #E8F5E9;
+      padding: 4px 8px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .map-pick-btn {
+      background: #2E7D32;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 14px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 12px;
-      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: all 0.2s;
-      &:hover { background: #DCEDC8; color: #1B5E20; }
-      &:active { transform: scale(0.95); }
+      box-shadow: 0 3px 10px rgba(46,125,50,0.25);
+      &:hover { background: #1B5E20; transform: translateY(-1px); }
+      &:active { transform: scale(0.97); }
     }
 
-    .form-group { margin-bottom: 14px; label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; } input { width: 100%; border: 1.5px solid #EEE; border-radius: 10px; padding: 10px 14px; font-family: 'Poppins', sans-serif; font-size: 14px; color: #1A1A1A; outline: none; transition: border-color 0.2s; &:focus { border-color: #4CAF50; } &::placeholder { color: #bbb; } } }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    /* ROUTE CONNECTOR */
+    .route-separator {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0 4px 6px;
+      padding-left: 14px;
+    }
+    .route-line-vert {
+      width: 2px;
+      height: 34px;
+      background: #D1D5DB;
+      border-radius: 99px;
+    }
+    .route-sep-chips { display: flex; gap: 6px; flex-shrink: 0; }
+    .sep-chip {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      &.dist { background: #EFF6FF; color: #1D4ED8; }
+      &.charge { background: #DCFCE7; color: #15803D; }
+      &.pending { background: #F3F4F6; color: #6B7280; font-size: 10px; }
+    }
+
+    /* CTA BANNER IF NO LOCATION */
+    .addr-cta-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #ECFDF5, #F0FDF4);
+      border: 1.5px solid #A7F3D0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-top: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      &:hover {
+        background: #DCFCE7;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(46,125,50,0.12);
+      }
+    }
+    .cta-banner-icon { font-size: 22px; flex-shrink: 0; }
+    .cta-banner-text { flex: 1; }
+    .cta-banner-title { font-size: 13px; font-weight: 700; color: #166534; margin: 0; }
+    .cta-banner-sub { font-size: 11px; color: #4B5563; margin: 2px 0 0; }
+    .cta-banner-arrow { font-size: 16px; color: #166534; font-weight: 700; }
 
     /* PAYMENT */
     .payment-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
@@ -326,10 +567,61 @@ import { environment } from '../../../environments/environment';
     .confirm-total { font-size: 20px; font-weight: 800; color: #2E7D32; }
 
     /* CTA */
-    .checkout-cta { position: fixed; bottom: 80px; left: 0; right: 0; padding: 12px 20px; background: linear-gradient(to top, #F8F9FA 80%, transparent); @media (min-width: 768px) { bottom: 0; } }
-    .btn-next, .btn-place { width: 100%; max-width: 480px; margin: 0 auto; display: block; border: none; border-radius: 14px; padding: 16px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 20px rgba(46,125,50,0.35); }
+    .checkout-cta {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      padding: 14px 20px max(18px, env(safe-area-inset-bottom));
+      background: #FFFFFF;
+      border-top: 1px solid #EEEEEE;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+    .btn-next, .btn-place {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      display: block;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 15.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 6px 20px rgba(46,125,50,0.35);
+      &:disabled { opacity: 0.7; cursor: not-allowed; }
+    }
     .btn-next { background: #2E7D32; color: #fff; &:hover { background: #1B5E20; transform: translateY(-2px); } }
-    .btn-place { background: linear-gradient(135deg, #2E7D32, #4CAF50); color: #fff; &:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(46,125,50,0.45); } }
+    .btn-place { background: linear-gradient(135deg, #2E7D32, #4CAF50); color: #fff; &:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(46,125,50,0.45); } }
+
+    /* EMPTY CART */
+    .empty-cart-pane {
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 40px 24px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      margin: 20px 0;
+    }
+    .empty-icon-bubble { font-size: 48px; margin-bottom: 12px; }
+    .empty-heading { font-size: 18px; font-weight: 800; color: #1F2937; margin: 0 0 6px; }
+    .empty-desc { font-size: 13px; color: #6B7280; margin: 0 0 20px; line-height: 1.4; }
+    .btn-browse-menu {
+      background: #2E7D32;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 14px rgba(46, 125, 50, 0.3);
+      transition: all 0.2s;
+      &:hover { background: #1B5E20; transform: translateY(-2px); }
+    }
 
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fadeInUp { animation: fadeInUp 0.35s ease both; }
@@ -341,20 +633,25 @@ export class CheckoutComponent {
   authService = inject(AuthService);
   dataService = inject(DataService);
 
-  currentStep = signal(1);
-  loading = signal(false);
+  currentStep     = signal(1);
+  loading         = signal(false);
   selectedPayment = signal('upi');
-  paymentVal = 'upi';
+  paymentVal      = 'upi';
+  showMapPicker   = signal(false);
+  pulseDropError  = signal(false);
+  toast           = signal<{ message: string; type: 'warning' | 'error' | 'success' } | null>(null);
+
+  private toastTimer: any = null;
 
   address = { 
     name: this.authService.currentUser()?.name || '', 
     phone: this.authService.currentUser()?.phone || '', 
-    addressLine1: this.authService.activeAddress().fullAddress || '123, Green Park, Indore', 
+    addressLine1: this.authService.activeAddress().fullAddress || 'Atal Dwar, LIG, Indore', 
     addressLine2: '', 
     city: this.authService.activeAddress().detail || 'Indore', 
     pincode: '452001',
-    lat: this.authService.activeAddress().lat || 22.7196,
-    lng: this.authService.activeAddress().lng || 75.8577
+    lat: this.authService.activeAddress().lat || 22.7378,
+    lng: this.authService.activeAddress().lng || 75.8867
   };
 
   constructor() {
@@ -368,8 +665,8 @@ export class CheckoutComponent {
       if (active) {
         this.address.addressLine1 = active.fullAddress;
         this.address.city = active.detail;
-        this.address.lat = active.lat || 22.7196;
-        this.address.lng = active.lng || 75.8577;
+        this.address.lat = active.lat || 22.7378;
+        this.address.lng = active.lng || 75.8867;
       }
     });
   }
@@ -386,9 +683,35 @@ export class CheckoutComponent {
     { id: 'cod', name: 'Cash on Delivery', icon: '💵', sub: 'Temporarily disabled (Online payment only)', disabled: true }
   ];
 
+  showToast(message: string, type: 'warning' | 'error' | 'success' = 'warning'): void {
+    clearTimeout(this.toastTimer);
+    this.toast.set({ message, type });
+    this.toastTimer = setTimeout(() => this.toast.set(null), 3600);
+  }
+
   nextStep(): void {
+    // Step 1 requires drop location to be selected
+    if (this.currentStep() === 1 && !this.cartService.dropDisplayName()) {
+      this.pulseDropError.set(true);
+      setTimeout(() => this.pulseDropError.set(false), 1200);
+      this.showToast('📍 Please select your delivery location on the map to continue.', 'warning');
+      this.showMapPicker.set(true);
+      return;
+    }
     if (this.currentStep() < 3) {
       this.currentStep.update(v => v + 1);
+    }
+  }
+
+  onMapLocationConfirmed(): void {
+    const drop = this.cartService.dropDisplayName();
+    const lat  = this.cartService.dropLat();
+    const lng  = this.cartService.dropLng();
+    if (drop) {
+      this.address.addressLine1 = drop;
+      this.address.lat = lat;
+      this.address.lng = lng;
+      this.showToast('✓ Delivery location updated successfully!', 'success');
     }
   }
 
@@ -413,7 +736,7 @@ export class CheckoutComponent {
       deliveryAddress: {
         name: this.address.name || 'Customer',
         phone: customerPhone,
-        addressLine1: this.address.addressLine1 || 'Green Park, Indore',
+        addressLine1: this.address.addressLine1 || 'Indore',
         addressLine2: this.address.addressLine2 || '',
         city: this.address.city || 'Indore',
         pincode: this.address.pincode || '452001',
@@ -457,7 +780,7 @@ export class CheckoutComponent {
       } catch (err) {
         console.error('Failed to save order:', err);
         this.loading.set(false);
-        alert('Could not place order. Please check your connection.');
+        this.showToast('Could not place order. Please check your connection.', 'error');
       }
     };
 
@@ -495,7 +818,7 @@ export class CheckoutComponent {
         const rzp = new Razorpay(options);
         rzp.on('payment.failed', (resp: any) => {
           this.loading.set(false);
-          alert('Payment was not completed. Please try again.');
+          this.showToast('Payment was not completed. Please try again.', 'error');
         });
         rzp.open();
       } catch (e) {
