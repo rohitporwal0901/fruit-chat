@@ -51,38 +51,41 @@ import { Product } from '../../core/models/product.model';
       <!-- ACTIVE ORDER STRIP (ONLY SHOWN IF EXACTLY 1 ACTIVE ORDER) -->
       @if (activeOrdersCount() === 1) {
         <div class="home-active-order-wrapper">
-          <!-- SINGLE ORDER UI WITH PROGRESS BAR (EXACT MOCKUP) -->
-          <div class="active-order-strip light-theme single-order" [routerLink]="'/track-order/' + activeOrders()[0].id">
-            <div class="aos-top-row">
-              <div class="aos-info">
-                <span class="aos-title dark-text">{{ getStatusText(activeOrders()[0].status) }}</span>
-                <span class="aos-sub dark-sub">Order #{{ activeOrders()[0].id.slice(-6).toUpperCase() }}</span>
+          <!-- BLINKIT STYLE ORDER CARD -->
+          <div class="blinkit-order-card" [routerLink]="'/track-order/' + activeOrders()[0].id">
+            <!-- Top row: live dot + status + actions -->
+            <div class="boc-top-row">
+              <div class="boc-status-group">
+                <span class="boc-live-dot"></span>
+                <div class="boc-texts">
+                  <span class="boc-status">{{ getStatusText(activeOrders()[0].status) }}</span>
+                  <span class="boc-order-id">Order #{{ activeOrders()[0].id.slice(-6).toUpperCase() }}</span>
+                </div>
               </div>
-              <div class="aos-actions" (click)="$event.stopPropagation()">
-                <a [routerLink]="'/track-order/' + activeOrders()[0].id" class="icon-btn track-btn">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <div class="boc-actions" (click)="$event.stopPropagation()">
+                <a [routerLink]="'/track-order/' + activeOrders()[0].id" class="boc-btn boc-track-btn">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                   Track
                 </a>
-                <a href="tel:+919827664121" class="icon-btn call-btn">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <a href="tel:+919827664121" class="boc-btn boc-call-btn">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                   Call
                 </a>
               </div>
             </div>
-            
-            <div class="aos-progress-wrapper">
-              <div class="progress-track">
-                <div class="progress-fill" [style.width.%]="getProgressPercent(activeOrders()[0].status)"></div>
-                <div class="moving-rider" [style.left.%]="getProgressPercent(activeOrders()[0].status)">
-                  <!-- High-Quality Scalable SVG (No Pixelation, Transparent Background) -->
-                  <svg width="46" height="46" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+
+            <!-- Progress bar with moving rider -->
+            <div class="boc-progress-area">
+              <div class="boc-track">
+                <div class="boc-fill" [style.width.%]="getProgressPercent(activeOrders()[0].status)"></div>
+                <div class="boc-rider" [style.left.%]="getProgressPercent(activeOrders()[0].status)">
+                  <svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
                     <rect x="6" y="24" width="18" height="18" rx="2" fill="#2E7D32"/>
                     <path d="M6 30 L24 30" stroke="#1B5E20" stroke-width="1.5"/>
                     <circle cx="15" cy="33" r="3" fill="#4CAF50"/>
                     <path d="M12 48 L28 48 L32 38 L48 38 L54 48 L60 48 A3 3 0 0 1 60 54 L12 54 A3 3 0 0 1 12 48 Z" fill="#4CAF50"/>
                     <path d="M46 38 L52 24 L56 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
                     <ellipse cx="58" cy="42" rx="3" ry="4" fill="#FFC107"/>
-                    <path d="M58 42 L66 36 L66 48 Z" fill="#FFC107" opacity="0.3"/> 
                     <path d="M26 38 C26 24 38 24 40 24 L48 24 L52 32 L40 32 L36 38 Z" fill="#FF9800"/>
                     <path d="M42 26 L48 34 L54 34" fill="none" stroke="#F57C00" stroke-width="2.5" stroke-linecap="round"/>
                     <circle cx="44" cy="16" r="6" fill="#FFCC80"/>
@@ -94,6 +97,29 @@ import { Product } from '../../core/models/product.model';
                     <path d="M2 42 L8 42 M0 48 L6 48" stroke="#CFD8DC" stroke-width="1.5" stroke-linecap="round"/>
                   </svg>
                 </div>
+              </div>
+            </div>
+
+            <!-- Mini steps row -->
+            <div class="boc-steps-row">
+              <div class="boc-step" [class.boc-step-done]="isStatusAtLeast(activeOrders()[0].status, 'confirmed')" [class.boc-step-active]="activeOrders()[0].status === 'confirmed' || activeOrders()[0].status === 'pending'">
+                <span>📋</span>
+                <span class="boc-step-lbl">Confirmed</span>
+              </div>
+              <div class="boc-step-line" [class.boc-step-line-done]="isStatusAtLeast(activeOrders()[0].status, 'preparing')"></div>
+              <div class="boc-step" [class.boc-step-done]="isStatusAtLeast(activeOrders()[0].status, 'preparing')" [class.boc-step-active]="activeOrders()[0].status === 'preparing'">
+                <span>👨‍🍳</span>
+                <span class="boc-step-lbl">Cooking</span>
+              </div>
+              <div class="boc-step-line" [class.boc-step-line-done]="isStatusAtLeast(activeOrders()[0].status, 'out-for-delivery')"></div>
+              <div class="boc-step" [class.boc-step-done]="isStatusAtLeast(activeOrders()[0].status, 'out-for-delivery')" [class.boc-step-active]="activeOrders()[0].status === 'out-for-delivery'">
+                <span>🛵</span>
+                <span class="boc-step-lbl">On Way</span>
+              </div>
+              <div class="boc-step-line" [class.boc-step-line-done]="activeOrders()[0].status === 'delivered'"></div>
+              <div class="boc-step" [class.boc-step-done]="activeOrders()[0].status === 'delivered'" [class.boc-step-active]="activeOrders()[0].status === 'delivered'">
+                <span>🎉</span>
+                <span class="boc-step-lbl">Delivered</span>
               </div>
             </div>
           </div>
@@ -337,130 +363,146 @@ import { Product } from '../../core/models/product.model';
     }
     .view-all { font-size: 11px; font-weight: 700; color: #2E7D32; text-decoration: none; }
 
-    /* ACTIVE ORDER STRIP (BLINKIT STYLE FOR HOME) */
+    /* ═══ BLINKIT ORDER CARD (HOME) ═══ */
     .home-active-order-wrapper {
       padding: 14px 14px 0;
-      animation: slideDownFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation: slideDownFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
     @keyframes slideDownFadeIn {
-      from { opacity: 0; transform: translateY(-12px); }
+      from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .active-order-strip.light-theme {
-      background: #F4FBF6; /* Match mockup background */
-      border-radius: 16px;
-      padding: 16px;
+
+    .blinkit-order-card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 14px 14px 12px;
       display: flex;
       flex-direction: column;
-      align-items: stretch;
-      text-decoration: none;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
-      border: 1px solid #E1EFE6;
-      transition: transform 0.2s, box-shadow 0.2s;
       cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+      border: 1.5px solid #E8F5E9;
+      text-decoration: none;
+      transition: transform 0.18s, box-shadow 0.18s;
+      position: relative;
+      overflow: hidden;
     }
-    .active-order-strip.light-theme.multi-order {
-      flex-direction: row;
+    .blinkit-order-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #2E7D32, #4CAF50, #81C784);
+      border-radius: 18px 18px 0 0;
+    }
+    .blinkit-order-card:active { transform: scale(0.985); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+    /* Top row */
+    .boc-top-row {
+      display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 16px;
+      margin-bottom: 4px;
     }
-    .active-order-strip.light-theme:active { transform: scale(0.98); }
-    .active-order-strip.light-theme:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-    
-    .aos-top-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      width: 100%;
-    }
-    
-    .aos-info {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .aos-title.dark-text {
-      font-size: 15px;
-      font-weight: 800;
-      color: #0D4A22;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 3px;
-    }
-    .aos-sub.dark-sub {
-      font-size: 11.5px;
-      color: #617C6B;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .aos-actions {
+    .boc-status-group {
       display: flex;
       align-items: center;
       gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+    .boc-live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #4CAF50;
       flex-shrink: 0;
+      animation: livePulse 1.4s infinite;
+      box-shadow: 0 0 0 0 rgba(76,175,80,0.5);
     }
-    .icon-btn {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      text-decoration: none;
-      transition: all 0.2s;
+    @keyframes livePulse {
+      0% { box-shadow: 0 0 0 0 rgba(76,175,80,0.5); }
+      70% { box-shadow: 0 0 0 6px rgba(76,175,80,0); }
+      100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); }
     }
-    .icon-btn.call-btn {
-      background: #ffffff;
-      border: 1px solid #2E7D32;
-      color: #2E7D32;
+    .boc-texts { display: flex; flex-direction: column; overflow: hidden; }
+    .boc-status {
+      font-size: 15px; font-weight: 800; color: #0D4A22;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .icon-btn.call-btn:hover { background: #F4FBF6; }
-    .icon-btn.track-btn {
-      background: #2E7D32;
-      border: 1px solid #2E7D32;
-      color: #fff;
-    }
-    .icon-btn.track-btn:hover { background: #1B5E20; border-color: #1B5E20; }
+    .boc-order-id { font-size: 11px; color: #888; font-weight: 600; }
 
-    /* Progress Bar */
-    .aos-progress-wrapper {
-      width: 100%;
+    .boc-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .boc-btn {
+      display: flex; align-items: center; gap: 4px;
+      padding: 6px 11px; border-radius: 999px;
+      font-size: 11px; font-weight: 700;
+      text-decoration: none; transition: all 0.18s;
+      border: none; cursor: pointer; font-family: inherit;
+    }
+    .boc-track-btn { background: #2E7D32; color: #fff; box-shadow: 0 2px 8px rgba(46,125,50,0.28); }
+    .boc-track-btn:hover { background: #1B5E20; }
+    .boc-call-btn { background: #F0FBF2; border: 1.5px solid #C8E6C9; color: #2E7D32; }
+    .boc-call-btn:hover { background: #E8F5E9; }
+
+    /* Progress bar */
+    .boc-progress-area {
       position: relative;
-      padding-bottom: 2px;
-      margin-top: 48px; /* Adds space so the rider doesn't overlap the top buttons */
+      margin-top: 40px;
+      padding-bottom: 4px;
     }
-    .progress-track {
-      width: 100%;
-      height: 6px;
-      background: #E3F2E7;
-      border-radius: 999px;
+    .boc-track {
+      width: 100%; height: 5px;
+      background: #E8F5E9; border-radius: 999px;
       position: relative;
     }
-    .progress-fill {
-      height: 100%;
-      background: #2E7D32;
+    .boc-fill {
+      height: 100%; background: linear-gradient(90deg, #2E7D32, #4CAF50);
       border-radius: 999px;
-      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: width 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .moving-rider {
-      position: absolute;
-      top: -42px; /* Sits exactly on the track line */
+    .boc-rider {
+      position: absolute; top: -40px;
       transform: translateX(-50%);
-      transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-      animation: bounceRide 1s infinite alternate;
+      transition: left 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+      animation: bocBounce 1.1s infinite alternate;
       z-index: 2;
     }
-    @keyframes bounceRide {
-      0% { transform: translateX(-50%) translateY(0); }
-      100% { transform: translateX(-50%) translateY(-3px); }
+    @keyframes bocBounce {
+      from { transform: translateX(-50%) translateY(0); }
+      to { transform: translateX(-50%) translateY(-4px); }
     }
+
+    /* Mini steps row */
+    .boc-steps-row {
+      display: flex;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #F0F0F0;
+    }
+    .boc-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      flex-shrink: 0;
+      opacity: 0.4;
+      transition: opacity 0.3s;
+    }
+    .boc-step.boc-step-done, .boc-step.boc-step-active { opacity: 1; }
+    .boc-step-lbl { font-size: 8.5px; font-weight: 700; color: #555; }
+    .boc-step.boc-step-active .boc-step-lbl { color: #2E7D32; font-weight: 800; }
+    .boc-step-line {
+      flex: 1;
+      height: 2px;
+      background: #E8E8E8;
+      border-radius: 1px;
+      margin: 0 3px;
+      transition: background 0.3s;
+    }
+    .boc-step-line.boc-step-line-done { background: linear-gradient(90deg, #2E7D32, #4CAF50); }
 
     /* ===== HERO BANNER SLIDER (REFERENCE CARD STYLE) ===== */
     .banner-section {
@@ -1745,4 +1787,16 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     this.searchQuery = '';
     this.selectedCategory.set('all');
   }
+
+  /**
+   * Returns true if the given order status is "at or past" the target status
+   * Used for highlighting completed steps in the Blinkit order card
+   */
+  isStatusAtLeast(currentStatus: string, targetStatus: string): boolean {
+    const order = ['pending', 'confirmed', 'preparing', 'out-for-delivery', 'delivered'];
+    const currentIdx = order.indexOf(currentStatus);
+    const targetIdx = order.indexOf(targetStatus);
+    return currentIdx >= targetIdx;
+  }
 }
+

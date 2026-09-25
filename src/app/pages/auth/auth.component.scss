@@ -127,16 +127,35 @@
 
 .skip-btn {
   position: absolute;
-  top: max(40px, env(safe-area-inset-top));
-  right: 24px;
-  background: none;
+  top: max(44px, env(safe-area-inset-top));
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
   border: none;
-  font-size: 16px;
-  font-weight: 700;
-  color: #FFFFFF;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  font-size: 13px;
+  font-weight: 800;
+  color: #1B5E20;
   cursor: pointer;
   z-index: 10;
+  padding: 8px 18px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(27, 94, 32, 0.15);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:active {
+    transform: scale(0.94);
+    background: rgba(255, 255, 255, 1);
+  }
+  
+  &::after {
+    content: ' →';
+    font-size: 13px;
+    font-weight: 800;
+    color: #1B5E20;
+  }
 }
 
 .carousel-container {
