@@ -106,40 +106,56 @@ declare const L: any;
             </div>
           </div>
 
-          <!-- ROUTE INFO CARD -->
+          <!-- RAPIDO-STYLE ROUTE CARD -->
           <div class="mp-route-card">
-            
+
+            <!-- Live stats row (Rapido style: km | mins | fare) -->
+            @if (routeLoading()) {
+              <div class="rapido-loading-row">
+                <div class="route-spin"></div>
+                <span>Calculating route...</span>
+              </div>
+            } @else if (distanceKm() > 0) {
+              <div class="rapido-stats-row">
+                <div class="rapido-stat" [class.stat-error]="outOfRange()">
+                  <span class="rapido-stat-icon">📏</span>
+                  <span class="rapido-stat-val">{{ distanceKm() }} km</span>
+                  <span class="rapido-stat-lbl">Distance</span>
+                </div>
+                <div class="rapido-stat-divider"></div>
+                <div class="rapido-stat">
+                  <span class="rapido-stat-icon">⏱️</span>
+                  <span class="rapido-stat-val">{{ etaMin() }} min</span>
+                  <span class="rapido-stat-lbl">Est. Time</span>
+                </div>
+                <div class="rapido-stat-divider"></div>
+                <div class="rapido-stat" [class.stat-error]="outOfRange()" [class.stat-ok]="!outOfRange()">
+                  <span class="rapido-stat-icon">{{ outOfRange() ? '❌' : '💰' }}</span>
+                  <span class="rapido-stat-val">{{ outOfRange() ? 'N/A' : '₹' + deliveryCharge() }}</span>
+                  <span class="rapido-stat-lbl">{{ outOfRange() ? 'Out of range' : 'Delivery' }}</span>
+                </div>
+              </div>
+            }
+
+            <!-- Route line -->
+            <div class="route-divider"></div>
+
             <!-- PICKUP POINT -->
             <div class="route-item pickup-item">
               <div class="route-node green"></div>
               <div class="route-content">
                 <div class="route-tag green-tag">STORE PICKUP</div>
                 <p class="route-main">Atal Dwar, LIG, Indore</p>
-                <span class="route-sub">Fresh Fruit & Chaat Kitchen</span>
+                <span class="route-sub">Fresh Fruit &amp; Chaat Kitchen</span>
               </div>
             </div>
 
-            <!-- CONNECTOR WITH LIVE ROUTE STATS -->
+            <!-- CONNECTOR -->
             <div class="route-connector-row">
               <div class="route-vert-line"></div>
-              <div class="route-stats-pill">
-                @if (routeLoading()) {
-                  <div class="calc-loading">
-                    <div class="route-spin"></div>
-                    <span>Calculating real road distance...</span>
-                  </div>
-                } @else if (distanceKm() > 0) {
-                  <div class="chips-flex">
-                    <span class="stat-badge dist-badge">📏 {{ distanceKm() }} km</span>
-                    <span class="stat-badge eta-badge">⏱️ {{ etaMin() }} mins</span>
-                    <span class="stat-badge" [class.charge-ok]="!outOfRange()" [class.charge-err]="outOfRange()">
-                      {{ outOfRange() ? '❌ Out of range (>10km)' : '💰 Delivery: ₹' + deliveryCharge() }}
-                    </span>
-                  </div>
-                } @else {
-                  <span class="calc-idle">Tap map or search above to select drop point</span>
-                }
-              </div>
+              @if (distanceKm() <= 0 && !routeLoading()) {
+                <span class="calc-idle">Tap map or search to select drop point</span>
+              }
             </div>
 
             <!-- DROP POINT -->
@@ -207,11 +223,13 @@ declare const L: any;
       -webkit-backdrop-filter: blur(4px);
     }
 
-    /* BOTTOM SHEET */
+    /* BOTTOM SHEET — auto height with safe-area for iPhone notch */
     .mp-sheet {
       width: 100%;
-      height: 90vh;
-      max-height: 90vh;
+      height: auto;
+      max-height: 92dvh;
+      max-height: 92vh; /* fallback */
+      max-height: 92dvh;
       background: #FFFFFF;
       border-radius: 24px 24px 0 0;
       display: flex;
@@ -221,6 +239,8 @@ declare const L: any;
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.28);
       position: relative;
+      padding-top: env(safe-area-inset-top, 0px);
+      box-sizing: border-box;
     }
 
     .mp-sheet.mp-sheet-open {
@@ -231,7 +251,7 @@ declare const L: any;
     .mp-handle-wrap {
       display: flex;
       justify-content: center;
-      padding: 10px 0 4px;
+      padding: 10px 0 2px;
       cursor: pointer;
       flex-shrink: 0;
     }
@@ -247,8 +267,9 @@ declare const L: any;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 4px 18px 8px;
+      padding: 6px 18px 10px;
       flex-shrink: 0;
+      border-bottom: 1px solid #F3F4F6;
     }
     .mp-header-text { flex: 1; }
     .mp-title {
@@ -284,7 +305,7 @@ declare const L: any;
 
     /* SEARCH CONTAINER */
     .mp-search-container {
-      padding: 0 16px 10px;
+      padding: 10px 16px 8px;
       position: relative;
       flex-shrink: 0;
       z-index: 1000;
@@ -378,18 +399,18 @@ declare const L: any;
     /* GOOGLE MAPS STYLE AUTOCOMPLETE DROPDOWN */
     .mp-suggestions-dropdown {
       position: absolute;
-      top: calc(100% + 4px);
+      top: calc(100% - 8px);
       left: 16px;
       right: 16px;
       background: #FFFFFF;
       border-radius: 14px;
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.08);
-      max-height: 270px;
+      max-height: 260px;
       display: flex;
       flex-direction: column;
       z-index: 100000;
       overflow: hidden;
-      animation: popIn 0.2s ease-out;
+      animation: popIn 0.18s ease-out;
     }
     .sug-header {
       display: flex;
@@ -422,10 +443,10 @@ declare const L: any;
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      padding: 11px 14px;
+      padding: 10px 14px;
       cursor: pointer;
       border-bottom: 1px solid #F3F4F6;
-      transition: background 0.15s;
+      transition: background 0.12s;
       &:last-child { border-bottom: none; }
       &:hover { background: #F0FDF4; }
       &:active { background: #DCFCE7; }
@@ -484,28 +505,29 @@ declare const L: any;
       -webkit-overflow-scrolling: touch;
       display: flex;
       flex-direction: column;
-      padding: 0 16px 14px;
-      gap: 12px;
+      padding: 0 14px 0;
+      gap: 10px;
+      min-height: 0;
     }
 
     /* MAP CONTAINER */
     .mp-map-container {
       position: relative;
-      border-radius: 16px;
+      border-radius: 14px;
       overflow: hidden;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
       border: 1px solid #E5E7EB;
       flex-shrink: 0;
     }
     .mp-map {
-      height: 230px;
+      height: 210px;
       width: 100%;
       z-index: 1;
       background: #E8ECEF;
     }
     .map-floating-badge {
       position: absolute;
-      bottom: 10px;
+      bottom: 8px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(255, 255, 255, 0.95);
@@ -521,14 +543,74 @@ declare const L: any;
       white-space: nowrap;
     }
 
-    /* ROUTE CARD */
+    /* ── RAPIDO-STYLE ROUTE CARD ── */
     .mp-route-card {
       background: #FFFFFF;
       border: 1px solid #E5E7EB;
       border-radius: 16px;
-      padding: 14px 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      padding: 14px 16px 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
+
+    /* Stats row — distance | time | fare like Rapido */
+    .rapido-stats-row {
+      display: flex;
+      align-items: center;
+      background: #F8FAFF;
+      border: 1px solid #E8EDFF;
+      border-radius: 12px;
+      padding: 10px 0;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .rapido-stat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 0 4px;
+    }
+    .rapido-stat.stat-ok .rapido-stat-val { color: #16A34A; }
+    .rapido-stat.stat-error .rapido-stat-val { color: #DC2626; }
+    .rapido-stat.stat-error .rapido-stat-lbl { color: #DC2626; }
+    .rapido-stat-icon { font-size: 16px; line-height: 1; }
+    .rapido-stat-val {
+      font-size: 15px;
+      font-weight: 800;
+      color: #111827;
+      line-height: 1.2;
+    }
+    .rapido-stat-lbl {
+      font-size: 10px;
+      font-weight: 600;
+      color: #6B7280;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .rapido-stat-divider {
+      width: 1px;
+      height: 36px;
+      background: #E5E7EB;
+      flex-shrink: 0;
+    }
+    .rapido-loading-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      margin-bottom: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #2E7D32;
+    }
+    .route-divider {
+      height: 1px;
+      background: #F3F4F6;
+      margin: 0 0 12px;
+    }
+
+    /* Route items */
     .route-item {
       display: flex;
       align-items: flex-start;
@@ -560,7 +642,7 @@ declare const L: any;
       &.red-tag { color: #E53935; }
     }
     .route-main {
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 700;
       color: #1F2937;
       margin: 0;
@@ -575,7 +657,7 @@ declare const L: any;
       &.verified { color: #16A34A; font-weight: 600; }
     }
 
-    /* CONNECTOR */
+    /* Connector between pickup and drop */
     .route-connector-row {
       display: flex;
       align-items: center;
@@ -585,18 +667,15 @@ declare const L: any;
     }
     .route-vert-line {
       width: 2px;
-      height: 42px;
-      background: #D1D5DB;
+      height: 32px;
+      background: linear-gradient(to bottom, #2E7D32, #E53935);
       border-radius: 99px;
+      flex-shrink: 0;
     }
-    .route-stats-pill { flex: 1; min-width: 0; }
-    .calc-loading {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: #2E7D32;
+    .calc-idle {
+      font-size: 11px;
+      color: #9CA3AF;
+      font-style: italic;
     }
     .route-spin {
       width: 14px;
@@ -605,41 +684,7 @@ declare const L: any;
       border-top-color: #059669;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-    }
-    .calc-idle {
-      font-size: 11.5px;
-      color: #9CA3AF;
-      font-style: italic;
-    }
-
-    .chips-flex {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .stat-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 9px;
-      border-radius: 999px;
-      white-space: nowrap;
-      &.dist-badge {
-        background: #EFF6FF;
-        color: #1D4ED8;
-      }
-      &.eta-badge {
-        background: #FEF3C7;
-        color: #B45309;
-      }
-      &.charge-ok {
-        background: #DCFCE7;
-        color: #15803D;
-      }
-      &.charge-err {
-        background: #FEE2E2;
-        color: #B91C1C;
-      }
+      flex-shrink: 0;
     }
 
     .mp-gps-error {
@@ -652,13 +697,14 @@ declare const L: any;
       font-weight: 600;
     }
 
-    /* FOOTER (FIXED PINNED AT BOTTOM) */
+    /* FOOTER — no extra bottom padding, just safe-area */
     .mp-footer {
       flex-shrink: 0;
       background: #FFFFFF;
       border-top: 1px solid #F3F4F6;
-      padding: 12px 18px max(20px, env(safe-area-inset-bottom));
-      box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.08);
+      padding: 12px 16px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
       z-index: 50;
       position: relative;
     }
@@ -715,7 +761,7 @@ declare const L: any;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes popIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
   `]
 })
 export class MapPickerComponent implements OnInit, OnDestroy {
@@ -723,22 +769,22 @@ export class MapPickerComponent implements OnInit, OnDestroy {
   @Output() closed = new EventEmitter<void>();
   @ViewChild('mapEl') mapElRef!: ElementRef<HTMLDivElement>;
 
-  mapService  = inject(MapService);
+  mapService = inject(MapService);
   cartService = inject(CartService);
-  ngZone      = inject(NgZone);
+  ngZone = inject(NgZone);
 
-  isOpen         = signal(false);
-  searchQuery    = '';
-  suggestions    = signal<SearchResult[]>([]);
-  dropAddress    = signal('');
-  distanceKm     = signal(0);
-  etaMin         = signal(0);
+  isOpen = signal(false);
+  searchQuery = '';
+  suggestions = signal<SearchResult[]>([]);
+  dropAddress = signal('');
+  distanceKm = signal(0);
+  etaMin = signal(0);
   deliveryCharge = signal(0);
-  outOfRange     = signal(false);
-  routeLoading   = signal(false);
-  isSearching    = signal(false);
-  gpsLoading     = signal(false);
-  gpsError       = signal('');
+  outOfRange = signal(false);
+  routeLoading = signal(false);
+  isSearching = signal(false);
+  gpsLoading = signal(false);
+  gpsError = signal('');
 
   private map: any = null;
   private pickupMarker: any = null;
@@ -924,20 +970,43 @@ export class MapPickerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isSearching.set(true);
+    // Show instant local-only results immediately (zero delay, no flicker)
+    const localOnly = this.mapService.INDORE_PLACES
+      .filter(p => {
+        const qc = q.toLowerCase();
+        return p.name.toLowerCase().includes(qc)
+          || p.area.toLowerCase().includes(qc)
+          || p.aliases.some(a => a.includes(qc) || qc.includes(a));
+      })
+      .map(p => {
+        const dist = this.mapService.getHaversineDistanceKm(
+          this.mapService.PICKUP.lat, this.mapService.PICKUP.lng, p.lat, p.lng
+        );
+        return {
+          lat: p.lat, lng: p.lng,
+          shortName: p.name, displayName: p.address,
+          icon: p.icon, distanceKm: dist,
+          distanceText: `${dist} km away`, type: p.type
+        };
+      })
+      .slice(0, 6);
 
-    const instantResults = await this.mapService.searchAddress(q);
-    if (instantResults.length > 0) {
-      this.suggestions.set(instantResults);
+    if (localOnly.length > 0) {
+      this.suggestions.set(localOnly);
+      // If enough local results, don't show spinner — just silently enhance
+      this.isSearching.set(false);
+    } else {
+      this.isSearching.set(true);
     }
 
+    // Debounced API call to enhance with Photon / Nominatim results
     this.searchTimer = setTimeout(async () => {
       const fullResults = await this.mapService.searchAddress(q);
       this.ngZone.run(() => {
         this.suggestions.set(fullResults);
         this.isSearching.set(false);
       });
-    }, 280);
+    }, 350);
   }
 
   selectSuggestion(s: SearchResult): void {

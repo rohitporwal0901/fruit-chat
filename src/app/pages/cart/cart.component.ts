@@ -135,8 +135,19 @@ import { ConfettiService } from '../../core/services/confetti.service';
                 </div>
               }
               <div class="bill-row">
-                <span>Delivery Charges</span>
-                <span class="delivery-charge">₹{{ cartService.deliveryCharge() }}</span>
+                <span class="delivery-label-wrap">
+                  Delivery Charges
+                  @if (!cartService.dropDisplayName()) {
+                    <span class="delivery-note">(select location)</span>
+                  }
+                </span>
+                <span class="delivery-charge" [class.delivery-pending]="!cartService.dropDisplayName()">
+                  @if (cartService.dropDisplayName()) {
+                    ₹{{ cartService.deliveryCharge() }}
+                  } @else {
+                    ₹15+
+                  }
+                </span>
               </div>
               <div class="divider"></div>
               <div class="bill-row total">
@@ -543,7 +554,10 @@ import { ConfettiService } from '../../core/services/confetti.service';
       &.total { font-size: 16px; font-weight: 800; color: #1A1A1A; }
       &.discount { color: #2E7D32; font-weight: 600; }
       .discount-val { color: #2E7D32; font-weight: 700; }
-      .delivery-charge { color: #999; }
+      .delivery-charge { color: #374151; font-weight: 600; }
+      .delivery-charge.delivery-pending { color: #9CA3AF; font-weight: 500; }
+      .delivery-label-wrap { display: flex; flex-direction: column; gap: 1px; }
+      .delivery-note { font-size: 10px; color: #9CA3AF; font-weight: 400; }
     }
 
     .divider { height: 1px; background: #EEE; margin: 2px 0; }

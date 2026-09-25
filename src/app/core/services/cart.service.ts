@@ -31,11 +31,11 @@ export class CartService {
   // 0-2km → ₹15, 2-5km → ₹15+(dist-2)×5, 5-10km → ₹30+(dist-5)×8
   deliveryCharge = computed(() => {
     const dist = this.deliveryDistanceKm();
-    if (dist <= 0) return 20; // default before map selection
+    if (dist <= 0) return 15; // default minimum charge
     if (dist <= 2) return 15;
     if (dist <= 5) return Math.round(15 + (dist - 2) * 5);
     if (dist <= 10) return Math.round(30 + (dist - 5) * 8);
-    return 20; // fallback
+    return 15; // fallback
   });
 
   // Discount applies only when itemTotal meets the minOrderAmount
